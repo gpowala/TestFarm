@@ -1,0 +1,13 @@
+.tests-container {
+    margin: 0 10px 0 10px
+}
+
+.tests-header {
+    margin: 20px 0 20px 0;
+    font-size: x-large;
+    color: rgb(70,78,178);
+
+    text-decoration: underline;
+    text-decoration-color: rgb(255,75,130);
+    text-decoration-thickness: 3px;
+}

@@ -1,0 +1,45 @@
+.grids-container {
+    margin: 0 10px 0 10px
+}
+
+.grids-header-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.grids-header {
+    margin: 20px 0 20px 0;
+    font-size: x-large;
+    color: rgb(70,78,178);
+
+    text-decoration: underline;
+    text-decoration-color: rgb(255,75,130);
+    text-decoration-thickness: 3px;
+}
+
+.refresh-control {
+    margin: auto 0 auto 0;
+    width: fit-content;
+}
+
+.example-action-buttons {
+    padding-bottom: 20px;
+}
+
+.mat-expansion-panel-header {
+    font-weight: 400;
+}
+
+.mat-divider {
+    margin-bottom: 24px;
+}
+
+.example-headers-align .mat-expansion-panel-header-description {
+    justify-content: space-between;
+    align-items: center;
+    font-size: smaller;
+}
+
+.example-headers-align .mat-mdc-form-field + .mat-mdc-form-field {
+    margin-left: 8px;
+}

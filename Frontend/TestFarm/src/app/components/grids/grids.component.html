@@ -1,0 +1,40 @@
+<div class="grids-container">
+  <div class="grids-header-container">
+    <div class="grids-header">
+        Grids
+    </div>
+    <div class="refresh-control">
+      <button mat-button extended color="primary" *ngIf="autoRefreshOn" (click)="turnOffAutoRefresh()">
+        <mat-icon>pause_circle_outline</mat-icon>
+        Turn off automatic refresh
+      </button>
+      <button mat-button extended color="primary" *ngIf="!autoRefreshOn" (click)="turnOnAutoRefresh()">
+        <mat-icon>play_circle_outline</mat-icon>
+        Turn on automatic refresh
+      </button>
+    </div>
+  </div>
+  <div class="grids-content">
+    <mat-accordion class="example-headers-align" multi>
+        <mat-expansion-panel *ngFor="let grid of gridsDescription; index as i">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon [ngStyle]="{'color': '#80c904', 'margin-right': '15px', 'transform': 'scale(0.8)'}">check_circle</mat-icon>
+              {{grid.name}} [{{grid.hosts.length}}]
+            </mat-panel-title>
+            <mat-panel-description>
+              creation time: {{grid.creationTime}} | last update time: {{grid.lastUpdateTime}}
+              <button mat-icon-button (click)="$event.stopPropagation();" matTooltip="copy connection command: run_tests.py --grid {{grid.name}}">
+                <mat-icon>terminal</mat-icon>
+              </button>
+              <!-- <mat-icon [ngStyle]="{'transform': 'scale(0.8)'}">terminal</mat-icon> -->
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <mat-divider></mat-divider>
+          <div *ngFor="let host of grid.hosts; index as j">
+            {{host.name}}
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
+  </div>
+</div>

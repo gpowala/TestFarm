@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Righteous&display=swap');
+
+.nav-bar {
+    padding: 10px 0 10px 0;
+    margin: 0;
+    background-color: rgb(70,78,178);
+
+    display: flex;
+    justify-content: start;
+
+    box-shadow: 0px 1px 5px #888888;
+}
+
+ul {
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links li{
+    display: inline-block;
+    margin: 0 20px 0 0;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+}
+
+.nav-links a:hover {
+    color: white;
+    text-decoration: underline;
+    text-decoration-color: rgb(255,75,130);
+    text-decoration-thickness: 3px;
+}
+
+.logo-test {
+    margin: 0;
+    color: white;
+    font-weight: 400;
+    font-size: large;
+    font-family: 'Righteous', cursive;
+    padding: 0 0 0 10px;
+}
+
+.logo-farm {
+    color: rgb(255,75,130);
+    font-weight: 400;
+    font-size: large;
+    font-family: 'Righteous', cursive;
+    padding: 0 40px 0 0;
+}
