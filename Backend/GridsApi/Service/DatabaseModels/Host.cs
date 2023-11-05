@@ -1,6 +1,6 @@
 ﻿namespace Service.DatabaseModels
 {
-    public class Host
+    public class Host : EntityBase
     {
         public int? Id { get; set; }
 

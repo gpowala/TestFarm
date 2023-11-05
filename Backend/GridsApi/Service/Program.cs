@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using Service.Configuration;
 using Service.DatabaseModels;
 
@@ -10,16 +11,27 @@ var app = builder.Build();
 
 app.MapGet("/AddHostToGrid?host_name={hostName}&&grid_name={gridName}", async (string hostName, string gridName, Context context) =>
 {
-    if (!context.Grids.Any(g => g.Name == gridName))
+    try
     {
-        context.Grids.Add(new Grid
+        if (!context.Grids.Any(g => g.Name == gridName))
         {
-            Name = gridName,
-            Status = "Running",
-            CreationTimestamp = DateTime.Now,
-            LastUpdateTimestamp = DateTime.Now
-        });
-        await context.SaveChangesAsync();
+            context.Grids.Add(new Grid
+            {
+                Name = gridName,
+                Status = "Running",
+                CreationTimestamp = DateTime.Now,
+                LastUpdateTimestamp = DateTime.Now
+            });
+            await context.SaveChangesAsync();
+        }
+    }
+    catch (SqlException ex)
+    {
+        const int violationOfUniqueConstraint = 2601;
+        if (ex.Number == violationOfUniqueConstraint)
+        {
+
+        }
     }
 
     context.Hosts.Add(new Host

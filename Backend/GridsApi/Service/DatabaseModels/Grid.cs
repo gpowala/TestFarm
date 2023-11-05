@@ -1,6 +1,6 @@
 ﻿namespace Service.DatabaseModels
 {
-    public class Grid
+    public class Grid : EntityBase
     {
         public int? Id { get; set; }
 
