@@ -12,6 +12,7 @@ namespace TestFarmGridsMigrator.Migrations
                 .WithColumn("GridId").AsInt32().NotNullable().ForeignKey("Grids", "Id")
 
                 .WithColumn("Name").AsString().NotNullable().Unique()
+                .WithColumn("Type").AsString().NotNullable()
                 .WithColumn("Status").AsString().NotNullable()
 
                 .WithColumn("HostDetailsJson").AsString().NotNullable()

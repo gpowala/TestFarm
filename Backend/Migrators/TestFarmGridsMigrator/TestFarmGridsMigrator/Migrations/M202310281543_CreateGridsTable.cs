@@ -11,7 +11,6 @@ namespace TestFarmGridsMigrator.Migrations
                 .WithColumn("Id").AsInt32().NotNullable().PrimaryKey().Identity()
 
                 .WithColumn("Name").AsString().NotNullable().Unique()
-                .WithColumn("Status").AsString().NotNullable()
 
                 .WithColumn("CreationTimestamp").AsDateTime2().NotNullable()
                 .WithColumn("LastUpdateTimestamp").AsDateTime2().NotNullable();

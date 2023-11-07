@@ -11,7 +11,7 @@ namespace Service.Repositories
         Task<IEnumerable<T>> ListAsync();
         Task<IEnumerable<T>> ListAsync(Expression<Func<T, bool>> predicate);
 
-        Task AddAsync(T entity);
+        Task<int> AddAsync(T entity);
         Task RemoveAsync(T entity);
     }
 }

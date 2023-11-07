@@ -1,42 +1,49 @@
-using Microsoft.Data.SqlClient;
+using Microsoft.AspNetCore.Mvc;
+
 using Service.Configuration;
 using Service.DatabaseModels;
+using Service.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<ServiceConfiguration, ServiceConfigurationImpl>();
 builder.Services.AddScoped<Context, ContextImpl>();
+builder.Services.AddScoped<Repository<Service.DatabaseModels.Grid>, Service.Repositories.Grids>();
+builder.Services.AddScoped<Repository<Service.DatabaseModels.Host>, Service.Repositories.Hosts>();
 
 var app = builder.Build();
 
-app.MapGet("/AddHostToGrid?host_name={hostName}&&grid_name={gridName}", async (string hostName, string gridName, Context context) =>
+app.MapPost("/AddHostToGrid", async ([FromBody] string hostName, [FromBody] string hostType, [FromBody] string hostDetailsJson, [FromBody] string gridName, Repository<Service.DatabaseModels.Grid> grids, Repository<Service.DatabaseModels.Host> hosts) =>
 {
     try
     {
-        if (!context.Grids.Any(g => g.Name == gridName))
+        var gridId = await grids.AddAsync(new Service.DatabaseModels.Grid
         {
-            context.Grids.Add(new Grid
-            {
-                Name = gridName,
-                Status = "Running",
-                CreationTimestamp = DateTime.Now,
-                LastUpdateTimestamp = DateTime.Now
-            });
-            await context.SaveChangesAsync();
-        }
-    }
-    catch (SqlException ex)
-    {
-        const int violationOfUniqueConstraint = 2601;
-        if (ex.Number == violationOfUniqueConstraint)
+            Name = gridName,
+            CreationTimestamp = DateTime.Now,
+            LastUpdateTimestamp = DateTime.Now
+        });
+
+        var hostId = await hosts.AddAsync(new Service.DatabaseModels.Host
         {
+            Name = hostName,
+            Type = hostType,
+            Status = "running",
 
-        }
+            HostDetailsJson = hostDetailsJson,
+
+            CreationTimestamp = DateTime.UtcNow,
+            LastUpdateTimestamp = DateTime.UtcNow,
+
+            GridId = gridId
+        });
+
+        return Results.Json(new { GridId = gridId, GridName = gridName, HostId = hostId, HostName = hostName, HostType = hostType });
     }
-
-    context.Hosts.Add(new Host
+    catch (Exception ex)
     {
-    });
+        return Results.BadRequest($"Failed to add host {hostName} to grid {gridName} with error: {ex.Message}");
+    }
 });
 
 app.Run();
