@@ -15,7 +15,9 @@ namespace TestFarmGridsMigrator.Migrations
                 .WithColumn("Type").AsString().NotNullable()
                 .WithColumn("Status").AsString().NotNullable()
 
-                .WithColumn("HostDetailsJson").AsString().NotNullable()
+                .WithColumn("Hostname").AsString().NotNullable()
+                .WithColumn("Cores").AsInt16().NotNullable()
+                .WithColumn("RAM").AsInt16().Nullable()
 
                 .WithColumn("CreationTimestamp").AsDateTime2().NotNullable()
                 .WithColumn("LastUpdateTimestamp").AsDateTime2().NotNullable();

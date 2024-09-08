@@ -1,6 +1,12 @@
 export interface HostDescription {
-    name: string,
-    status: string,
-    connectionTime: string,
-    lastUpdateTime: string
+    Dd: number,
+    GridId: number,
+    Name: string,
+    Type: string,
+    Status: string,
+    Hostname: string,
+    Cores: number,
+    RAM: number,
+    CreationTimestamp: string,
+    LastUpdateTimestamp: string
 }

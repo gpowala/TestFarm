@@ -1,0 +1,100 @@
+<testsuite name="complex_data_security.complex data security" tests="9" errors="0" failures="0" skipped="0" time="10.234051" timestamp="2024-09-05T22:02:34.079103" hostname="D-EXT-WEB051"><testcase classname="complex_data_security.complex data security" name="complex data security/fetch holiday rights data" status="passed" time="1.828122"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: complex data security/fetch holiday rights data
+    Given data loaded from complex_data_security.json ... passed in 1.797s
+    When call HolidayRights/GetAllHolidayRightsForConcern for concern 01547 and 3000 employer/employee pairs with one specific employer 0072863, employee 0000258, holiday year 2024 ... passed in 0.031s
+    Then the HolidayRights/GetAllHolidayRightsForConcern response status code is 200 and result ids are [565764, 565765] ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase><testcase classname="complex_data_security.complex data security" name="complex data security/fetch full holiday rights request content" status="passed" time="1.046875"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: complex data security/fetch full holiday rights request content
+    Given data loaded from complex_data_security.json ... passed in 1.031s
+    When call HolidayRights/GetFullRequestContent for id 565764 with filters for concern 01547 and 3000 employer/employee pairs with one specific employer 0072863, employee 0000258 ... passed in 0.016s
+    Then the HolidayRights/GetFullRequestContent response status code is 200 and request content is not null ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase><testcase classname="complex_data_security.complex data security" name="complex data security/fetch full holiday rights response content" status="passed" time="1.063581"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: complex data security/fetch full holiday rights response content
+    Given data loaded from complex_data_security.json ... passed in 1.032s
+    When call HolidayRights/GetFullResponseContent for id 565764 with filters for concern 01547 and 3000 employer/employee pairs with one specific employer 0072863, employee 0000258 ... passed in 0.031s
+    Then the HolidayRights/GetFullResponseContent response status code is 200 and response content is not null ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase><testcase classname="complex_data_security.complex data security" name="complex data security/fetch holiday pays data" status="passed" time="1.04686"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: complex data security/fetch holiday pays data
+    Given data loaded from complex_data_security.json ... passed in 1.031s
+    When call HolidayPays/GetAllHolidayPaysForConcern for concern 01834 and 3000 employer/employee pairs with one specific employer 0070446, employee 0000646, holiday year 2024 ... passed in 0.016s
+    Then the HolidayPays/GetAllHolidayPaysForConcern response status code is 200 and result ids are [16337] ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase><testcase classname="complex_data_security.complex data security" name="complex data security/fetch full holiday pays request content" status="passed" time="1.070217"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: complex data security/fetch full holiday pays request content
+    Given data loaded from complex_data_security.json ... passed in 1.055s
+    When call HolidayPays/GetFullRequestContent for id 16337 with filters for concern 01834 and 3000 employer/employee pairs with one specific employer 0070446, employee 0000646 ... passed in 0.016s
+    Then the HolidayPays/GetFullRequestContent response status code is 200 and request content is not null ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase><testcase classname="complex_data_security.complex data security" name="complex data security/fetch full holiday pays response content" status="passed" time="1.031252"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: complex data security/fetch full holiday pays response content
+    Given data loaded from complex_data_security.json ... passed in 1.031s
+    When call HolidayPays/GetFullResponseContent for id 16337 with filters for concern 01834 and 3000 employer/employee pairs with one specific employer 0070446, employee 0000646 ... passed in 0.000s
+    Then the HolidayPays/GetFullResponseContent response status code is 200 and response content is not null ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase><testcase classname="complex_data_security.complex data security" name="complex data security/fetch single pay deductions data" status="passed" time="1.052312"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: complex data security/fetch single pay deductions data
+    Given data loaded from complex_data_security.json ... passed in 1.037s
+    When call SinglePayDeductions/GetAllHolidayPaysForConcern for concern 01717 and 3000 employer/employee pairs with one specific employer 0069270, employee 0063893, holiday year 2024 ... passed in 0.016s
+    Then the SinglePayDeductions/GetAllHolidayPaysForConcern response status code is 200 and result ids are [40] ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase><testcase classname="complex_data_security.complex data security" name="complex data security/fetch full single pay deductions request content" status="passed" time="1.047961"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: complex data security/fetch full single pay deductions request content
+    Given data loaded from complex_data_security.json ... passed in 1.032s
+    When call SinglePayDeductions/GetFullRequestContent for id 40 with filters for concern 01717 and 3000 employer/employee pairs with one specific employer 0069270, employee 0063893 ... passed in 0.016s
+    Then the SinglePayDeductions/GetFullRequestContent response status code is 200 and request content is not null ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase><testcase classname="complex_data_security.complex data security" name="complex data security/fetch full single pay deductions response content" status="passed" time="1.046872"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: complex data security/fetch full single pay deductions response content
+    Given data loaded from complex_data_security.json ... passed in 1.031s
+    When call SinglePayDeductions/GetFullResponseContent for id 40 with filters for concern 01717 and 3000 employer/employee pairs with one specific employer 0069270, employee 0063893 ... passed in 0.016s
+    Then the SinglePayDeductions/GetFullResponseContent response status code is 200 and response content is not null ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase></testsuite>

@@ -11,6 +11,6 @@ export class GridsApiHttpClientService {
     constructor(private http: HttpClient) { }
 
     getAllGridsData() {
-        return this.http.get<GridDescription[]>('http://localhost:3000/get-all-grids-data');
+        return this.http.get<GridDescription[]>('http://localhost:3000/grids');
     }
 }

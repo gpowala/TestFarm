@@ -46,8 +46,8 @@ export class GridsComponent implements OnInit, OnDestroy{
       this.gridsDescription = data.map(grid => {
         let modifiedGrid = grid;
 
-        modifiedGrid.creationTime = this.formatDate(new Date(grid.creationTime));
-        modifiedGrid.lastUpdateTime = this.formatDate(new Date(grid.lastUpdateTime));
+        modifiedGrid.CreationTimestamp = this.formatDate(new Date(grid.CreationTimestamp));
+        modifiedGrid.LastUpdateTimestamp = this.formatDate(new Date(grid.LastUpdateTimestamp));
 
         return modifiedGrid;
       });

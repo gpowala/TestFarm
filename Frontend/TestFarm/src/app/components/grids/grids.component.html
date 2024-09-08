@@ -4,13 +4,13 @@
         Grids
     </div>
     <div class="refresh-control">
-      <button mat-button extended color="primary" *ngIf="autoRefreshOn" (click)="turnOffAutoRefresh()">
-        <mat-icon>pause_circle_outline</mat-icon>
-        Turn off automatic refresh
+      <button mat-button extended color="primary" *ngIf="autoRefreshOn" (click)="turnOffAutoRefresh()" [ngStyle]="{'font-size': '0.9em'}">
+        <mat-icon [ngStyle]="{'font-size': '18px', 'margin-right': '6px', 'vertical-align': 'middle'}">pause_circle_outline</mat-icon>
+        turn off automatic refresh
       </button>
-      <button mat-button extended color="primary" *ngIf="!autoRefreshOn" (click)="turnOnAutoRefresh()">
-        <mat-icon>play_circle_outline</mat-icon>
-        Turn on automatic refresh
+      <button mat-button extended color="primary" *ngIf="!autoRefreshOn" (click)="turnOnAutoRefresh()" [ngStyle]="{'font-size': '0.9em'}">
+        <mat-icon [ngStyle]="{'font-size': '18px', 'margin-right': '6px', 'vertical-align': 'middle'}">play_circle_outline</mat-icon>
+        turn on automatic refresh
       </button>
     </div>
   </div>
@@ -20,19 +20,19 @@
           <mat-expansion-panel-header>
             <mat-panel-title>
               <mat-icon [ngStyle]="{'color': '#80c904', 'margin-right': '15px', 'transform': 'scale(0.8)'}">check_circle</mat-icon>
-              {{grid.name}} [{{grid.hosts.length}}]
+              {{grid.Name}} [{{grid.Hosts.length}}]
             </mat-panel-title>
             <mat-panel-description>
-              creation time: {{grid.creationTime}} | last update time: {{grid.lastUpdateTime}}
-              <button mat-icon-button (click)="$event.stopPropagation();" matTooltip="copy connection command: run_tests.py --grid {{grid.name}}">
+              creation time: {{grid.CreationTimestamp}} | last update time: {{grid.LastUpdateTimestamp}}
+              <button mat-icon-button (click)="$event.stopPropagation();" matTooltip="copy connection command: run_tests.py --grid {{grid.Name}}">
                 <mat-icon>terminal</mat-icon>
               </button>
               <!-- <mat-icon [ngStyle]="{'transform': 'scale(0.8)'}">terminal</mat-icon> -->
             </mat-panel-description>
           </mat-expansion-panel-header>
           <mat-divider></mat-divider>
-          <div *ngFor="let host of grid.hosts; index as j">
-            {{host.name}}
+          <div *ngFor="let host of grid.Hosts; index as j">
+            {{host.Name}}
           </div>
         </mat-expansion-panel>
       </mat-accordion>

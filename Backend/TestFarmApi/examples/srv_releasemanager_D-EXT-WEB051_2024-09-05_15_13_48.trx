@@ -1,0 +1,192 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="510e3b79-3a3f-4e6e-bcf0-720d771e41a0" name="srv_releasemanager@D-EXT-WEB051 2024-09-05 15:13:48" runUser="ONTWIKKEL\srv_releasemanager" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2024-09-05T15:13:48.2236179+02:00" queuing="2024-09-05T15:13:48.2236179+02:00" start="2024-09-05T15:13:36.3652268+02:00" finish="2024-09-05T15:14:14.3347606+02:00" />
+  <TestSettings name="default" id="16cec1dd-61e0-4a32-9cc2-24fe8f694c4f">
+    <Deployment runDeploymentRoot="srv_releasemanager_D-EXT-WEB051_2024-09-05_15_13_48" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="67d42617-2dc0-410b-811f-daee9b340940" testId="94d74d6b-257d-6a0c-c333-a830cb71ef31" testName="Annual Correction Out Of Service Tab with data is visible" computerName="D-EXT-WEB051" duration="00:00:05.0741338" startTime="2024-09-05T15:14:14.2069510+02:00" endTime="2024-09-05T15:14:14.2069512+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="67d42617-2dc0-410b-811f-daee9b340940">
+      <Output>
+        <StdOut>Given data from Data\HolidayAnnualCorrectionOutOfService.json&#xD;
+-&gt; done: AnnualCorrectionOutOfServiceTabViewStepDefinitions.GivenDataFrom("Data\HolidayAnnua...") (2,8s)&#xD;
+And results loaded for concern 01717 and language English&#xD;
+-&gt; done: AnnualCorrectionOutOfServiceTabViewStepDefinitions.GivenResultsLoadedForConcernAndLanguageEnglish("01717", "English") (1,3s)&#xD;
+When clicked on Annual Correction Out Of Service Tab&#xD;
+-&gt; done: AnnualCorrectionOutOfServiceTabViewStepDefinitions.WhenClickedOnAnnualCorrectionOutOfServiceTab() (0,6s)&#xD;
+And refresh data&#xD;
+-&gt; done: AnnualCorrectionOutOfServiceTabViewStepDefinitions.WhenRefreshData() (0,1s)&#xD;
+Then data should contains 1 table rows&#xD;
+-&gt; done: AnnualCorrectionOutOfServiceTabViewStepDefinitions.ThenDataShouldContainsSpecyficCountTableRows(1) (0,0s)</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="af6c77d8-8315-4863-9d5d-85fe6d564326" testId="03186b2a-c7aa-a5d5-9d1f-08fed39c7fbf" testName="Pay tab with approved data is visible" computerName="D-EXT-WEB051" duration="00:00:05.2653080" startTime="2024-09-05T15:14:01.9537066+02:00" endTime="2024-09-05T15:14:01.9537068+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="af6c77d8-8315-4863-9d5d-85fe6d564326">
+      <Output>
+        <StdOut>Given data from Data\HolidayPaysData.json&#xD;
+-&gt; done: PayTabViewStepDefinitions.GivenDataFrom("Data\HolidayPaysD...") (3,0s)&#xD;
+And results loaded for concern 01937 and language English&#xD;
+-&gt; done: PayTabViewStepDefinitions.GivenResultsLoadedForConcernAndLanguageEnglish("01937", "English") (1,2s)&#xD;
+When clicked on Pay tab&#xD;
+-&gt; done: PayTabViewStepDefinitions.WhenClickedOnPayTab() (0,6s)&#xD;
+And refresh data&#xD;
+-&gt; done: PayTabViewStepDefinitions.WhenRefreshData() (0,2s)&#xD;
+Then data should contains 3 table rows&#xD;
+-&gt; done: PayTabViewStepDefinitions.ThenDataShouldContainsSpecyficCountTableRows(3) (0,0s)</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4089ee76-4b94-46d8-bca1-b67f4a123042" testId="c425def9-0161-88d0-e435-22798804e99c" testName="User can navigate to and see Right tab" computerName="D-EXT-WEB051" duration="00:00:03.5139533" startTime="2024-09-05T15:13:51.7090372+02:00" endTime="2024-09-05T15:13:51.7090373+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4089ee76-4b94-46d8-bca1-b67f4a123042">
+      <Output>
+        <StdOut>Given Hoca homepage is displayed&#xD;
+-&gt; done: RightTabViewStepDefinitions.GivenHocaHomepageIsDisplayed() (3,2s)&#xD;
+When clicked on Right tab&#xD;
+-&gt; done: RightTabViewStepDefinitions.WhenClickedOnRightTab() (0,1s)&#xD;
+Then Right tab is active&#xD;
+-&gt; done: RightTabViewStepDefinitions.ThenRightTabIsActive() (0,0s)</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="328f97fc-564c-44e6-bdc1-a2453f3fa79c" testId="9c45f2cc-2856-8a85-8f3a-438a3b96579d" testName="User can navigate to and see Annual Correction Out Of Service Tab" computerName="D-EXT-WEB051" duration="00:00:03.4814462" startTime="2024-09-05T15:14:09.1326565+02:00" endTime="2024-09-05T15:14:09.1326567+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="328f97fc-564c-44e6-bdc1-a2453f3fa79c">
+      <Output>
+        <StdOut>Given Hoca homepage is displayed&#xD;
+-&gt; done: AnnualCorrectionOutOfServiceTabViewStepDefinitions.GivenHocaHomepageIsDisplayed() (3,0s)&#xD;
+When clicked on Annual Correction Out Of Service Tab&#xD;
+-&gt; done: AnnualCorrectionOutOfServiceTabViewStepDefinitions.WhenClickedOnAnnualCorrectionOutOfServiceTab() (0,3s)&#xD;
+Then Annual Correction Out Of Service Tab is active&#xD;
+-&gt; done: AnnualCorrectionOutOfServiceTabViewStepDefinitions.ThenAnnualCorrectionsOutOfServiceTabIsActive() (0,0s)</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="38f49ed8-c073-4cdd-9f35-a93eadb7cd58" testId="264d3c56-069a-596c-074c-6a1152e1c91c" testName="Right tab with approved data is visible" computerName="D-EXT-WEB051" duration="00:00:04.9782726" startTime="2024-09-05T15:13:56.6874104+02:00" endTime="2024-09-05T15:13:56.6874105+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="38f49ed8-c073-4cdd-9f35-a93eadb7cd58">
+      <Output>
+        <StdOut>Given data from Data/HolidayRightsData.json&#xD;
+-&gt; done: RightTabViewStepDefinitions.GivenDataFrom("Data/HolidayRight...") (2,8s)&#xD;
+And results loaded for concern 01547 and language English&#xD;
+-&gt; done: RightTabViewStepDefinitions.GivenResultsLoadedForConcernAndLanguageEnglish("01547", "English") (1,5s)&#xD;
+When clicked on Right tab&#xD;
+-&gt; done: RightTabViewStepDefinitions.WhenClickedOnRightTab() (0,3s)&#xD;
+And refresh data&#xD;
+-&gt; done: RightTabViewStepDefinitions.WhenRefreshData() (0,2s)&#xD;
+Then data should contains 2 table rows&#xD;
+-&gt; done: RightTabViewStepDefinitions.ThenDataShouldContainsSpecyficCountTableRows(2) (0,0s)</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="771a1bc1-27b3-483e-8c36-d9b1b811c529" testId="9ce2009f-6cfd-8fcf-a31f-f55afce904cb" testName="Unlock holiday right using unapproved result" computerName="D-EXT-WEB051" duration="00:00:09.8803142" startTime="2024-09-05T15:13:48.1887451+02:00" endTime="2024-09-05T15:13:48.1887683+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="771a1bc1-27b3-483e-8c36-d9b1b811c529">
+      <Output>
+        <StdOut>Given data from Data/UnlockHolidayRightUsingUnapprovedResult.json&#xD;
+-&gt; done: HolidayRightsShowStepsDefinitions.GivenDataFrom("Data/UnlockHolida...") (3,8s)&#xD;
+And results loaded for concern 01547 and language English&#xD;
+-&gt; done: HolidayRightsShowStepsDefinitions.GivenResultsLoadedForConcernAndLanguage("01547", "English") (3,2s)&#xD;
+When clicked details of result for employer 1RB0679 and employee 0000259&#xD;
+-&gt; done: HolidayRightsShowStepsDefinitions.WhenClickedDetailsOfResultForEmployerAndEmployee("1RB0679", "0000259") (1,5s)&#xD;
+And clicked unlock&#xD;
+-&gt; done: HolidayRightsShowStepsDefinitions.WhenClickedUnlock() (0,4s)&#xD;
+And results refreshed&#xD;
+-&gt; done: HolidayRightsShowStepsDefinitions.WhenResultsRefreshed() (0,2s)&#xD;
+Then user should be allowed to approve&#xD;
+-&gt; done: HolidayRightsShowStepsDefinitions.ThenUserShouldBeAllowedToApprove() (0,4s)</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="11666d46-8c38-4c7c-b7fd-247d69e11ecd" testId="bd57096f-cdda-0b25-23b2-e31854e0390f" testName="User can navigate to and see Pay tab" computerName="D-EXT-WEB051" duration="00:00:03.6965116" startTime="2024-09-05T15:14:05.6503838+02:00" endTime="2024-09-05T15:14:05.6503839+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="11666d46-8c38-4c7c-b7fd-247d69e11ecd">
+      <Output>
+        <StdOut>Given Hoca homepage is displayed&#xD;
+-&gt; done: PayTabViewStepDefinitions.GivenHocaHomepageIsDisplayed() (3,1s)&#xD;
+When clicked on Pay tab&#xD;
+-&gt; done: PayTabViewStepDefinitions.WhenClickedOnPayTab() (0,4s)&#xD;
+Then Pay tab is active&#xD;
+-&gt; done: PayTabViewStepDefinitions.ThenPayTabIsActive() (0,0s)</StdOut>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Right tab with approved data is visible" storage="c:\vstsagent\a5\_work\r27\a\holidaycalculator.tests-ci\sdworx.holidaycalculator.frontend.tests\tests.dll" id="264d3c56-069a-596c-074c-6a1152e1c91c">
+      <Execution id="38f49ed8-c073-4cdd-9f35-a93eadb7cd58" />
+      <TestMethod codeBase="C:\vstsagent\A5\_work\r27\a\HolidayCalculator.Tests-CI\SdWorx.HolidayCalculator.Frontend.Tests\Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Tests.Features.RightTabViewFeature" name="RightTabWithApprovedDataIsVisible" />
+    </UnitTest>
+    <UnitTest name="User can navigate to and see Annual Correction Out Of Service Tab" storage="c:\vstsagent\a5\_work\r27\a\holidaycalculator.tests-ci\sdworx.holidaycalculator.frontend.tests\tests.dll" id="9c45f2cc-2856-8a85-8f3a-438a3b96579d">
+      <Execution id="328f97fc-564c-44e6-bdc1-a2453f3fa79c" />
+      <TestMethod codeBase="C:\vstsagent\A5\_work\r27\a\HolidayCalculator.Tests-CI\SdWorx.HolidayCalculator.Frontend.Tests\Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Tests.Features.AnnualCorrectionOutOfServiceTabViewFeature" name="UserCanNavigateToAndSeeAnnualCorrectionOutOfServiceTab" />
+    </UnitTest>
+    <UnitTest name="Unlock holiday right using unapproved result" storage="c:\vstsagent\a5\_work\r27\a\holidaycalculator.tests-ci\sdworx.holidaycalculator.frontend.tests\tests.dll" id="9ce2009f-6cfd-8fcf-a31f-f55afce904cb">
+      <Execution id="771a1bc1-27b3-483e-8c36-d9b1b811c529" />
+      <TestMethod codeBase="C:\vstsagent\A5\_work\r27\a\HolidayCalculator.Tests-CI\SdWorx.HolidayCalculator.Frontend.Tests\Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Tests.Features.HolidayRightsLocksFeature" name="UnlockHolidayRightUsingUnapprovedResult" />
+    </UnitTest>
+    <UnitTest name="User can navigate to and see Right tab" storage="c:\vstsagent\a5\_work\r27\a\holidaycalculator.tests-ci\sdworx.holidaycalculator.frontend.tests\tests.dll" id="c425def9-0161-88d0-e435-22798804e99c">
+      <Execution id="4089ee76-4b94-46d8-bca1-b67f4a123042" />
+      <TestMethod codeBase="C:\vstsagent\A5\_work\r27\a\HolidayCalculator.Tests-CI\SdWorx.HolidayCalculator.Frontend.Tests\Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Tests.Features.RightTabViewFeature" name="UserCanNavigateToAndSeeRightTab" />
+    </UnitTest>
+    <UnitTest name="User can navigate to and see Pay tab" storage="c:\vstsagent\a5\_work\r27\a\holidaycalculator.tests-ci\sdworx.holidaycalculator.frontend.tests\tests.dll" id="bd57096f-cdda-0b25-23b2-e31854e0390f">
+      <Execution id="11666d46-8c38-4c7c-b7fd-247d69e11ecd" />
+      <TestMethod codeBase="C:\vstsagent\A5\_work\r27\a\HolidayCalculator.Tests-CI\SdWorx.HolidayCalculator.Frontend.Tests\Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Tests.Features.PayTabViewFeature" name="UserCanNavigateToAndSeePayTab" />
+    </UnitTest>
+    <UnitTest name="Annual Correction Out Of Service Tab with data is visible" storage="c:\vstsagent\a5\_work\r27\a\holidaycalculator.tests-ci\sdworx.holidaycalculator.frontend.tests\tests.dll" id="94d74d6b-257d-6a0c-c333-a830cb71ef31">
+      <Execution id="67d42617-2dc0-410b-811f-daee9b340940" />
+      <TestMethod codeBase="C:\vstsagent\A5\_work\r27\a\HolidayCalculator.Tests-CI\SdWorx.HolidayCalculator.Frontend.Tests\Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Tests.Features.AnnualCorrectionOutOfServiceTabViewFeature" name="AnnualCorrectionOutOfServiceTabWithDataIsVisible" />
+    </UnitTest>
+    <UnitTest name="Pay tab with approved data is visible" storage="c:\vstsagent\a5\_work\r27\a\holidaycalculator.tests-ci\sdworx.holidaycalculator.frontend.tests\tests.dll" id="03186b2a-c7aa-a5d5-9d1f-08fed39c7fbf">
+      <Execution id="af6c77d8-8315-4863-9d5d-85fe6d564326" />
+      <TestMethod codeBase="C:\vstsagent\A5\_work\r27\a\HolidayCalculator.Tests-CI\SdWorx.HolidayCalculator.Frontend.Tests\Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Tests.Features.PayTabViewFeature" name="PayTabWithApprovedDataIsVisible" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="94d74d6b-257d-6a0c-c333-a830cb71ef31" executionId="67d42617-2dc0-410b-811f-daee9b340940" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="03186b2a-c7aa-a5d5-9d1f-08fed39c7fbf" executionId="af6c77d8-8315-4863-9d5d-85fe6d564326" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c425def9-0161-88d0-e435-22798804e99c" executionId="4089ee76-4b94-46d8-bca1-b67f4a123042" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9c45f2cc-2856-8a85-8f3a-438a3b96579d" executionId="328f97fc-564c-44e6-bdc1-a2453f3fa79c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="264d3c56-069a-596c-074c-6a1152e1c91c" executionId="38f49ed8-c073-4cdd-9f35-a93eadb7cd58" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9ce2009f-6cfd-8fcf-a31f-f55afce904cb" executionId="771a1bc1-27b3-483e-8c36-d9b1b811c529" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bd57096f-cdda-0b25-23b2-e31854e0390f" executionId="11666d46-8c38-4c7c-b7fd-247d69e11ecd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="7" executed="7" passed="7" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.4.3+1b45f5407b (64-bit .NET 6.0.33)&#xD;
+[xUnit.net 00:00:00.66]   Discovering: Tests&#xD;
+[xUnit.net 00:00:00.71]   Discovered:  Tests&#xD;
+[xUnit.net 00:00:00.72]   Starting:    Tests&#xD;
+-&gt; Loading plugin C:\vstsagent\A5\_work\r27\a\HolidayCalculator.Tests-CI\SdWorx.HolidayCalculator.Frontend.Tests\LivingDoc.SpecFlowPlugin.dll&#xD;
+-&gt; Loading plugin C:\vstsagent\A5\_work\r27\a\HolidayCalculator.Tests-CI\SdWorx.HolidayCalculator.Frontend.Tests\TechTalk.SpecFlow.xUnit.SpecFlowPlugin.dll&#xD;
+-&gt; Loading plugin C:\vstsagent\A5\_work\r27\a\HolidayCalculator.Tests-CI\SdWorx.HolidayCalculator.Frontend.Tests\Tests.dll&#xD;
+-&gt; Using default config&#xD;
+Starting ChromeDriver 128.0.6613.119 (6e439cfca4deda5954b0c74cde9b521c03cb31ad-refs/branch-heads/6613@{#1464}) on port 61499&#xD;
+Only local connections are allowed.&#xD;
+Please see https://chromedriver.chromium.org/security-considerations for suggestions on keeping ChromeDriver safe.&#xD;
+ChromeDriver was started successfully on port 61499.&#xD;
+Import completed successfully.&#xD;
+ERROR: &#xD;
+Starting ChromeDriver 128.0.6613.119 (6e439cfca4deda5954b0c74cde9b521c03cb31ad-refs/branch-heads/6613@{#1464}) on port 61525&#xD;
+Only local connections are allowed.&#xD;
+Please see https://chromedriver.chromium.org/security-considerations for suggestions on keeping ChromeDriver safe.&#xD;
+ChromeDriver was started successfully on port 61525.&#xD;
+Starting ChromeDriver 128.0.6613.119 (6e439cfca4deda5954b0c74cde9b521c03cb31ad-refs/branch-heads/6613@{#1464}) on port 61556&#xD;
+Only local connections are allowed.&#xD;
+Please see https://chromedriver.chromium.org/security-considerations for suggestions on keeping ChromeDriver safe.&#xD;
+ChromeDriver was started successfully on port 61556.&#xD;
+Import completed successfully.&#xD;
+ERROR: &#xD;
+Starting ChromeDriver 128.0.6613.119 (6e439cfca4deda5954b0c74cde9b521c03cb31ad-refs/branch-heads/6613@{#1464}) on port 61577&#xD;
+Only local connections are allowed.&#xD;
+Please see https://chromedriver.chromium.org/security-considerations for suggestions on keeping ChromeDriver safe.&#xD;
+ChromeDriver was started successfully on port 61577.&#xD;
+Import completed successfully.&#xD;
+ERROR: &#xD;
+Starting ChromeDriver 128.0.6613.119 (6e439cfca4deda5954b0c74cde9b521c03cb31ad-refs/branch-heads/6613@{#1464}) on port 61597&#xD;
+Only local connections are allowed.&#xD;
+Please see https://chromedriver.chromium.org/security-considerations for suggestions on keeping ChromeDriver safe.&#xD;
+ChromeDriver was started successfully on port 61597.&#xD;
+Starting ChromeDriver 128.0.6613.119 (6e439cfca4deda5954b0c74cde9b521c03cb31ad-refs/branch-heads/6613@{#1464}) on port 61628&#xD;
+Only local connections are allowed.&#xD;
+Please see https://chromedriver.chromium.org/security-considerations for suggestions on keeping ChromeDriver safe.&#xD;
+ChromeDriver was started successfully on port 61628.&#xD;
+Starting ChromeDriver 128.0.6613.119 (6e439cfca4deda5954b0c74cde9b521c03cb31ad-refs/branch-heads/6613@{#1464}) on port 61649&#xD;
+Only local connections are allowed.&#xD;
+Please see https://chromedriver.chromium.org/security-considerations for suggestions on keeping ChromeDriver safe.&#xD;
+ChromeDriver was started successfully on port 61649.&#xD;
+Import completed successfully.&#xD;
+ERROR: &#xD;
+-&gt; LivingDocPlugin: Output generated in: C:\vstsagent\A5\_work\r27\a\HolidayCalculator.Tests-CI\SdWorx.HolidayCalculator.Frontend.Tests\TestExecution.json&#xD;
+[xUnit.net 00:00:36.95]   Finished:    Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>
