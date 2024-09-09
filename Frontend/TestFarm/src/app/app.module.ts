@@ -18,6 +18,8 @@ import { GridsComponent } from './components/grids/grids.component';
 import { GroupsComponent } from './components/groups/groups.component';
 import { RunsComponent } from './components/runs/runs.component';
 import { GridsApiHttpClientService } from './services/grids-api-http-cient-service';
+import { TestsRunResultsComponent } from './components/tests-run-results/tests-run-results.component';
+import { ConsoleOutputToHtmlPipe } from './pipes/console-output-to-html-pipe';
 
 @NgModule({
   declarations: [
@@ -27,7 +29,9 @@ import { GridsApiHttpClientService } from './services/grids-api-http-cient-servi
     BenchmarksComponent,
     GridsComponent,
     GroupsComponent,
-    RunsComponent
+    RunsComponent,
+    TestsRunResultsComponent,
+    ConsoleOutputToHtmlPipe
   ],
   imports: [
     BrowserModule,

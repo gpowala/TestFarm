@@ -108,7 +108,6 @@ app.post('/upload-behave-tests-results', async (req, res) => {
           CreationTimestamp: new Date()
         });
       }
-      console.log('Parsed result:', result.executionOutput);
 
       await TestResult.create({
         TestRunId: testRun.Id,
@@ -119,12 +118,12 @@ app.post('/upload-behave-tests-results', async (req, res) => {
       });
     }
 
-    sendEmail('gpowala@gmail.com', testRunName, 'Test results published');
+    sendEmail('gpowala@gmail.com', testRunName, 'Tests results published');
 
-    res.status(200).json({ message: 'Test results uploaded and processed successfully' });
+    res.status(200).json({ message: 'Tests results uploaded and processed successfully' });
   } catch (error) {
-    console.error('Error processing test results:', error);
-    res.status(500).send('Error processing test results');
+    console.error('Error processing tests results:', error);
+    res.status(500).send('Error processing tests results');
   }
 });
 
@@ -165,20 +164,163 @@ app.post('/upload-behave-tests-results', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-app.post('/upload-specflow-tests-results', (req, res) => {
+app.post('/upload-specflow-tests-results', async (req, res) => {
   try {
-    const { testRunName, resultXml } = req.body;
+    const { testRunName, resultsXml } = req.body;
 
-    if (!xmlString) {
+    if (!resultsXml) {
       return res.status(400).send('No XML string provided.');
     }
 
-    let parsedResults = parseSpecFlowTestsResults(unescapeXmlString(xmlString));
+    let parsedResults = parseSpecFlowTestsResults(unescapeXmlString(resultsXml));
 
-    res.status(200).json({ message: 'Test results uploaded and processed successfully' });
+    const testRun = await TestRun.create({
+      Name: testRunName,
+      CreationTimestamp: new Date()
+    });
+
+    for (const result of parsedResults) {
+      let test = await Test.findOne({ where: { Name: result.name } });
+      if (!test) {
+        test = await Test.create({
+          Name: result.name,
+          CreationTimestamp: new Date()
+        });
+      }
+      console.log('Parsed result:', result.executionOutput);
+
+      await TestResult.create({
+        TestRunId: testRun.Id,
+        TestId: test.Id,
+        Status: result.status,
+        ExecutionTime: new Date(),
+        ExecutionOutput: result.executionOutput
+      });
+    }
+
+    res.status(200).json({ message: 'Tests results uploaded and processed successfully' });
   } catch (error) {
-    console.error('Error processing test results:', error);
-    res.status(500).send('Error processing test results');
+    console.error('Error processing tests results:', error);
+    res.status(500).send('Error processing tests results');
+  }
+});
+
+/**
+ * @swagger
+ * /tests-runs:
+ *   get:
+ *     summary: Fetch all test runs
+ *     tags: [Tests]
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved all test runs
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   Id:
+ *                     type: integer
+ *                   Name:
+ *                     type: string
+ *                   CreationTimestamp:
+ *                     type: string
+ *                     format: date-time
+ *                   EndTime:
+ *                     type: string
+ *                     format: date-time
+ *       500:
+ *         description: Internal server error
+ */
+app.get('/tests-runs', async (req, res) => {
+  try {
+    const testRuns = await TestRun.findAll({
+      attributes: ['Id', 'Name', 'CreationTimestamp'],
+      order: [['CreationTimestamp', 'DESC']]
+    });
+    res.status(200).json(testRuns);
+  } catch (error) {
+    console.error('Error fetching test runs:', error);
+    res.status(500).send('Error fetching test runs');
+  }
+});
+
+/**
+ * @swagger
+ * /tests-run-results/{testsRunId}:
+ *   get:
+ *     summary: Fetch tests results for a specific tests run
+ *     tags: [Tests]
+ *     parameters:
+ *       - in: path
+ *         name: testsRunId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the tests run
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved tests results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   Id:
+ *                     type: integer
+ *                   TestId:
+ *                     type: integer
+ *                   TestName:
+ *                     type: string
+ *                   Status:
+ *                     type: string
+ *                   ExecutionTime:
+ *                     type: string
+ *                     format: date-time
+ *                   ExecutionOutput:
+ *                     type: string
+ *       404:
+ *         description: Tests run not found
+ *       500:
+ *         description: Internal server error
+ */
+app.get('/tests-run-results/:testsRunId', async (req, res) => {
+  try {
+    const testsRunId = parseInt(req.params.testsRunId);
+    
+    const testsRun = await TestRun.findByPk(testsRunId);
+    if (!testsRun) {
+      return res.status(404).json({ message: 'Tests run not found' });
+    }
+
+    const testsResults = await TestResult.findAll({
+      where: { TestRunId: testsRunId },
+      attributes: ['Id', 'TestId', 'Status', 'ExecutionOutput', 'ExecutionTime'],
+      include: [{
+        model: Test,
+        as: 'Test',
+        attributes: ['Name']
+      }],
+      order: [['ExecutionTime', 'ASC']]
+    });
+
+    const formattedResults = testsResults.map(result => ({
+      Id: result.Id,
+      TestId: result.TestId,
+      TestName: result.Test.Name,
+      Status: result.Status,
+      ExecutionTime: result.ExecutionTime,
+      ExecutionOutput: result.ExecutionOutput
+    }));
+
+    res.status(200).json(formattedResults);
+  } catch (error) {
+    console.error('Error fetching test results:', error);
+    res.status(500).send('Error fetching test results');
   }
 });
 

@@ -3,6 +3,23 @@
         Runs
     </div>
     <div class="runs-content">
-        <p>runs works!</p>
+        <table class="runs-table" style="width: 100%; text-align: center;">
+            <thead>
+                <tr>
+                    <th class="run-id" style="width: 1%; white-space: nowrap; padding: 5px;">ID</th>
+                    <th class="run-name" style="padding: 5px;">Name</th>
+                    <th class="run-timestamp" style="width: 1%; white-space: nowrap; padding: 5px;">Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let run of testsRuns" class="run-item" style="transition: background-color 0.3s;" 
+                    (mouseover)="onMouseOver($event)" 
+                    (mouseout)="onMouseOut($event)">
+                    <td class="run-id" style="padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.Id }}</a></td>
+                    <td class="run-name" style="padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.Name }}</a></td>
+                    <td class="run-timestamp" style="width: 1%; white-space: nowrap; padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.CreationTimestamp | date:'medium' }}</a></td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>

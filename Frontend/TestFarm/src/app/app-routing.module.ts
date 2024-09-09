@@ -7,6 +7,7 @@ import { BenchmarksComponent } from './components/benchmarks/benchmarks.componen
 import { GroupsComponent } from './components/groups/groups.component';
 import { GridsComponent } from './components/grids/grids.component';
 import { RunsComponent } from './components/runs/runs.component';
+import { TestsRunResultsComponent } from './components/tests-run-results/tests-run-results.component';
 
 const routes: Routes = [
   {path: 'builds', component: BuildsComponent},
@@ -14,7 +15,8 @@ const routes: Routes = [
   {path: 'benchmarks', component: BenchmarksComponent},
   {path: 'groups', component: GroupsComponent},
   {path: 'grids', component: GridsComponent},
-  {path: 'runs', component: RunsComponent}
+  {path: 'runs', component: RunsComponent},
+  {path: 'tests-run-results/:testsRunId', component: TestsRunResultsComponent}
 ];
 
 @NgModule({
