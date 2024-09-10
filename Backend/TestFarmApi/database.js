@@ -8,8 +8,7 @@ const appSettings = JSON.parse(fs.readFileSync(appSettingsPath, 'utf8'));
 
 sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: appSettings.database.sqliteDatabasePath,
-  logging: console.log
+  storage: appSettings.database.sqliteDatabasePath
 });
 
 sequelize.verbose_sync = async function() {

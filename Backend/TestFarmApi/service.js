@@ -1,8 +1,15 @@
 var Service = require('node-windows').Service;
+
+const fs = require('fs');
+const path = require('path');
+
+const appSettingsPath = path.join(__dirname, 'appsettings.json');
+const appSettings = JSON.parse(fs.readFileSync(appSettingsPath, 'utf8'));
+
 var svc = new Service({
-    name: 'TestFarmAPI',
-    description: 'TestFarm backend API.',
-    script: ''
+    name: appSettings.service.name,
+    description: appSettings.service.description,
+    script: appSettings.service.serverScriptPath
 });
 
 svc.on('install', function() {
