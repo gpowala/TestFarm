@@ -15,7 +15,7 @@ function parseBehaveTestsResults(xmlString) {
 
   const testcases = Array.from(xmlDoc.getElementsByTagName("testcase")).map(testcase => ({
     name: testcase.getAttribute("name"),
-    status: testcase.getAttribute("status"),
+    status: testcase.getAttribute("status").toLowerCase(),
     executionOutput: testcase.getElementsByTagName("system-out")[0]?.textContent || "",
     executionTime: parseFloat(testcase.getAttribute("time"))
   }));
@@ -29,7 +29,7 @@ function parseSpecFlowTestsResults(xmlString) {
 
   const unitTestResults = Array.from(xmlDoc.getElementsByTagName("UnitTestResult")).map(result => ({
     name: result.getAttribute("testName"),
-    status: result.getAttribute("outcome"),
+    status: result.getAttribute("outcome").toLowerCase(),
     executionOutput: result.getElementsByTagName("Output")[0]?.getElementsByTagName("StdOut")[0]?.textContent || "",    
     executionTime: result.getAttribute("duration")
   }));
