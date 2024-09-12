@@ -19,7 +19,8 @@ export class TestsRunResultsComponent implements OnInit {
     this.fetchTestsRunResultsData();
     this.testsRunResults = this.testsRunResults.map(result => ({
       ...result,
-      ShowDetails: false
+      ShowDetails: false,
+      ShowHistory: false
     }));
   }
 

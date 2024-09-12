@@ -6,5 +6,6 @@ export interface TestsRunResultDescription {
     ExecutionTime: string,
     ExecutionOutput: string,
 
-    ShowDetails?: boolean
+    ShowDetails?: boolean,
+    ShowHistory?: boolean
 }

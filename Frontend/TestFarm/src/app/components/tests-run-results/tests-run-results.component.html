@@ -9,6 +9,7 @@
                     <th class="test-name" style="padding: 5px; text-align: left;">Name</th>
                     <th class="result-status" style="padding: 5px; text-align: center;">Status</th>
                     <th class="result-details" style="padding: 5px; text-align: center;">Details</th>
+                    <th class="test-history" style="padding: 5px; text-align: center;">History</th>
                 </tr>
             </thead>
             <tbody>
@@ -23,10 +24,20 @@
                                 {{ result.ShowDetails ? 'hide' : 'show' }}
                             </button>
                         </td>
+                        <td class="test-history" style="padding: 5px; text-align: center;">
+                            <button mat-button color="primary" (click)="result.ShowHistory = !result.ShowHistory">
+                                {{ result.ShowHistory ? 'hide' : 'show' }}
+                            </button>
+                        </td>
                     </tr>
                     <tr *ngIf="result.ShowDetails" class="expanded-details">
-                        <td colspan="3" class="execution-output" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
+                        <td colspan="4" class="execution-output" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
                             <div [innerHTML]="result.ExecutionOutput | consoleOutputToHtml"></div>
+                        </td>
+                    </tr>
+                    <tr *ngIf="result.ShowHistory" class="expanded-history">
+                        <td colspan="4" class="test-history" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
+                            <app-test-history [testId]="result.TestId"></app-test-history>
                         </td>
                     </tr>
                 </ng-container>

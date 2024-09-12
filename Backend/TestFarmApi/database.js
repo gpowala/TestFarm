@@ -7,8 +7,12 @@ const appSettingsPath = path.join(__dirname, 'appsettings.json');
 const appSettings = JSON.parse(fs.readFileSync(appSettingsPath, 'utf8'));
 
 sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: appSettings.database.sqliteDatabasePath
+  dialect: 'postgres',
+  host: 'localhost',
+  port: 5432,
+  username: 'postgres',
+  password: 'postgres',
+  database: 'TestFarmGrids'
 });
 
 sequelize.verbose_sync = async function() {

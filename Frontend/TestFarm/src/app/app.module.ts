@@ -19,6 +19,7 @@ import { GroupsComponent } from './components/groups/groups.component';
 import { RunsComponent } from './components/runs/runs.component';
 import { GridsApiHttpClientService } from './services/grids-api-http-cient-service';
 import { TestsRunResultsComponent } from './components/tests-run-results/tests-run-results.component';
+import { TestHistoryComponent } from './components/test-history/test-history.component';
 import { ConsoleOutputToHtmlPipe } from './pipes/console-output-to-html-pipe';
 
 @NgModule({
@@ -31,6 +32,7 @@ import { ConsoleOutputToHtmlPipe } from './pipes/console-output-to-html-pipe';
     GroupsComponent,
     RunsComponent,
     TestsRunResultsComponent,
+    TestHistoryComponent,
     ConsoleOutputToHtmlPipe
   ],
   imports: [

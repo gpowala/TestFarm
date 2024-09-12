@@ -1,0 +1,35 @@
+<div class="runs-container">
+    <div class="runs-content">
+        <table class="runs-table" style="width: 100%;">
+            <thead>
+                <tr>
+                    <th class="run-name" style="padding: 5px; text-align: left;">Run Name</th>
+                    <th class="result-status" style="padding: 5px; text-align: center;">Status</th>
+                    <th class="result-execution-time" style="padding: 5px; text-align: center;">Execution Time</th>
+                    <th class="result-details" style="padding: 5px; text-align: center;">Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                <ng-container *ngFor="let entry of testHistory">
+                    <tr class="run-item" [ngClass]="{'expanded': entry.ShowDetails}" style="transition: background-color 0.3s;" 
+                        (mouseover)="onMouseOver($event)" 
+                        (mouseout)="onMouseOut($event, entry.ShowDetails ?? false)">
+                        <td class="run-name" style="padding: 5px; text-align: left;">{{ entry.TestRunName }}</td>
+                        <td class="result-status" style="padding: 5px; text-align: center;" [ngStyle]="{'background-color': entry.Status === 'passed' ? '#90EE90' : '#FFB6C1'}">{{ entry.Status }}</td>
+                        <td class="result-execution-time" style="white-space: nowrap; padding: 5px; text-align: center;">{{ entry.ExecutionTime | date:'medium' }}</td>
+                        <td class="result-details" style="padding: 5px; text-align: center;">
+                            <button mat-button color="primary" (click)="entry.ShowDetails = !entry.ShowDetails">
+                                {{ entry.ShowDetails ? 'hide' : 'show' }}
+                            </button>
+                        </td>
+                    </tr>
+                    <tr *ngIf="entry.ShowDetails" class="expanded-details">
+                        <td colspan="4" class="execution-output" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
+                            <div [innerHTML]="entry.ExecutionOutput | consoleOutputToHtml"></div>
+                        </td>
+                    </tr>
+                </ng-container>
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -2,8 +2,10 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, retry } from 'rxjs/operators';
-import { TestsRunDescription } from '../models/tests-run-description';
-import { TestsRunResultDescription } from '../models/tests-run-result-description';
+import { TestsRunDescription } from 'src/app/models/tests-run-description';
+import { TestsRunResultDescription } from 'src/app/models/tests-run-result-description';
+import { environment } from 'src/environments/environment ';
+import { TestHistoryResult } from 'src/app/models/test-history-result.description';
 
 @Injectable({
     providedIn: 'root'
@@ -12,10 +14,14 @@ export class TestsApiHttpClientService {
     constructor(private http: HttpClient) { }
 
     getAllTestsRunsData() {
-        return this.http.get<TestsRunDescription[]>('http://localhost:3000/tests-runs');
+        return this.http.get<TestsRunDescription[]>(`${environment.baseApiUrl}/tests-runs`);
     }
 
     getAllTestsRunResultsData(testsRunId: string) {
-        return this.http.get<TestsRunResultDescription[]>('http://localhost:3000/tests-run-results/' + testsRunId);
+        return this.http.get<TestsRunResultDescription[]>(`${environment.baseApiUrl}/tests-run-results/${testsRunId}`);
+    }
+
+    getTestHistory(testId: string) {
+        return this.http.get<TestHistoryResult[]>(`${environment.baseApiUrl}/test-history/${testId}`);
     }
 }

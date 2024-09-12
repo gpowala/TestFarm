@@ -10,6 +10,9 @@ const port = 3000;
 app.use(express.json());
 app.use(cors());
 
+const appSettingsPath = path.join(__dirname, 'appsettings.json');
+const appSettings = JSON.parse(fs.readFileSync(appSettingsPath, 'utf8'));
+
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
@@ -46,7 +49,6 @@ async function notifyTeams(subject, text) {
   const message = `${subject}\n\n${text}`;
   return await sendTeamsMessage(webhookUrl, message);
 }
-
 
 /**
  * @swagger
@@ -118,7 +120,20 @@ app.post('/upload-behave-tests-results', async (req, res) => {
       });
     }
 
-    sendEmail('gpowala@gmail.com', testRunName, 'Tests results published');
+    if (appSettings.teams.enabled) {
+      const failedResultsCount = parsedResults.filter(result => result.status.toLowerCase() !== 'passed').length;
+
+      let teamsHtml = `<h2>Test Run: ${testRunName}</h2>`;
+      teamsHtml += `<p>Total tests: ${parsedResults.length}</p>`;
+      
+      if (failedResultsCount > 0) {
+        teamsHtml += `<p style="color: red;">Failed tests: ${failedResultsCount}/${parsedResults.length}</p>`;
+      } else {
+        teamsHtml += `<p style="color: green;">All tests passed!</p>`;
+      }
+
+      await notifyTeams(`Tests Run Results: ${testRunName}`, teamsHtml);
+    }
 
     res.status(200).json({ message: 'Tests results uploaded and processed successfully' });
   } catch (error) {
@@ -196,6 +211,21 @@ app.post('/upload-specflow-tests-results', async (req, res) => {
         ExecutionTime: new Date(),
         ExecutionOutput: result.executionOutput
       });
+    }
+
+    if (appSettings.teams.enabled) {
+      const failedResultsCount = parsedResults.filter(result => result.status.toLowerCase() !== 'passed').length;
+
+      let teamsHtml = `<h2>Test Run: ${testRunName}</h2>`;
+      teamsHtml += `<p>Total tests: ${parsedResults.length}</p>`;
+      
+      if (failedResultsCount > 0) {
+        teamsHtml += `<p style="color: red;">Failed tests: ${failedResultsCount}/${parsedResults.length}</p>`;
+      } else {
+        teamsHtml += `<p style="color: green;">All tests passed!</p>`;
+      }
+
+      await notifyTeams(`Tests Run Results: ${testRunName}`, teamsHtml);
     }
 
     res.status(200).json({ message: 'Tests results uploaded and processed successfully' });
@@ -321,6 +351,83 @@ app.get('/tests-run-results/:testsRunId', async (req, res) => {
   } catch (error) {
     console.error('Error fetching test results:', error);
     res.status(500).send('Error fetching test results');
+  }
+});
+
+/**
+ * @swagger
+ * /test-history/{testId}:
+ *   get:
+ *     summary: Get test history for a specific test sorted by execution time
+ *     tags: [Tests]
+ *     parameters:
+ *       - in: path
+ *         name: testId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the test
+ *     responses:
+ *       200:
+ *         description: Test history retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   Id:
+ *                     type: integer
+ *                   TestRunId:
+ *                     type: integer
+ *                   TestRunName:
+ *                     type: string
+ *                   Status:
+ *                     type: string
+ *                   ExecutionTime:
+ *                     type: string
+ *                     format: date-time
+ *                   ExecutionOutput:
+ *                     type: string
+ *       404:
+ *         description: Test not found
+ *       500:
+ *         description: Internal server error
+ */
+app.get('/test-history/:testId', async (req, res) => {
+  try {
+    const testId = parseInt(req.params.testId);
+    
+    const test = await Test.findByPk(testId);
+    if (!test) {
+      return res.status(404).json({ message: 'Test not found' });
+    }
+
+    const testHistory = await TestResult.findAll({
+      where: { TestId: testId },
+      attributes: ['Id', 'TestRunId', 'Status', 'ExecutionOutput', 'ExecutionTime'],
+      include: [{
+        model: TestRun,
+        as: 'TestRun',
+        attributes: ['Name']
+      }],
+      order: [['ExecutionTime', 'DESC']]
+    });
+
+    const formattedHistory = testHistory.map(result => ({
+      Id: result.Id,
+      TestRunId: result.TestRunId,
+      TestRunName: result.TestRun.Name,
+      Status: result.Status,
+      ExecutionTime: result.ExecutionTime,
+      ExecutionOutput: result.ExecutionOutput
+    }));
+
+    res.status(200).json(formattedHistory);
+  } catch (error) {
+    console.error('Error fetching test history:', error);
+    res.status(500).send('Error fetching test history');
   }
 });
 
