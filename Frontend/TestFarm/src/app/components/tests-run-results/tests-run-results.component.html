@@ -14,9 +14,9 @@
             </thead>
             <tbody>
                 <ng-container *ngFor="let result of testsRunResults">
-                    <tr class="run-item" [ngClass]="{'expanded': result.ShowDetails}" style="transition: background-color 0.3s;" 
+                    <tr class="run-item" [ngClass]="{'expanded': result.ShowDetails || result.ShowHistory}" style="transition: background-color 0.3s;" 
                         (mouseover)="onMouseOver($event)" 
-                        (mouseout)="onMouseOut($event, result.ShowDetails ?? false)">
+                        (mouseout)="onMouseOut($event, (result.ShowDetails || result.ShowHistory) ?? false)">
                         <td class="test-name" style="padding: 5px; text-align: left;">{{ result.TestName }}</td>
                         <td class="result-status" style="padding: 5px; text-align: center;" [ngStyle]="{'background-color': result.Status === 'passed' ? '#90EE90' : '#FFB6C1'}">{{ result.Status }}</td>
                         <td class="result-details" style="padding: 5px; text-align: center;">

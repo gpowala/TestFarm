@@ -1,3 +1,9 @@
+const fs = require('fs');
+const path = require('path');
+
+const appSettingsPath = path.join(__dirname, 'appsettings.json');
+const appSettings = JSON.parse(fs.readFileSync(appSettingsPath, 'utf8'));
+
 const express = require('express');
 const { sequelize, Grid, Host, TestRun, Test, TestResult } = require('./database');
 const gridsRouter = require('./grids-router');
@@ -9,9 +15,6 @@ const port = 3000;
 
 app.use(express.json());
 app.use(cors());
-
-const appSettingsPath = path.join(__dirname, 'appsettings.json');
-const appSettings = JSON.parse(fs.readFileSync(appSettingsPath, 'utf8'));
 
 const swaggerOptions = {
   definition: {
