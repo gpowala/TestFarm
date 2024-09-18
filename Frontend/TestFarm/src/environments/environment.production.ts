@@ -1,4 +1,4 @@
 export const environment = {
     production: true,
-    apiUrl: 'https://api.yourproductionsite.com'
+    apiUrl: 'https://a-ext-web051.accsd.be/testfarmapi'
 };
