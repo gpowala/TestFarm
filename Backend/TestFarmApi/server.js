@@ -434,6 +434,73 @@ app.get('/test-history/:testId', async (req, res) => {
   }
 });
 
+const azureDevOps = require('azure-devops-node-api');
+
+/**
+ * @swagger
+ * /story-info/{storyId}:
+ *   get:
+ *     summary: Get information about a story from Azure DevOps
+ *     tags: [Stories]
+ *     parameters:
+ *       - in: path
+ *         name: storyId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the story
+ *     responses:
+ *       200:
+ *         description: Story information retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 title:
+ *                   type: string
+ *                 state:
+ *                   type: string
+ *                 description:
+ *                   type: string
+ *       404:
+ *         description: Story not found
+ *       500:
+ *         description: Internal server error
+ */
+app.get('/story-info/:storyId', async (req, res) => {
+  try {
+    const storyId = parseInt(req.params.storyId);
+    
+    const orgUrl = appSettings.azureDevOps.orgUrl;
+    const token = appSettings.azureDevOps.personalAccessToken;
+    const authHandler = azureDevOps.getPersonalAccessTokenHandler(token);
+    const connection = new azureDevOps.WebApi(orgUrl, authHandler);
+    
+    const witApi = await connection.getWorkItemTrackingApi();
+    
+    const workItem = await witApi.getWorkItem(storyId, undefined, undefined, undefined, appSettings.azureDevOps.project);
+    
+    if (!workItem) {
+      return res.status(404).json({ message: 'Story not found' });
+    }
+    
+    const storyInfo = {
+      id: workItem.id,
+      title: workItem.fields['System.Title'],
+      state: workItem.fields['System.State'],
+      description: workItem.fields['System.Description']
+    };
+    
+    res.status(200).json(storyInfo);
+  } catch (error) {
+    console.error('Error fetching story information:', error);
+    res.status(500).send('Error fetching story information');
+  }
+});
+
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/', gridsRouter);
