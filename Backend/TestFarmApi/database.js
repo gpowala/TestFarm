@@ -1,10 +1,5 @@
 const { Sequelize, DataTypes } = require('sequelize');
-
-const fs = require('fs');
-const path = require('path');
-
-const appSettingsPath = path.join(__dirname, 'appsettings.json');
-const appSettings = JSON.parse(fs.readFileSync(appSettingsPath, 'utf8'));
+const { appSettings } = require('./appsettings');
 
 sequelize = new Sequelize({
   dialect: 'sqlite',

@@ -7,7 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTableModule } from '@angular/material/table';
-
+import { FormsModule } from '@angular/forms';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -45,7 +45,8 @@ import { ConsoleOutputToHtmlPipe } from './pipes/console-output-to-html-pipe';
     MatButtonModule,
     MatDividerModule,
     MatTooltipModule,
-    MatTableModule
+    MatTableModule,
+    FormsModule
   ],
   providers: [GridsApiHttpClientService],
   bootstrap: [AppComponent]

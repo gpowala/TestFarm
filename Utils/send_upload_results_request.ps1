@@ -15,7 +15,7 @@ $xmlContent = Get-Content -Path $xmlFilePath -Raw
 $escapedXmlContent = [System.Security.SecurityElement]::Escape($xmlContent)
 
 $jsonObject = @{
-    "testRunName" = "Behave Test Run No 1"
+    "testRunName" = "Behave Test Run"
     "resultsXml" = $escapedXmlContent
 }
 $jsonString = $jsonObject | ConvertTo-Json

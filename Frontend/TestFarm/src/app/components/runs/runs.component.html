@@ -2,13 +2,47 @@
     <div class="runs-header">
         Runs
     </div>
+    <div class="search-container" style="display: flex; align-items: center; justify-content: space-between; margin: 10px 0 10px 0;">
+        <div class="search-field" style="width: 50%;">
+            <label style="display: block; font-size: 11px; color: #666; margin-bottom: 2px; padding-left: 4px;">tests run name</label>
+            <input type="text" 
+                   [(ngModel)]="searchName"
+                   (ngModelChange)="fetchTestsRunsData()"
+                   style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 2px; font-size: 14px; width: calc(100% - 4px); box-sizing: border-box;">
+        </div>
+        <div class="search-field" style="width: 25%;">
+            <label style="display: block; font-size: 11px; color: #666; margin-bottom: 4px; padding-left: 4px;">timespan</label>
+            <select 
+                [(ngModel)]="selectedTimespan"
+                (change)="fetchTestsRunsData()"
+                style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: calc(100% - 4px); box-sizing: border-box;">
+                <option *ngFor="let timespan of timespanPresets | keyvalue" 
+                        [value]="timespan.key">
+                    {{timespan.value}}
+                </option>
+            </select>
+        </div>
+        <div class="search-field" style="width: 25%;">
+            <label style="display: block; font-size: 11px; color: #666; margin-bottom: 4px; padding-left: 4px;">status</label>
+            <select 
+                [(ngModel)]="selectedResult"
+                (change)="fetchTestsRunsData()"
+                style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: calc(100% - 4px); box-sizing: border-box;">
+                <option *ngFor="let result of resultPresets | keyvalue" 
+                        [value]="result.key">
+                    {{result.value}}
+                </option>
+            </select>
+        </div>
+    </div>
     <div class="runs-content">
         <table class="runs-table" style="width: 100%; text-align: center;">
             <thead>
                 <tr>
                     <th class="run-id" style="width: 1%; white-space: nowrap; padding: 5px;">ID</th>
                     <th class="run-name" style="padding: 5px;">Name</th>
-                    <th class="run-timestamp" style="width: 1%; white-space: nowrap; padding: 5px;">Created</th>
+                    <th class="run-timestamp" style="white-space: nowrap; padding: 5px;">Created</th>
+                    <th class="run-result" style="width: 1%; white-space: nowrap; padding: 5px;">Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -17,7 +51,20 @@
                     (mouseout)="onMouseOut($event)">
                     <td class="run-id" style="padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.Id }}</a></td>
                     <td class="run-name" style="padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.Name }}</a></td>
-                    <td class="run-timestamp" style="width: 1%; white-space: nowrap; padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.CreationTimestamp | date:'medium' }}</a></td>
+                    <td class="run-timestamp" style="white-space: nowrap; padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.CreationTimestamp | date:'medium' }}</a></td>
+                    <td class="run-result" style="width: 1%; white-space: nowrap; padding: 5px; text-align: center;" [ngStyle]="{'background-color': run.OverallResult === 'passed' ? '#90EE90' : '#FFB6C1'}"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.OverallResult }}</a></td>
+                </tr>
+                <tr class="run-item">
+                    <td colspan="3" style="text-align: center; padding: 20px;">
+                        <ng-container *ngIf="testsRuns.length === 0; else showMore">
+                            No test runs available
+                        </ng-container>
+                        <ng-template #showMore>
+                            <button mat-raised-button color="primary" (click)="increaseLimit()">
+                                <small>show more</small>
+                            </button>
+                        </ng-template>
+                    </td>
                 </tr>
             </tbody>
         </table>

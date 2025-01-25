@@ -1,10 +1,7 @@
-const fs = require('fs');
-const path = require('path');
-
-const appSettingsPath = path.join(__dirname, 'appsettings.json');
-const appSettings = JSON.parse(fs.readFileSync(appSettingsPath, 'utf8'));
+const { appSettings } = require('./appsettings');
 
 const express = require('express');
+const { Sequelize } = require('sequelize');
 const { sequelize, Grid, Host, TestRun, Test, TestResult } = require('./database');
 const gridsRouter = require('./grids-router');
 const swaggerJsdoc = require('swagger-jsdoc');
@@ -43,17 +40,28 @@ async function sendTeamsMessage(webhookUrl, message) {
   try {
     const response = await axios.post(webhookUrl, payload);
     console.log('Teams message sent:', response.status);
-    return true;
   } catch (error) {
     console.error('Error sending Teams message:', error);
-    return false;
   }
 }
 
-async function notifyTeams(subject, text) {
-  const webhookUrl = process.env.TEAMS_WEBHOOK_URL;
-  const message = `${subject}\n\n${text}`;
-  return await sendTeamsMessage(webhookUrl, message);
+async function notifyTeamsOnNewTestsRunPublished(testRunId, testRunName, testRunResults) {
+  if (appSettings.teams.enabled) {
+    const failedResultsCount = testRunResults.filter(result => result.status.toLowerCase() !== 'passed').length;
+
+    let message = `<h2>Test Run Results: ${testRunName} [${testRunId}]</h2>`;
+    message += `<p>Total tests: ${testRunResults.length}</p>`;
+    
+    if (failedResultsCount > 0) {
+      message += `<p style="color: red;">Failed tests: ${failedResultsCount}/${testRunResults.length}</p>`;
+      message += `<p><a href="${appSettings.teams.resultsUrl}/${testRun.Id}">View results</a></p>`;
+    } else {
+      message += `<p style="color: green;">All tests passed!</p>`;
+      message += `<p><a href="${appSettings.teams.resultsUrl}">View results</a></p>`;
+    }
+
+    return await sendTeamsMessage(appSettings.teams.webhookUrl, message);
+  }
 }
 
 /**
@@ -126,21 +134,7 @@ app.post('/upload-behave-tests-results', async (req, res) => {
       });
     }
 
-    if (appSettings.teams.enabled) {
-      const failedResultsCount = parsedResults.filter(result => result.status.toLowerCase() !== 'passed').length;
-
-      let teamsHtml = `<h2>Test Run: ${testRunName}</h2>`;
-      teamsHtml += `<p>Total tests: ${parsedResults.length}</p>`;
-      
-      if (failedResultsCount > 0) {
-        teamsHtml += `<p style="color: red;">Failed tests: ${failedResultsCount}/${parsedResults.length}</p>`;
-      } else {
-        teamsHtml += `<p style="color: green;">All tests passed!</p>`;
-      }
-
-      await notifyTeams(`Tests Run Results: ${testRunName}`, teamsHtml);
-    }
-
+    await notifyTeamsOnNewTestsRunPublished(testRun.Id, testRunName, parsedResults);
     res.status(200).json({ message: 'Tests results uploaded and processed successfully' });
   } catch (error) {
     console.error('Error processing tests results:', error);
@@ -219,21 +213,7 @@ app.post('/upload-specflow-tests-results', async (req, res) => {
       });
     }
 
-    if (appSettings.teams.enabled) {
-      const failedResultsCount = parsedResults.filter(result => result.status.toLowerCase() !== 'passed').length;
-
-      let teamsHtml = `<h2>Test Run: ${testRunName}</h2>`;
-      teamsHtml += `<p>Total tests: ${parsedResults.length}</p>`;
-      
-      if (failedResultsCount > 0) {
-        teamsHtml += `<p style="color: red;">Failed tests: ${failedResultsCount}/${parsedResults.length}</p>`;
-      } else {
-        teamsHtml += `<p style="color: green;">All tests passed!</p>`;
-      }
-
-      await notifyTeams(`Tests Run Results: ${testRunName}`, teamsHtml);
-    }
-
+    await notifyTeamsOnNewTestsRunPublished(testRun.Id, testRunName, parsedResults);
     res.status(200).json({ message: 'Tests results uploaded and processed successfully' });
   } catch (error) {
     console.error('Error processing tests results:', error);
@@ -243,13 +223,20 @@ app.post('/upload-specflow-tests-results', async (req, res) => {
 
 /**
  * @swagger
- * /tests-runs:
+ * /tests-runs/{limit}:
  *   get:
- *     summary: Fetch all test runs
+ *     summary: Fetch test runs with optional limit
  *     tags: [Tests]
+ *     parameters:
+ *       - in: path
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Number of test runs to return
  *     responses:
  *       200:
- *         description: Successfully retrieved all test runs
+ *         description: Successfully retrieved test runs
  *         content:
  *           application/json:
  *             schema:
@@ -272,9 +259,70 @@ app.post('/upload-specflow-tests-results', async (req, res) => {
  */
 app.get('/tests-runs', async (req, res) => {
   try {
+    const { name, timespan, result: rawResult, limit } = req.query;
+    const result = rawResult === 'all' ? null : rawResult;
+    
+    let whereClause = {};
+    
+    if (name) {
+      whereClause.Name = {
+        [Sequelize.Op.like]: `%${name}%`
+      };
+    }
+    
+    if (timespan && timespan !== '-1') {
+      const timeSpanHours = parseInt(timespan);
+      whereClause.CreationTimestamp = {
+        [Sequelize.Op.gte]: new Date(Date.now() - timeSpanHours * 60 * 60 * 1000)
+      };
+    }
+
     const testRuns = await TestRun.findAll({
-      attributes: ['Id', 'Name', 'CreationTimestamp'],
-      order: [['CreationTimestamp', 'DESC']]
+      attributes: [
+        'Id', 
+        'Name', 
+        'CreationTimestamp',
+        [
+          sequelize.literal(`(
+            SELECT CASE 
+              WHEN EXISTS (
+                SELECT 1 FROM TestsResults 
+                WHERE TestsResults.TestRunId = TestsRuns.Id 
+                AND TestsResults.Status = 'Failed'
+              ) THEN 'failed'
+              WHEN NOT EXISTS (
+                SELECT 1 FROM TestsResults 
+                WHERE TestsResults.TestRunId = TestsRuns.Id
+              ) THEN 'Unknown' 
+              ELSE 'passed'
+            END
+          )`),
+          'OverallResult'
+        ]
+      ],
+      where: {
+        ...whereClause,
+        ...(result && {
+          [Sequelize.Op.and]: [
+            sequelize.literal(`(
+              SELECT CASE 
+                WHEN EXISTS (
+                  SELECT 1 FROM TestsResults 
+                  WHERE TestsResults.TestRunId = TestsRuns.Id 
+                  AND TestsResults.Status = 'Failed'
+                ) THEN 'failed'
+                WHEN NOT EXISTS (
+                  SELECT 1 FROM TestsResults 
+                  WHERE TestsResults.TestRunId = TestsRuns.Id
+                ) THEN 'Unknown' 
+                ELSE 'passed'
+              END
+            ) = '${result}'`)
+          ]
+        })
+      },
+      order: [['CreationTimestamp', 'DESC']],
+      limit: parseInt(limit)
     });
     res.status(200).json(testRuns);
   } catch (error) {
@@ -441,7 +489,7 @@ const azureDevOps = require('azure-devops-node-api');
 
 /**
  * @swagger
- * /story-info/{storyId}:
+ * /integration/azure-devops/story-info/{storyId}:
  *   get:
  *     summary: Get information about a story from Azure DevOps
  *     tags: [Stories]
@@ -473,7 +521,7 @@ const azureDevOps = require('azure-devops-node-api');
  *       500:
  *         description: Internal server error
  */
-app.get('/story-info/:storyId', async (req, res) => {
+app.get('/integration/azure-devops/story-info/:storyId', async (req, res) => {
   try {
     const storyId = parseInt(req.params.storyId);
     
@@ -501,6 +549,147 @@ app.get('/story-info/:storyId', async (req, res) => {
   } catch (error) {
     console.error('Error fetching story information:', error);
     res.status(500).send('Error fetching story information');
+  }
+});
+
+/**
+ * @swagger
+ * /integration/azure-devops/trigger-release/{buildId}:
+ *   get:
+ *     summary: Trigger a release pipeline in Azure DevOps
+ *     tags: [Azure DevOps]
+ *     parameters:
+ *       - in: path
+ *         name: buildId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The artifact build ID to use for the release
+ *     responses:
+ *       200:
+ *         description: Release pipeline triggered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 releaseId:
+ *                   type: integer
+ *       400:
+ *         description: Invalid request
+ *       500:
+ *         description: Internal server error
+ */
+app.get('/integration/azure-devops/trigger-release/:buildId', async (req, res) => {
+  try {
+    const buildId = parseInt(req.params.buildId);
+
+    if (isNaN(buildId)) {
+      return res.status(400).json({ message: 'Invalid Build ID' });
+    }
+
+    const orgUrl = appSettings.azureDevOps.orgUrl;
+    const token = appSettings.azureDevOps.personalAccessToken;
+    const project = appSettings.azureDevOps.project;
+    const releaseDefinitionId = appSettings.azureDevOps.releaseDefinitionId;
+
+    const authHandler = azureDevOps.getPersonalAccessTokenHandler(token);
+    const connection = new azureDevOps.WebApi(orgUrl, authHandler);
+
+    const releaseApi = await connection.getReleaseApi();
+
+    const releaseStartMetadata = {
+      definitionId: releaseDefinitionId,
+      artifacts: [
+        {
+          alias: '_Build',
+          instanceReference: {
+            id: buildId.toString(),
+            name: null
+          }
+        }
+      ],
+      isDraft: false,
+      reason: 'none',
+      description: 'Triggered from API'
+    };
+
+    const createdRelease = await releaseApi.createRelease(releaseStartMetadata, project);
+
+    res.status(200).json({
+      message: 'Release pipeline triggered successfully',
+      releaseId: createdRelease.id
+    });
+  } catch (error) {
+    console.error('Error triggering release pipeline:', error);
+    res.status(500).json({ message: 'Error triggering release pipeline' });
+  }
+});
+
+/**
+ * @swagger
+ * /integration/azure-devops/register-build/{project}/{buildId}/{releaseDefinitionId}:
+ *   get:
+ *     summary: Register a new build for Azure DevOps
+ *     tags: [Integration]
+ *     parameters:
+ *       - in: path
+ *         name: project
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The Azure DevOps project name
+ *       - in: path
+ *         name: buildId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the build to register
+ *       - in: path
+ *         name: releaseDefinitionId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the release definition
+ *     responses:
+ *       200:
+ *         description: Build registered successfully
+ *       400:
+ *         description: Invalid request parameters
+ *       500:
+ *         description: Internal server error
+ */
+app.get('/integration/azure-devops/register-build/:project/:buildId/:releaseDefinitionId', async (req, res) => {
+  try {
+    const { project, buildId, releaseDefinitionId } = req.params;
+
+    // Validate input parameters
+    if (!project || !buildId || !releaseDefinitionId) {
+      return res.status(400).json({ message: 'Missing required parameters' });
+    }
+
+    const parsedBuildId = parseInt(buildId);
+    const parsedReleaseDefinitionId = parseInt(releaseDefinitionId);
+
+    if (isNaN(parsedBuildId) || isNaN(parsedReleaseDefinitionId)) {
+      return res.status(400).json({ message: 'Invalid buildId or releaseDefinitionId' });
+    }
+
+    // Here you would typically store this information in your database
+    // For this example, we'll just log it and return a success message
+    console.log(`Registered new build - Project: ${project}, Build ID: ${parsedBuildId}, Release Definition ID: ${parsedReleaseDefinitionId}`);
+
+    res.status(200).json({
+      message: 'Build registered successfully',
+      project,
+      buildId: parsedBuildId,
+      releaseDefinitionId: parsedReleaseDefinitionId
+    });
+  } catch (error) {
+    console.error('Error registering build:', error);
+    res.status(500).json({ message: 'Error registering build' });
   }
 });
 

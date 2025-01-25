@@ -13,10 +13,17 @@ import { TestHistoryResult } from 'src/app/models/test-history-result.descriptio
 export class TestsApiHttpClientService {
     constructor(private http: HttpClient) { }
 
-    getAllTestsRunsData() {
-        return this.http.get<TestsRunDescription[]>(`${environment.baseApiUrl}/tests-runs`);
+    getAllTestsRunsData(name: string, timespan: number, result: string, limit: number) {
+        return this.http.get<TestsRunDescription[]>(`${environment.baseApiUrl}/tests-runs`, {
+            params: {
+                name: name,
+                timespan: timespan.toString(),
+                result: result,
+                limit: limit.toString()
+            }
+        });
     }
-
+    
     getAllTestsRunResultsData(testsRunId: string) {
         return this.http.get<TestsRunResultDescription[]>(`${environment.baseApiUrl}/tests-run-results/${testsRunId}`);
     }
