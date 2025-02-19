@@ -58,11 +58,6 @@ const Host = sequelize.define('Host', {
       key: 'Id'
     }
   },
-  Name: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
-  },
   Type: {
     type: DataTypes.STRING,
     allowNull: false
@@ -73,7 +68,8 @@ const Host = sequelize.define('Host', {
   },
   Hostname: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    unique: true
   },
   Cores: {
     type: DataTypes.SMALLINT,

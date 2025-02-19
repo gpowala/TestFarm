@@ -16,14 +16,11 @@ const router = express.Router();
  *             type: object
  *             required:
  *               - GridName
- *               - Name
  *               - Type
  *               - Hostname
  *               - Cores
  *             properties:
  *               GridName:
- *                 type: string
- *               Name:
  *                 type: string
  *               Type:
  *                 type: string
@@ -45,7 +42,7 @@ const router = express.Router();
  */
 router.post('/register-host', async (req, res) => {
     try {
-      const { GridName, Name, Type, Hostname, Cores, RAM } = req.body;
+      const { GridName, Type, Hostname, Cores, RAM } = req.body;
   
       let grid = await Grid.findOne({ where: { Name: GridName } });
       if (!grid) {
@@ -58,7 +55,6 @@ router.post('/register-host', async (req, res) => {
   
       const newHost = await Host.create({
         GridId: grid.Id,
-        Name: Name,
         Type: Type,
         Status: "Waiting for tests...",
         Hostname: Hostname,
@@ -217,7 +213,6 @@ router.post('/register-host', async (req, res) => {
    *       required:
    *         - Id
    *         - GridId
-   *         - Name
    *         - Type
    *         - Status
    *         - Hostname
@@ -229,8 +224,6 @@ router.post('/register-host', async (req, res) => {
    *           type: integer
    *         GridId:
    *           type: integer
-   *         Name:
-   *           type: string
    *         Type:
    *           type: string
    *         Status:

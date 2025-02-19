@@ -1,5 +1,5 @@
 export interface HostDescription {
-    Dd: number,
+    Id: number,
     GridId: number,
     Name: string,
     Type: string,
