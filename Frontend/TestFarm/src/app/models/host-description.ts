@@ -1,7 +1,6 @@
 export interface HostDescription {
     Id: number,
     GridId: number,
-    Name: string,
     Type: string,
     Status: string,
     Hostname: string,

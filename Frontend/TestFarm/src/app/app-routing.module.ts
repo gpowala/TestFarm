@@ -8,9 +8,11 @@ import { GroupsComponent } from './components/groups/groups.component';
 import { GridsComponent } from './components/grids/grids.component';
 import { RunsComponent } from './components/runs/runs.component';
 import { TestsRunResultsComponent } from './components/tests-run-results/tests-run-results.component';
+import { RepositoriesComponent } from './components/repositories/repositories.component';
 
 const routes: Routes = [
   {path: 'builds', component: BuildsComponent},
+  {path: 'repositories', component: RepositoriesComponent},
   {path: 'tests', component: TestsComponent},
   {path: 'benchmarks', component: BenchmarksComponent},
   {path: 'groups', component: GroupsComponent},

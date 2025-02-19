@@ -1,0 +1,57 @@
+<div class="repositories-container">
+    <div class="repositories-header">
+        Repositories
+    </div>
+    <div class="repositories-content">
+      <div class="add-repository-form">
+        <div class="form-fields-container">
+            <div class="form-field">
+                <label>Repository Name</label>
+                <input type="text" [(ngModel)]="repositoryName">
+            </div>
+            <div class="form-field">
+                <label>Repository URL</label>
+                <input type="text" [(ngModel)]="repositoryUrl">
+            </div>
+            <div class="form-field">
+                <label>User</label>
+                <input type="text" [(ngModel)]="repositoryUser">
+            </div>
+            <div class="form-field">
+                <label>PAT (Token)</label>
+                <input type="password" [(ngModel)]="repositoryToken">
+            </div>
+            <button mat-raised-button color="primary" (click)="addRepository()">
+                Add Repository
+            </button>
+        </div>
+      </div>
+      <table class="repositories-table" style="width: 100%;">
+          <thead>
+              <tr>
+                  <th style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">ID</th>
+                  <th style="white-space: nowrap; padding: 5px; text-align: center;">Name</th>
+                  <th style="white-space: nowrap; padding: 5px;">URL</th>
+                  <th style="white-space: nowrap; padding: 5px;">User</th>
+                  <th style="white-space: nowrap; padding: 5px;">Actions</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr *ngFor="let repo of repositories"
+                  class="repository-item"
+                  (mouseover)="onMouseOver($event)"
+                  (mouseout)="onMouseOut($event)" style="transition: background-color 0.3s;">
+                  <td style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">{{repo.Id}}</td>
+                  <td style="white-space: nowrap; padding: 5px; text-align: center;">{{repo.Name}}</td>
+                  <td style="white-space: nowrap; padding: 5px; text-align: center;"><a href="{{repo.Url}}">{{repo.Url}}</a></td>
+                  <td style="white-space: nowrap; padding: 5px; text-align: center;">{{repo.User}}</td>
+                  <td style="white-space: nowrap; padding: 5px; text-align: center;">
+                      <button mat-button color="primary" (click)="removeRepository(repo.Id)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                  </td>
+              </tr>
+          </tbody>
+      </table>
+    </div>
+</div>

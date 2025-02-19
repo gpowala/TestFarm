@@ -21,6 +21,7 @@ import { GridsApiHttpClientService } from './services/grids-api-http-cient-servi
 import { TestsRunResultsComponent } from './components/tests-run-results/tests-run-results.component';
 import { TestHistoryComponent } from './components/test-history/test-history.component';
 import { ConsoleOutputToHtmlPipe } from './pipes/console-output-to-html-pipe';
+import { RepositoriesComponent } from './components/repositories/repositories.component';
 
 @NgModule({
   declarations: [
@@ -33,7 +34,8 @@ import { ConsoleOutputToHtmlPipe } from './pipes/console-output-to-html-pipe';
     RunsComponent,
     TestsRunResultsComponent,
     TestHistoryComponent,
-    ConsoleOutputToHtmlPipe
+    ConsoleOutputToHtmlPipe,
+    RepositoriesComponent
   ],
   imports: [
     BrowserModule,

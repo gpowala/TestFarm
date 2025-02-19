@@ -1,0 +1,67 @@
+.repositories-container {
+  margin: 0 10px 0 10px
+}
+
+.repositories-header {
+  margin: 20px 0 20px 0;
+  font-size: x-large;
+  color: rgb(70,78,178);
+
+  text-decoration: underline;
+  text-decoration-color: rgb(255,75,130);
+  text-decoration-thickness: 3px;
+}
+
+.add-repository-form {
+  margin-top: 20px;
+}
+
+.form-fields-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: nowrap;
+  margin: 10px 0 10px 0;
+}
+
+.form-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.form-field label {
+  display: block;
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 2px;
+  padding-left: 4px;
+}
+
+.form-field input {
+  height: 36px;
+  width: 100%;
+  padding: 0 12px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.mat-mdc-button {
+  min-width: 0px !important;
+}
+
+button[mat-raised-button] {
+  height: 36px;
+  padding: 0 16px;
+  align-self: flex-end;
+  box-shadow: none;
+}
+
+button[mat-raised-button]:active {
+  box-shadow: none !important;
+}
+
+.mat-mdc-button>.mat-icon {
+  margin-right: 0;
+}

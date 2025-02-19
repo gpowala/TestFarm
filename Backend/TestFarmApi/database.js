@@ -188,11 +188,42 @@ TestResult.belongsTo(TestRun, { foreignKey: 'TestRunId', as: 'TestRun' });
 Test.hasMany(TestResult, { foreignKey: 'TestId', as: 'TestResults' });
 TestResult.belongsTo(Test, { foreignKey: 'TestId', as: 'Test' });
 
+const Repository = sequelize.define('Repository', {
+  Id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+    allowNull: false
+  },
+  Name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  Url: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  User: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  Token: {
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+}, {
+  tableName: 'Repositories',
+  timestamps: false
+});
+
 module.exports = {
   Grid,
   Host,
   TestRun,
   Test,
   TestResult,
+  Repository,
   sequelize
 };

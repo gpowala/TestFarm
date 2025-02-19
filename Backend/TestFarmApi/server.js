@@ -4,6 +4,7 @@ const express = require('express');
 const { Sequelize } = require('sequelize');
 const { sequelize, Grid, Host, TestRun, Test, TestResult } = require('./database');
 const gridsRouter = require('./grids-router');
+const repositoriesRouter = require('./reporitories-router');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const cors = require('cors');
@@ -32,10 +33,22 @@ const { parseBehaveTestsResults, parseSpecFlowTestsResults, unescapeXmlString } 
 
 const axios = require('axios');
 
-async function sendTeamsMessage(webhookUrl, message) {
-  const payload = {
-    text: message
-  };
+async function sendTeamsMessage(webhookUrl, messages, actions) {
+	const payload = {
+        "type": "message",
+        "attachments": [{
+              "contentType": "application/vnd.microsoft.card.adaptive",
+              "content": {
+                "type": "AdaptiveCard",
+                "version": "1.2",
+                "body": [title, message],
+                "actions": actions
+              }
+            }
+        ],
+        "sections": [],
+        "potentialAction": []
+    };
 
   try {
     const response = await axios.post(webhookUrl, payload);
@@ -49,18 +62,41 @@ async function notifyTeamsOnNewTestsRunPublished(testRunId, testRunName, testRun
   if (appSettings.teams.enabled) {
     const failedResultsCount = testRunResults.filter(result => result.status.toLowerCase() !== 'passed').length;
 
-    let message = `<h2>Test Run Results: ${testRunName} [${testRunId}]</h2>`;
-    message += `<p>Total tests: ${testRunResults.length}</p>`;
+    const title = {
+		"type": "TextBlock",
+		"weight": "Bolder",
+		"text": `Test Run Results: ${testRunName} [${testRunId}]`,
+		"color": failedResultsCount > 0 ? "Attention" : "Good",
+		"wrap": false
+	};
+	
+	const actions = [
+		{
+            "type": "Action.OpenUrl",
+            "title": "View",
+            "url": `${appSettings.teams.resultsUrl}/${testRunId}`
+        }
+	];
     
+	let message = {};
+	
     if (failedResultsCount > 0) {
-      message += `<p style="color: red;">Failed tests: ${failedResultsCount}/${testRunResults.length}</p>`;
-      message += `<p><a href="${appSettings.teams.resultsUrl}/${testRun.Id}">View results</a></p>`;
+      message = {
+		"type": "TextBlock",
+		"text": `Failed tests: ${failedResultsCount}/${testRunResults.length}! [view results](${appSettings.teams.resultsUrl}/${testRunId})`,
+		"color": "Attention",
+		"wrap": false
+	  };
     } else {
-      message += `<p style="color: green;">All tests passed!</p>`;
-      message += `<p><a href="${appSettings.teams.resultsUrl}">View results</a></p>`;
+		message = {
+		"type": "TextBlock",
+		"text": `All tests passed! Total tests run: ${testRunResults.length}. [view results](${appSettings.teams.resultsUrl}/${testRunId})`,
+		"color": "Good",
+		"wrap": false
+	  };
     }
 
-    return await sendTeamsMessage(appSettings.teams.webhookUrl, message);
+    return await sendTeamsMessage(appSettings.teams.webhookUrl, title, message);
   }
 }
 
@@ -696,6 +732,7 @@ app.get('/integration/azure-devops/register-build/:project/:buildId/:releaseDefi
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/', gridsRouter);
+app.use('/', repositoriesRouter);
 
 app.listen(port, async () => {
   sequelize.verbose_sync();
