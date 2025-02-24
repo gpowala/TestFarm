@@ -52,6 +52,7 @@ router.post('/add-repository', async (req, res) => {
               Url: url,
               User: user,
               Token: token,
+              IsActive: true
           });
       }
       
@@ -92,11 +93,11 @@ router.post('/add-repository', async (req, res) => {
         return res.status(404).json({ error: 'Repository not found' });
       } else {
         await repository.destroy();
-        res.status(200).json({ message: 'Host unregistered successfully' });
+        res.status(200).json({ message: 'Repository removed successfully' });
       }
       
     } catch (error) {
-      console.error('Error unregistering host:', error);
+      console.error('Error removing repository:', error);
       res.status(500).json({ error: 'Internal Server Error' });
     }
   });

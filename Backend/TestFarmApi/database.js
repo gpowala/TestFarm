@@ -102,9 +102,21 @@ const TestRun = sequelize.define('TestsRuns', {
     autoIncrement: true,
     allowNull: false
   },
+  RepositoryName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  SuiteName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   Name: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  GridName: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
   CreationTimestamp: {
     type: DataTypes.DATE,
@@ -122,10 +134,17 @@ const Test = sequelize.define('Test', {
     autoIncrement: true,
     allowNull: false
   },
+  RepositoryName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  SuiteName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   Name: {
     type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
+    allowNull: false
   },
   Owner: {
     type: DataTypes.STRING,
@@ -171,7 +190,7 @@ const TestResult = sequelize.define('TestResult', {
   },
   ExecutionTime: {
     type: DataTypes.DATE,
-    allowNull: false
+    allowNull: true
   },
   ExecutionOutput: {
     type: DataTypes.TEXT('long'),
@@ -211,6 +230,10 @@ const Repository = sequelize.define('Repository', {
   },
   Token: {
     type: DataTypes.STRING,
+    allowNull: false
+  },
+  IsActive: {
+    type: DataTypes.BOOLEAN,
     allowNull: false
   }
 }, {
