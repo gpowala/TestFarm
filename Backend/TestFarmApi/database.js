@@ -188,7 +188,11 @@ const TestResult = sequelize.define('TestResult', {
     type: DataTypes.STRING,
     allowNull: false
   },
-  ExecutionTime: {
+  ExecutionStartTimestamp: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  ExecutionEndTimestamp: {
     type: DataTypes.DATE,
     allowNull: true
   },

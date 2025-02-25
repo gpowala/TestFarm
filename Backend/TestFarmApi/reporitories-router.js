@@ -174,10 +174,19 @@ router.post('/add-repository', async (req, res) => {
    */
   router.get('/repositories', async (req, res) => {
     try {
-      const repositories = await Repository.findAll();
+      const { name } = req.query;
+      let whereClause = {};
+      
+      if (name) {
+        whereClause.Name = name;
+      }
+
+      const repositories = await Repository.findAll({
+        where: whereClause
+      });
       res.status(200).json(repositories);
     } catch (error) {
-      console.error('Error fetching grids with hosts:', error);
+      console.error('Error fetching repositories:', error);
       res.status(500).json({ error: 'Internal Server Error' });
     }
   });
