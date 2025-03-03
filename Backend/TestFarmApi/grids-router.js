@@ -53,18 +53,24 @@ router.post('/register-host', async (req, res) => {
           });
       }
   
-      const newHost = await Host.create({
-        GridId: grid.Id,
-        Type: Type,
-        Status: "Waiting for tests...",
-        Hostname: Hostname,
-        Cores: Cores,
-        RAM: RAM,
-        CreationTimestamp: new Date(),
-        LastUpdateTimestamp: new Date()
-      });
+      // TODO: Check if hosts have the same capabilities (type, cores, RAM) and are on the same grid and update the existing host instead of creating a new one
+      let host = await Host.findOne({ where: { Hostname: Hostname } });
+      if (!host) {
+        host = await Host.create({
+          GridId: grid.Id,
+          Type: Type,
+          Status: "Waiting for tests...",
+          Hostname: Hostname,
+          Cores: Cores,
+          RAM: RAM,
+          CreationTimestamp: new Date(),
+          LastUpdateTimestamp: new Date()
+        });
+      }
       
-      res.status(201).json(newHost);
+      // console.log(host);
+
+      res.status(201).json(host);
     } catch (error) {
       console.error('Error creating host:', error);
       res.status(500).json({ error: 'Internal Server Error' });
@@ -121,7 +127,7 @@ router.post('/register-host', async (req, res) => {
   /**
    * @swagger
    * /update-host-status:
-   *   put:
+   *   post:
    *     summary: Update host status
    *     tags: [Hosts]
    *     requestBody:
@@ -150,19 +156,27 @@ router.post('/register-host', async (req, res) => {
    *       500:
    *         description: Internal Server Error
    */
-  router.put('/update-host-status', async (req, res) => {
+  router.post('/update-host-status', async (req, res) => {
     try {
       const { Id, Status } = req.body;
-  
+
       const host = await Host.findByPk(Id);
       if (!host) {
         return res.status(404).json({ error: 'Host not found' });
       }
-  
+
+      const grid = await Grid.findByPk(host.GridId);
+      if (!grid) {
+        return res.status(404).json({ error: 'Parent grid not found' });
+      }
+
       host.Status = Status;
       host.LastUpdateTimestamp = new Date();
       await host.save();
-  
+
+      grid.LastUpdateTimestamp = new Date();
+      await grid.save();
+
       res.status(200).json({ message: 'Host status updated successfully', host });
     } catch (error) {
       console.error('Error updating host status:', error);

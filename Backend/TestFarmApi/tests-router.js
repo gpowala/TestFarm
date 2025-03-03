@@ -1,7 +1,7 @@
 const { execSync } = require('child_process');
 const { fs } = require('fs');
 
-const { express } = require('express');
+const express = require('express');
 const router = express.Router();
 
 const { appSettings } = require('./appsettings');

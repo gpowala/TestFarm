@@ -31,9 +31,54 @@
             </mat-panel-description>
           </mat-expansion-panel-header>
           <mat-divider></mat-divider>
-          <div *ngFor="let host of grid.Hosts; index as j">
-            {{host.Hostname}}
+
+          <div class="hosts-table-container">
+            <table mat-table [dataSource]="grid.Hosts" class="mat-elevation-z0 hosts-table">
+              <!-- Hostname Column -->
+              <ng-container matColumnDef="hostname">
+                <th mat-header-cell *matHeaderCellDef> Hostname </th>
+                <td mat-cell *matCellDef="let host"> {{host.Hostname}} </td>
+              </ng-container>
+
+              <!-- Cores Column -->
+              <ng-container matColumnDef="cores">
+                <th mat-header-cell *matHeaderCellDef> Cores </th>
+                <td mat-cell *matCellDef="let host"> {{host.Cores}} </td>
+              </ng-container>
+
+              <!-- RAM Column -->
+              <ng-container matColumnDef="ram">
+                <th mat-header-cell *matHeaderCellDef> RAM </th>
+                <td mat-cell *matCellDef="let host"> {{host.RAM}} </td>
+              </ng-container>
+
+              <!-- Creation Timestamp Column -->
+              <ng-container matColumnDef="creationTimestamp">
+                <th mat-header-cell *matHeaderCellDef> Creation Time </th>
+                <td mat-cell *matCellDef="let host"> {{host.CreationTimestamp}} </td>
+              </ng-container>
+
+              <!-- Last Update Timestamp Column -->
+              <ng-container matColumnDef="lastUpdateTimestamp">
+                <th mat-header-cell *matHeaderCellDef> Last Update </th>
+                <td mat-cell *matCellDef="let host"> {{host.LastUpdateTimestamp}} </td>
+              </ng-container>
+
+              <!-- Status Column -->
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef> Status </th>
+                <td mat-cell *matCellDef="let host">
+                    {{host.Status}}
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="['hostname', 'cores', 'ram', 'creationTimestamp', 'lastUpdateTimestamp', 'status']"></tr>
+              <tr mat-row *matRowDef="let host; columns: ['hostname', 'cores', 'ram', 'creationTimestamp', 'lastUpdateTimestamp', 'status'];"
+                  [ngClass]="{'recent-update': isRecentUpdate(host.LastUpdateTimestamp), 'old-update': !isRecentUpdate(host.LastUpdateTimestamp)}">
+              </tr>
+            </table>
           </div>
+
         </mat-expansion-panel>
       </mat-accordion>
   </div>

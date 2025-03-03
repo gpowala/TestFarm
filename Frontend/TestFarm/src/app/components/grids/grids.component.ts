@@ -49,6 +49,15 @@ export class GridsComponent implements OnInit, OnDestroy{
         modifiedGrid.CreationTimestamp = this.formatDate(new Date(grid.CreationTimestamp));
         modifiedGrid.LastUpdateTimestamp = this.formatDate(new Date(grid.LastUpdateTimestamp));
 
+        modifiedGrid.Hosts.map(host => {
+          let modifiedHost = host;
+
+          modifiedHost.CreationTimestamp = this.formatDate(new Date(host.CreationTimestamp));
+          modifiedHost.LastUpdateTimestamp = this.formatDate(new Date(host.LastUpdateTimestamp));
+
+          return modifiedHost;
+        })
+
         return modifiedGrid;
       });
     });
@@ -63,5 +72,19 @@ export class GridsComponent implements OnInit, OnDestroy{
     };
 
     return `${ensureLeadingZero(date.getDate())}/${ensureLeadingZero(date.getMonth() + 1)}/${ensureLeadingZero(date.getFullYear())} ${ensureLeadingZero(date.getHours())}:${ensureLeadingZero(date.getMinutes())}:${ensureLeadingZero(date.getSeconds())}`;
+  }
+
+  isRecentUpdate(timestamp: string): boolean {
+    const updateTime = new Date(timestamp);
+    const currentTime = new Date();
+
+    // Calculate the difference in milliseconds
+    const differenceInMs = currentTime.getTime() - updateTime.getTime();
+
+    // Calculate the difference in minutes
+    const differenceInMinutes = differenceInMs / (1000 * 60);
+
+    // Return true if the update is less than 5 minutes old
+    return differenceInMinutes < 5;
   }
 }

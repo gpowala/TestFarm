@@ -43,3 +43,36 @@
 .example-headers-align .mat-mdc-form-field + .mat-mdc-form-field {
     margin-left: 8px;
 }
+
+/* Table styles added from SCSS */
+.hosts-table-container {
+    margin-top: 16px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+}
+
+.hosts-table {
+    width: 100%;
+}
+
+/* Row highlighting based on timestamp - simplified approach */
+.hosts-table .recent-update {
+    background-color: rgba(128, 201, 4, 0.6) !important; /* Green with transparency */
+}
+
+.hosts-table .recent-update:hover {
+    background-color: rgba(128, 201, 4, 0.4) !important; /* Slightly darker green on hover */
+}
+
+.hosts-table .old-update {
+    background-color: rgba(244, 67, 54, 0.9) !important; /* Red with transparency */
+}
+
+.hosts-table .old-update:hover {
+    background-color: rgba(244, 67, 54, 0.6) !important; /* Slightly darker red on hover */
+}
+
+/* Override any mat-row background colors */
+.hosts-table .mat-row {
+    background-color: transparent !important;
+}

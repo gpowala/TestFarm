@@ -1,0 +1,19 @@
+{
+    "Grid": {
+        "name": "mongoose_eblox_payroll",
+        "capabilities": [
+            "tests",
+            "benchmarks"
+        ]
+    },
+    "TestFarmApi": {
+        "BaseUrl": "http://localhost:3000",
+        "Timeout": 60
+    },
+    "Logging": {
+        "LogDir": "C:/logs/testfarm"
+    },
+    "Storage": {
+        "Repositories": "C:/temp_repositories"
+    }
+}
