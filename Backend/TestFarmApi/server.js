@@ -321,12 +321,22 @@ app.get('/tests-runs', async (req, res) => {
         'CreationTimestamp',
         [
           sequelize.literal(`(
-            SELECT CASE 
+            SELECT CASE
               WHEN EXISTS (
                 SELECT 1 FROM TestsResults 
                 WHERE TestsResults.TestRunId = TestsRuns.Id 
-                AND TestsResults.Status = 'Failed'
+                AND TestsResults.Status = 'running'
+              ) THEN 'running' 
+              WHEN EXISTS (
+                SELECT 1 FROM TestsResults 
+                WHERE TestsResults.TestRunId = TestsRuns.Id 
+                AND TestsResults.Status = 'failed'
               ) THEN 'failed'
+              WHEN EXISTS (
+                SELECT 1 FROM TestsResults 
+                WHERE TestsResults.TestRunId = TestsRuns.Id 
+                AND TestsResults.Status = 'queued'
+              ) THEN 'queued'
               WHEN NOT EXISTS (
                 SELECT 1 FROM TestsResults 
                 WHERE TestsResults.TestRunId = TestsRuns.Id
@@ -420,13 +430,13 @@ app.get('/tests-run-results/:testsRunId', async (req, res) => {
 
     const testsResults = await TestResult.findAll({
       where: { TestRunId: testsRunId },
-      attributes: ['Id', 'TestId', 'Status', 'ExecutionOutput', 'ExecutionTime'],
+      attributes: ['Id', 'TestId', 'Status', 'ExecutionOutput', 'ExecutionStartTimestamp', 'ExecutionEndTimestamp'],
       include: [{
         model: Test,
         as: 'Test',
         attributes: ['Name']
       }],
-      order: [['ExecutionTime', 'ASC']]
+      order: [['ExecutionStartTimestamp', 'ASC']]
     });
 
     const formattedResults = testsResults.map(result => ({
@@ -434,7 +444,8 @@ app.get('/tests-run-results/:testsRunId', async (req, res) => {
       TestId: result.TestId,
       TestName: result.Test.Name,
       Status: result.Status,
-      ExecutionTime: result.ExecutionTime,
+      ExecutionStartTimestamp: result.ExecutionStartTimestamp,
+      ExecutionEndTimestamp: result.ExecutionEndTimestamp,
       ExecutionOutput: result.ExecutionOutput
     }));
 
@@ -497,13 +508,13 @@ app.get('/test-history/:testId', async (req, res) => {
 
     const testHistory = await TestResult.findAll({
       where: { TestId: testId },
-      attributes: ['Id', 'TestRunId', 'Status', 'ExecutionOutput', 'ExecutionTime'],
+      attributes: ['Id', 'TestRunId', 'Status', 'ExecutionOutput', 'ExecutionStartTimestamp', 'ExecutionEndTimestamp'],
       include: [{
         model: TestRun,
         as: 'TestRun',
         attributes: ['Name']
       }],
-      order: [['ExecutionTime', 'DESC']]
+      order: [['ExecutionStartTimestamp', 'DESC']]
     });
 
     const formattedHistory = testHistory.map(result => ({
@@ -511,7 +522,8 @@ app.get('/test-history/:testId', async (req, res) => {
       TestRunId: result.TestRunId,
       TestRunName: result.TestRun.Name,
       Status: result.Status,
-      ExecutionTime: result.ExecutionTime,
+      ExecutionStartTimestamp: result.ExecutionStartTimestamp,
+      ExecutionEndTimestamp: result.ExecutionEndTimestamp,
       ExecutionOutput: result.ExecutionOutput
     }));
 

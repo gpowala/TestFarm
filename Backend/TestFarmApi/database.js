@@ -142,6 +142,10 @@ const Test = sequelize.define('Test', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  Path: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   Name: {
     type: DataTypes.STRING,
     allowNull: false

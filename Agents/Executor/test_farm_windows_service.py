@@ -11,8 +11,10 @@ import win32serviceutil
 import win32event
 import logging
 import sys
+import subprocess
+from testfarm_agents_utils import *
 
-from test_farm_api import get_next_test, register_host, unregister_host, update_host_status, Host
+from test_farm_api import get_next_test, register_host, unregister_host, update_host_status, Host, Repository
 from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
 from logging.handlers import RotatingFileHandler
 
@@ -61,11 +63,15 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
         
         log_file = os.path.join(self._config.logging.log_dir, "testfarm_service.log")
         
-        log_handler = RotatingFileHandler(
+        if self._isDebugModeOn:
+            log_handler = logging.StreamHandler(sys.stdout)
+            logging.info("Debug mode: logging to console")
+        else:
+            log_handler = RotatingFileHandler(
             filename=log_file,
             maxBytes=10*1024*1024,
             backupCount=5,
-        )
+            )
         log_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
         
         root_logger = logging.getLogger()
@@ -78,11 +84,16 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
         
         logging.info(f"Logging initialized to: {log_file}")
 
-    # def clone_repository(self):
-    #     if not os.path.exists(local_repository_dir):
-    #         os.makedirs(local_repository_dir, exist_ok=True)
+    def clone_repository(self, repository: Repository) -> str:
+        local_repository_dir = expand_magic_variables(f"$__TF_TESTS_REPOS_DIR__/{repository.name}")
 
-    #     connection_string = f"https://{repository.user}:{repository.token}@{repository.url.replace('https://', '')}"
+        if not os.path.exists(local_repository_dir):
+            os.makedirs(local_repository_dir, exist_ok=True)
+
+        connection_string = f"https://{repository.user}:{repository.token}@{repository.url.replace('https://', '')}"
+        Repo.clone_from(connection_string, local_repository_dir)
+
+        return local_repository_dir
 
     def SvcStop(self):
         self._running = False
@@ -120,12 +131,28 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
         while self._running:
             try:
-                # if test := get_next_test(self._config):
-                #     logging.info(f"Received test: {test.test.name} (ID: {test.id})")
+                test = get_next_test(self._config)
+                if test:
+                    logging.info(f"Received test: {test.test.name} (ID: {test.id})")
+
+                    logging.info(f"Cloning {test.repository.name} tests repository...")
+                    local_repository_dir = self.clone_repository(test.repository)
                     
-                #     update_host_status(self._host, f"Executing {test.test.name} test", self._config)
+                    logging.info(f"Repository cloned to {local_repository_dir}. Looking for test description...")
+
+                    # env = os.environ.copy()
+                    # env["PYTHONPATH"] = f"{local_repository_dir}:{env.get('PYTHONPATH', '')}"
+
+                    # new_working_dir = "/path/to/new/working/directory"
+                    # process = subprocess.Popen(["python", "-c", "import sys; print(sys.path)"], env=env, cwd=new_working_dir)
+                    # process.wait()
+
+                    # update_host_status(self._host, status, self._config)
+                    
+                    update_host_status(f"Executing {test.test.name} test", self._host, self._config)
                     
                 update_host_status("Waiting for tests...", self._host, self._config)
+                logging.info(f"Host {self._host.hostname} status set to \"Waiting for tests...\"")
             except requests.RequestException as e:
                 logging.error(f"Error fetching or processing test: {e}")
 

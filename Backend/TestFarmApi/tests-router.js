@@ -1,5 +1,6 @@
 const { execSync } = require('child_process');
-const { fs } = require('fs');
+const fs = require('fs');
+const { Sequelize } = require('sequelize'); // Add Sequelize import
 
 const express = require('express');
 const router = express.Router();
@@ -25,7 +26,8 @@ requireRepositoryExists = (repository) => {
     throw Error('Repository does not exist');
 }
 
-router.post('tests/schedule-run', async (req, res) => {
+router.post('/schedule-run', async (req, res) => {
+  console.log('Scheduling test run:', req.body);
   const { RepositoryName, SuiteName, GridName, TestRunName } = req.body;
   const localRepositoryDir = `${appSettings.storage.repositories}/${RepositoryName}`;  
   
@@ -57,8 +59,8 @@ router.post('tests/schedule-run', async (req, res) => {
 
         let testConfig = JSON.parse(fs.readFileSync(testConfigPath, 'utf8'));
 
-        let test = await Test.findOne({ where: {RepositoryName: RepositoryName, SuiteName: SuiteName, Name: testConfig.name} })
-                ?? await Test.create({ RepositoryName: RepositoryName, SuiteName: SuiteName, Name: testConfig.name, Owner: null, CreationTimestamp: new Date() });
+        let test = await Test.findOne({ where: {RepositoryName: RepositoryName, SuiteName: SuiteName, Path: testPath, Name: testConfig.name} })
+                ?? await Test.create({ RepositoryName: RepositoryName, SuiteName: SuiteName, Path: testPath,  Name: testConfig.name, Owner: testConfig.owner, CreationTimestamp: new Date() });
 
         await TestResult.create({ TestRunId: testRun.Id, TestId: test.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null });
       }
@@ -76,39 +78,53 @@ router.post('tests/schedule-run', async (req, res) => {
   }
 });
 
-router.get('tests/get-next-test', async (req, res) => {
+router.get('/get-next-test', async (req, res) => {
   const { GridName } = req.query;
   
   try {
-    const result = await sequelize.transaction(async (t) => {
-      const [updatedCount, updatedTestResults] = await TestResult.update(
-        {
-          Status: 'running',
-          ExecutionStartTimestamp: new Date()
+    // Use a transaction with the highest isolation level to prevent race conditions
+    const result = await sequelize.transaction({
+      isolationLevel: Sequelize.Transaction.ISOLATION_LEVELS.SERIALIZABLE
+    }, async (t) => {
+      // First find all TestRun IDs that match our GridName
+      const matchingTestRuns = await TestRun.findAll({
+        attributes: ['Id'],
+        where: {
+          GridName: GridName
         },
-        {
-          where: {
-            Status: 'queued',
-            '$TestRun.GridName$': GridName
-          },
-          include: [{
-            model: TestRun,
-            as: 'TestRun'
-          }],
-          order: [
-            [{model: TestRun, as: 'TestRun'}, 'CreationTimestamp', 'ASC']
-          ],
-          limit: 1,
-          returning: true,
-          transaction: t
-        }
-      );
-
-      if (updatedCount === 0) {
+        transaction: t
+      });
+      
+      if (matchingTestRuns.length === 0) {
         return null;
       }
-
-      return TestResult.findByPk(updatedTestResults[0].Id, {
+      
+      const testRunIds = matchingTestRuns.map(run => run.Id);
+      
+      // Find a single test result that is queued and belongs to our grid
+      const queuedTest = await TestResult.findOne({
+        where: {
+          Status: 'queued',
+          TestRunId: testRunIds
+        },
+        order: [
+          ['Id', 'ASC'] // Select the oldest queued test
+        ],
+        lock: t.LOCK.UPDATE, // Add row-level locking to prevent other transactions from changing this row
+        transaction: t
+      });
+      
+      if (!queuedTest) {
+        return null;
+      }
+      
+      // Update the status atomically within the transaction
+      queuedTest.Status = 'running';
+      queuedTest.ExecutionStartTimestamp = new Date();
+      await queuedTest.save({ transaction: t });
+      
+      // Retrieve the complete test information with associations
+      return TestResult.findByPk(queuedTest.Id, {
         include: [
           {
             model: TestRun,
@@ -116,25 +132,39 @@ router.get('tests/get-next-test', async (req, res) => {
           },
           {
             model: Test,
-            as: 'Test',
-            include: [{
-              model: Repository,
-              as: 'Repository'
-            }]
+            as: 'Test'
           }
         ],
         transaction: t
+      }).then(async (testResult) => {
+        // Fetch the repository separately based on the RepositoryName
+        if (testResult && testResult.TestRun && testResult.TestRun.RepositoryName) {
+          const repository = await Repository.findOne({
+            where: { 
+              Name: testResult.TestRun.RepositoryName 
+            },
+            transaction: t
+          });
+          
+          // Add repository info to the response
+          if (repository) {
+            const plainResult = testResult.get({ plain: true });
+            plainResult.Repository = repository.get({ plain: true });
+            return plainResult;
+          }
+        }
+        return testResult;
       });
     });
 
     if (!result) {
       return res.status(404).json({ message: 'No queued tests found for this grid' });
     }
-
+    console.log(result);
     res.status(200).json(result);
   } catch (error) {
     console.error('Error getting next test:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 });
 

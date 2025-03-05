@@ -11,11 +11,18 @@
             </thead>
             <tbody>
                 <ng-container *ngFor="let entry of testHistory">
-                    <tr class="run-item" [ngClass]="{'expanded': entry.ShowDetails}" style="transition: background-color 0.3s;" 
-                        (mouseover)="onMouseOver($event)" 
+                    <tr class="run-item" [ngClass]="{'expanded': entry.ShowDetails}" style="transition: background-color 0.3s;"
+                        (mouseover)="onMouseOver($event)"
                         (mouseout)="onMouseOut($event, entry.ShowDetails ?? false)">
                         <td class="run-name" style="padding: 5px; text-align: left;">{{ entry.TestRunName }}</td>
-                        <td class="result-status" style="padding: 5px; text-align: center;" [ngStyle]="{'background-color': entry.Status === 'passed' ? '#90EE90' : '#FFB6C1'}">{{ entry.Status }}</td>
+                        <td class="result-status" style="padding: 5px; text-align: center;"
+                          [ngStyle]="{'background-color':
+                          entry.Status === 'passed' ? '#90EE90' :
+                          entry.Status === 'failed' ? '#FFB6C1' :
+                          entry.Status === 'queued' ? '#D3D3D3' :
+                          entry.Status === 'running' ? '#FFFF99' : '#FFFFFF'}">
+                          {{ entry.Status }}
+                        </td>
                         <td class="result-execution-time" style="white-space: nowrap; padding: 5px; text-align: center;">{{ entry.ExecutionTime | date:'medium' }}</td>
                         <td class="result-details" style="padding: 5px; text-align: center;">
                             <button mat-button color="primary" (click)="entry.ShowDetails = !entry.ShowDetails">

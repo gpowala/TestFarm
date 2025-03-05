@@ -71,10 +71,10 @@ class Test:
     id: int
     repository_name: str
     suite_name: str
+    path: str
     name: str
     owner: str
     creation_timestamp: datetime
-    repository: Repository
 
     @staticmethod
     def from_dict(data: dict) -> 'Test':
@@ -82,10 +82,10 @@ class Test:
             id=data['Id'],
             repository_name=data['RepositoryName'],
             suite_name=data['SuiteName'],
+            path=data['Path'],
             name=data['Name'],
             owner=data['Owner'],
-            creation_timestamp=datetime.fromisoformat(data['CreationTimestamp'].replace('Z', '+00:00')),
-            repository=Repository.from_dict(data['Repository'])
+            creation_timestamp=datetime.fromisoformat(data['CreationTimestamp'].replace('Z', '+00:00'))
         )
 
 @dataclass
@@ -119,6 +119,7 @@ class TestResult:
     execution_output: Optional[str]
     test_run: TestRun
     test: Test
+    repository: Repository
 
     @staticmethod
     def from_dict(data: dict) -> 'TestResult':
@@ -131,17 +132,18 @@ class TestResult:
             execution_end_timestamp=datetime.fromisoformat(data['ExecutionEndTimestamp'].replace('Z', '+00:00')) if data['ExecutionEndTimestamp'] else None,
             execution_output=data['ExecutionOutput'],
             test_run=TestRun.from_dict(data['TestRun']),
-            test=Test.from_dict(data['Test'])
+            test=Test.from_dict(data['Test']),
+            repository=Repository.from_dict(data['Repository'])
         )
 
 def get_next_test(config: Config) -> Optional[TestResult]:
     response = requests.get(
-        url = urljoin(config.test_farm_api.base_url, "tests/get-next-test"),
+        url = urljoin(config.test_farm_api.base_url, "get-next-test"),
         params = {'GridName': config.grid.name},
         timeout = config.test_farm_api.timeout
     )
     
-    return TestResult.from_dict(response.json()) if response.status_code == 200 else None
+    return TestResult.from_dict(response.json()) if response.ok else None
 
 def get_system_info(config: Config) -> Dict[str, any]:
     hostname = socket.gethostname()
