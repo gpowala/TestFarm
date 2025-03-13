@@ -3,7 +3,8 @@ import os
 
 __all__ = [
     "add_custom_magic_variable",
-    "expand_magic_variables"
+    "expand_magic_variables",
+    "stringify_magic_variables"
 ]
 
 
@@ -41,4 +42,9 @@ def expand_magic_variables(text: str) -> str:
        expanded_text = expanded_text.replace(key, magic_variables[key])
        
     return expanded_text
+
+
+def stringify_magic_variables() -> str:
+    magic_variables = {**default_magic_variables, **custom_magic_variables}
+    return "\n".join([f"{key}={magic_variables[key]}" for key in magic_variables])
 

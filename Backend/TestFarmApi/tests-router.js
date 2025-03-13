@@ -6,7 +6,7 @@ const express = require('express');
 const router = express.Router();
 
 const { appSettings } = require('./appsettings');
-const { Test, TestRun, TestResult, Repository, sequelize } = require('./database');
+const { Test, TestRun, TestResult, TestResultDiff, Repository, sequelize } = require('./database');
 
 cloneSparseRepository = (repository, localRepositoryDir) => {
   if (!fs.existsSync(localRepositoryDir))
@@ -164,6 +164,65 @@ router.get('/get-next-test', async (req, res) => {
     res.status(200).json(result);
   } catch (error) {
     console.error('Error getting next test:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
+router.post('/complete-test', async (req, res) => {
+  const { TestResultId, Status, ExecutionOutput } = req.body;
+  
+  try {
+    const testResult = await TestResult.findByPk(TestResultId);
+    
+    if (!testResult) {
+      return res.status(404).json({ message: 'Test result not found' });
+    }
+    
+    testResult.Status = Status;
+    testResult.ExecutionEndTimestamp = new Date();
+    testResult.ExecutionOutput = ExecutionOutput;
+    await testResult.save();
+    
+    res.status(200).json(testResult);
+  } catch (error) {
+    console.error('Error completing test:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
+const multer = require('multer');
+const zlib = require('zlib');
+const upload = multer({ dest: 'uploads/' });
+
+router.post('/upload-diff', upload.single('report'), async (req, res) => {
+  const { TestResultId, Name, Status } = req.body;
+  const reportFile = req.file;
+
+  try {
+    const testResult = await TestResult.findByPk(TestResultId);
+
+    if (!testResult) {
+      return res.status(404).json({ message: 'Test result not found' });
+    }
+
+    let reportContent = null;
+    if (reportFile) {
+      const filePath = reportFile.path;
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      reportContent = zlib.gzipSync(fileContent).toString('base64');
+      fs.unlinkSync(filePath); // Clean up the uploaded file
+    }
+
+    const testResultDiff = await TestResultDiff.create({
+      TestResultId,
+      Name,
+      Status,
+      Report: reportContent
+    });
+
+    res.status(201).json(testResultDiff);
+  } catch (error) {
+    console.error('Error uploading report:', error);
     res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 });

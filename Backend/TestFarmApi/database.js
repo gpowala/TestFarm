@@ -249,6 +249,42 @@ const Repository = sequelize.define('Repository', {
   timestamps: false
 });
 
+const TestResultDiff = sequelize.define('TestResultDiff', {
+  Id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+    allowNull: false
+  },
+  TestResultId: {
+    type: DataTypes.INTEGER,
+    foreignKey: true,
+    allowNull: false,
+    references: {
+      model: 'TestsResults',
+      key: 'Id'
+    }
+  },
+  Name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  Status: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  Report: {
+    type: DataTypes.TEXT('long'),
+    allowNull: true
+  }
+}, {
+  tableName: 'TestsResultsDiffs',
+  timestamps: false
+});
+
+TestResult.hasMany(TestResultDiff, { foreignKey: 'TestResultId', as: 'TestsResultsDiffs' });
+TestResultDiff.belongsTo(TestResult, { foreignKey: 'TestResultId', as: 'TestResult' });
+
 module.exports = {
   Grid,
   Host,
@@ -256,5 +292,6 @@ module.exports = {
   Test,
   TestResult,
   Repository,
+  TestResultDiff,
   sequelize
 };

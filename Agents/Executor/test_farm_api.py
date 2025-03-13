@@ -1,10 +1,11 @@
 from datetime import datetime
 from dataclasses import dataclass
-from typing import Optional, Dict
+from typing import Optional, Dict, Union, BinaryIO
 import requests
 from urllib.parse import urljoin
 import socket
 import psutil
+import os
 
 from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
 
@@ -17,7 +18,9 @@ __all__ = [
     'get_next_test',
     'register_host',
     'unregister_host',
-    'update_host_status'
+    'update_host_status',
+    'complete_test',
+    'upload_diff'
 ]
 
 @dataclass
@@ -179,7 +182,7 @@ def unregister_host(host: Host, config: Config):
 
     response = requests.get(
         url=url,
-        params={"Id": host.Id},
+        params={"Id": host.id},
         timeout=config.test_farm_api.timeout
     )
     
@@ -198,3 +201,52 @@ def update_host_status(status: str, host: Host, config: Config):
     
     if not response.ok:
         raise RuntimeError(f"Failed to update host status with status code: {response.status_code} and message: {response.reason}")
+    
+def complete_test(test_result: TestResult, status: str, execution_output: str, config: Config):
+    url = urljoin(config.test_farm_api.base_url, "complete-test")
+    
+    payload = {
+        "TestResultId": test_result.id, 
+        "Status": status, 
+        "ExecutionOutput": execution_output
+    }
+    
+    response = requests.post(
+        url=url,
+        json=payload,
+        timeout=config.test_farm_api.timeout
+    )
+    
+    if not response.ok:
+        raise RuntimeError(f"Failed to complete test result with status code: {response.status_code} and message: {response.reason}")
+
+def upload_diff(test_result: TestResult, name: str, status: str, config: Config, report_file_path: Optional[str] = None):
+    url = urljoin(config.test_farm_api.base_url, "upload-diff")
+    
+    form_data = {
+        'TestResultId': str(test_result.id),
+        'Name': name,
+        'Status': status
+    }
+    
+    files = {}
+    
+    if report_file_path and os.path.exists(report_file_path):
+        files = {
+            'report': (os.path.basename(report_file_path), 
+                      open(report_file_path, 'rb'), 
+                      'application/octet-stream')
+        }
+    
+    response = requests.post(
+        url=url,
+        data=form_data,
+        files=files,
+        timeout=config.test_farm_api.timeout
+    )
+    
+    if files and 'report' in files:
+        files['report'][1].close()
+    
+    if not response.ok:
+        raise RuntimeError(f"Failed to upload diff with status code: {response.status_code} and message: {response.reason}")

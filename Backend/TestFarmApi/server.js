@@ -2,7 +2,7 @@ const { appSettings } = require('./appsettings');
 
 const express = require('express');
 const { Sequelize } = require('sequelize');
-const { sequelize, Grid, Host, TestRun, Test, TestResult } = require('./database');
+const { sequelize, Grid, Host, TestRun, Test, TestResult, TestResultDiff } = require('./database');
 const gridsRouter = require('./grids-router');
 const repositoriesRouter = require('./reporitories-router');
 const testsRunsRouter = require('./tests-router');
@@ -431,11 +431,18 @@ app.get('/tests-run-results/:testsRunId', async (req, res) => {
     const testsResults = await TestResult.findAll({
       where: { TestRunId: testsRunId },
       attributes: ['Id', 'TestId', 'Status', 'ExecutionOutput', 'ExecutionStartTimestamp', 'ExecutionEndTimestamp'],
-      include: [{
-        model: Test,
-        as: 'Test',
-        attributes: ['Name']
-      }],
+      include: [
+        {
+          model: Test,
+          as: 'Test',
+          attributes: ['Name']
+        },
+        {
+          model: TestResultDiff,
+          as: 'TestsResultsDiffs',
+          required: false
+        }
+      ],
       order: [['ExecutionStartTimestamp', 'ASC']]
     });
 
@@ -446,7 +453,8 @@ app.get('/tests-run-results/:testsRunId', async (req, res) => {
       Status: result.Status,
       ExecutionStartTimestamp: result.ExecutionStartTimestamp,
       ExecutionEndTimestamp: result.ExecutionEndTimestamp,
-      ExecutionOutput: result.ExecutionOutput
+      ExecutionOutput: result.ExecutionOutput,
+      Diffs: result.TestsResultsDiffs
     }));
 
     res.status(200).json(formattedResults);

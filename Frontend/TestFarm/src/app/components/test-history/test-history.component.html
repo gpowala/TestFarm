@@ -18,9 +18,9 @@
                         <td class="result-status" style="padding: 5px; text-align: center;"
                           [ngStyle]="{'background-color':
                           entry.Status === 'passed' ? '#90EE90' :
-                          entry.Status === 'failed' ? '#FFB6C1' :
-                          entry.Status === 'queued' ? '#D3D3D3' :
-                          entry.Status === 'running' ? '#FFFF99' : '#FFFFFF'}">
+                          entry.Status === 'failed' ? '#EB3324' :
+                          entry.Status === 'queued' ? '#808080' :
+                          entry.Status === 'running' ? '#FFC90E' : '#FFFFFF'}">
                           {{ entry.Status }}
                         </td>
                         <td class="result-execution-time" style="white-space: nowrap; padding: 5px; text-align: center;">{{ entry.ExecutionTime | date:'medium' }}</td>

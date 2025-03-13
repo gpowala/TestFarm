@@ -12,9 +12,13 @@ import win32event
 import logging
 import sys
 import subprocess
+import difflib
+import chardet
+import sys
 from testfarm_agents_utils import *
 
-from test_farm_api import get_next_test, register_host, unregister_host, update_host_status, Host, Repository
+from test_farm_tests import DiffPair, TestCase
+from test_farm_api import get_next_test, register_host, unregister_host, update_host_status, complete_test, upload_diff, Repository
 from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
 from logging.handlers import RotatingFileHandler
 
@@ -85,13 +89,31 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
         logging.info(f"Logging initialized to: {log_file}")
 
     def clone_repository(self, repository: Repository) -> str:
+        logging.info(f"Fetching {repository.name} tests repository...")
+
         local_repository_dir = expand_magic_variables(f"$__TF_TESTS_REPOS_DIR__/{repository.name}")
 
         if not os.path.exists(local_repository_dir):
             os.makedirs(local_repository_dir, exist_ok=True)
 
         connection_string = f"https://{repository.user}:{repository.token}@{repository.url.replace('https://', '')}"
-        Repo.clone_from(connection_string, local_repository_dir)
+
+        if os.path.exists(os.path.join(local_repository_dir, ".git")):
+            logging.info(f"Repository already exists. Pulling latest changes...")
+            
+            repo = Repo(local_repository_dir)
+            
+            origin = repo.remotes.origin
+            origin.set_url(connection_string)
+            origin.pull()
+            
+            logging.info(f"Successfully pulled latest changes")
+        else:
+            logging.info(f"Repository does not exist. Cloning new repository...")
+
+            Repo.clone_from(connection_string, local_repository_dir)
+            
+            logging.info(f"Successfully cloned new repository")
 
         return local_repository_dir
 
@@ -119,6 +141,8 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
         logging.info(f"TestFarm service is starting for grid: {self._config.grid.name}")
         logging.info(f"TestFarm API URL: {self._config.test_farm_api.base_url}")
 
+        logging.info(f"Magic variables:\n{stringify_magic_variables()}")
+
         self._host = register_host(self._config)
         assert self._host is not None, "Host must be initialized upon service startup."
         logging.info(f"Host registered successfully with hostname: {self._host.hostname} and id: {self._host.id}")
@@ -134,28 +158,229 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                 test = get_next_test(self._config)
                 if test:
                     logging.info(f"Received test: {test.test.name} (ID: {test.id})")
-
-                    logging.info(f"Cloning {test.repository.name} tests repository...")
                     local_repository_dir = self.clone_repository(test.repository)
                     
-                    logging.info(f"Repository cloned to {local_repository_dir}. Looking for test description...")
-
-                    # env = os.environ.copy()
-                    # env["PYTHONPATH"] = f"{local_repository_dir}:{env.get('PYTHONPATH', '')}"
-
-                    # new_working_dir = "/path/to/new/working/directory"
-                    # process = subprocess.Popen(["python", "-c", "import sys; print(sys.path)"], env=env, cwd=new_working_dir)
-                    # process.wait()
-
-                    # update_host_status(self._host, status, self._config)
+                    test_description_file = f"{local_repository_dir}/{test.test.path}/test.testfarm"
+                    logging.info(f"Looking for test description under {test_description_file}...")
                     
-                    update_host_status(f"Executing {test.test.name} test", self._host, self._config)
+                    if not os.path.exists(test_description_file):
+                        raise FileNotFoundError(f"Test description file does not exist: {test_description_file}")
+
+                    logging.info(f"Found test description file: {test_description_file}")
+
+                    test_case = TestCase.from_file(test_description_file)
                     
+                    env = os.environ.copy()
+                    env["PYTHONPATH"] = f"{local_repository_dir};{env.get('PYTHONPATH', '')}"
+                    logging.debug(f"env: {env}")
+
+                    new_working_dir = os.path.dirname(test_description_file)
+                    logging.debug(f"cwd: {new_working_dir}")
+                    
+                    for pre_step in test_case.pre_steps:
+                        expanded_pre_step = expand_magic_variables(pre_step)
+                        logging.info(f"Executing pre-step: {expanded_pre_step}")
+
+                        self.execute_command(expanded_pre_step, env, new_working_dir)
+
+                    expanded_test_command = expand_magic_variables(test_case.command)    
+                    logging.info(f"Executing test command: {expanded_test_command}")
+
+                    self.execute_command(expanded_test_command, env, new_working_dir)
+                        
+                    for post_step in test_case.post_steps:
+                        expanded_post_step = expand_magic_variables(post_step)
+                        logging.info(f"Executing post-step: {expanded_post_step}")
+
+                        self.execute_command(expanded_post_step, env, new_working_dir)
+
+                    logging.info(f"Test passed! Registering results...")
+
+                    test_passed = True
+
+                    for diff in test_case.diffs:
+                        diff_name = os.path.splitext(os.path.basename(diff.gold))[0]
+
+                        gold_file = f"{new_working_dir}/{diff.gold}"
+                        new_file = expand_magic_variables(diff.new)
+                        report_file = expand_magic_variables(f"$__TF_TEMP_DIR__/{diff_name}.html")
+                        self.generate_html_diff(gold_file, new_file, report_file)
+
+                        # Check if the diff report is not empty
+                        if os.path.getsize(report_file) > 0:
+                            logging.info(f"Differences found in {diff.gold} vs {diff.new}")
+                            logging.info(f"HTML difference report generated: {report_file}")
+                            test_passed = False
+                            upload_diff(test, diff_name, "failed", self._config, report_file)
+                        else:
+                            logging.info(f"No differences found in {diff.gold} vs {diff.new}")
+                            upload_diff(test, diff_name, "passed", self._config)
+
+                    if test_passed:
+                        logging.info("Test PASSED! Publishing results...")
+                        complete_test(test, "passed", self.read_execution_output(test_case), self._config)
+                    else:
+                        logging.info("Test FAILED! Publishing results...")
+                        complete_test(test, "failed", self.read_execution_output(test_case), self._config)
+
+                    logging.info("Test completed.")
+            except Exception as e:
+                logging.error(f"Error processing test: {e}")
+            finally:
                 update_host_status("Waiting for tests...", self._host, self._config)
                 logging.info(f"Host {self._host.hostname} status set to \"Waiting for tests...\"")
-            except requests.RequestException as e:
-                logging.error(f"Error fetching or processing test: {e}")
 
-            time.sleep(60)
+                time.sleep(60)
         
         logging.info("TestFarm service has stopped.")
+
+    def execute_command(self, command: str, env: str, cwd: str) -> None:
+        try:
+            subprocess.run(command, shell=True, check=True, 
+                          env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Command execution failed! Exit code: {e.returncode}\n"
+                         f"stdout: {e.stdout.decode('utf-8', errors='replace')}\n"
+                         f"stderr: {e.stderr.decode('utf-8', errors='replace')}")
+        except FileNotFoundError:
+            raise RuntimeError(f"Command not found or could not be executed!")
+        except Exception as e:
+            raise RuntimeError(f"Command execution failed! Details: {e}")
+        
+    def read_execution_output(self, test_case: TestCase) -> str:
+        output_file_path = expand_magic_variables(test_case.output)
+
+        if os.path.exists(output_file_path):
+            try:
+                with open(output_file_path, 'r', encoding='utf-8') as output_file:
+                    return output_file.read()
+            except Exception as e:
+                raise RuntimeError(f"Error reading execution output file {output_file_path}: {e}")
+        else:
+            raise RuntimeError(f"Execution output file not found: {output_file_path}")
+
+    def detect_encoding(self, file_path):
+        with open(file_path, 'rb') as f:
+            raw_data = f.read()
+            result = chardet.detect(raw_data)
+        return result['encoding'] if result['encoding'] else 'utf-8'  # Default to UTF-8 if unknown
+
+    def generate_html_diff(self, gold_file: str, new_file: str, report_file: str):
+        gold_encoding = self.detect_encoding(gold_file)
+        new_encoding = self.detect_encoding(new_file)
+        
+        with open(gold_file, 'r', encoding=gold_encoding) as f1, open(new_file, 'r', encoding=new_encoding) as f2:
+            gold_content = f1.readlines()
+            new_content = f2.readlines()
+
+        differ = difflib.unified_diff(gold_content, new_content, fromfile=gold_file, tofile=new_file, lineterm='', n=10)
+        
+        diff_lines = list(differ)
+        diff_lines = [line for line in diff_lines if not line.startswith('---') and not line.startswith('+++')]
+
+        if not diff_lines:
+            open(report_file, 'w').close()
+            return
+
+        html_content = f"""
+            <html>
+                <head>
+                    <title>File Differences [Gold File: {gold_file} vs New File: {new_file}]</title>
+                    <style>
+                        body {{ font-family: Arial, sans-serif; margin: 20px; }}
+                        table {{ width: 100%; border: 1px solid #ddd; }}
+                        th, td {{ padding: 2px; font-family: monospace; white-space: pre; }}
+                        th {{ background-color: #f4f4f4; }}
+                        .added {{ background-color: #d4fcbc; }} /* Green */
+                        .removed {{ background-color: #ffdddd; }} /* Red */
+                        .context {{ background-color: #f8f8f8; }} /* Gray */
+                        .view-buttons {{ margin-bottom: 15px; }}
+                        .view-buttons button {{ padding: 8px 15px; margin-right: 10px; cursor: pointer; }}
+                        .active-view {{ background-color: #007bff; color: white; border: none; }}
+                        .inactive-view {{ background-color: #f8f8f8; border: 1px solid #ddd; }}
+                        .hidden {{ display: none; }}
+                    </style>
+                    <script>
+                        function switchView(viewName) {{
+                            // Hide all views
+                            document.getElementById('side-by-side-view').classList.add('hidden');
+                            document.getElementById('unified-view').classList.add('hidden');
+                            
+                            // Show selected view
+                            document.getElementById(viewName).classList.remove('hidden');
+                            
+                            // Update button styles
+                            if (viewName === 'side-by-side-view') {{
+                                document.getElementById('side-by-side-btn').classList.add('active-view');
+                                document.getElementById('side-by-side-btn').classList.remove('inactive-view');
+                                document.getElementById('unified-btn').classList.add('inactive-view');
+                                document.getElementById('unified-btn').classList.remove('active-view');
+                            }} else {{
+                                document.getElementById('unified-btn').classList.add('active-view');
+                                document.getElementById('unified-btn').classList.remove('inactive-view');
+                                document.getElementById('side-by-side-btn').classList.add('inactive-view');
+                                document.getElementById('side-by-side-btn').classList.remove('active-view');
+                            }}
+                        }}
+                    </script>
+                </head>
+                <body>
+                    <h2>File Difference Report</h2>
+                    <div class="view-buttons">
+                        <button id="side-by-side-btn" class="active-view" onclick="switchView('side-by-side-view')">Side by Side View</button>
+                        <button id="unified-btn" class="inactive-view" onclick="switchView('unified-view')">Unified View</button>
+                    </div>
+                    
+                    <div id="side-by-side-view">
+                        <table>
+                            <tr><th>Gold File: {gold_file}</th><th>New File: {new_file}</th></tr>
+        """
+        
+        # Process lines for side-by-side view
+        left_side = []
+        right_side = []
+        
+        for line in diff_lines:
+            if line.startswith('-'):
+                left_side.append(f'<td class="removed">- {line[1:].rstrip()}</td>')
+                right_side.append('<td></td>')
+            elif line.startswith('+'):
+                left_side.append('<td></td>')
+                right_side.append(f'<td class="added">+ {line[1:].rstrip()}</td>')
+            else:
+                left_side.append(f'<td class="context">{line}</td>')
+                right_side.append(f'<td class="context">{line}</td>')
+
+        # Add side-by-side rows
+        for left, right in zip(left_side, right_side):
+            html_content += f"<tr>{left}{right}</tr>\n"
+
+        # Close the side-by-side table and start unified view
+        html_content += """
+                        </table>
+                    </div>
+                    
+                    <div id="unified-view" class="hidden">
+                        <table>
+                            <tr><th>Unified Diff View</th></tr>
+        """
+        
+        # Process lines for unified view
+        for line in diff_lines:
+            if line.startswith('-'):
+                html_content += f'<tr><td class="removed">- {line[1:].rstrip()}</td></tr>\n'
+            elif line.startswith('+'):
+                html_content += f'<tr><td class="added">+ {line[1:].rstrip()}</td></tr>\n'
+            else:
+                html_content += f'<tr><td class="context">{line}</td></tr>\n'
+
+        # Close the unified table and finish the HTML
+        html_content += """
+                        </table>
+                    </div>
+                </body>
+            </html>
+        """
+
+        with open(report_file, 'w', encoding='utf-8') as f:
+            f.write(html_content)

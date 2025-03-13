@@ -9,6 +9,7 @@
                     <th class="test-name" style="padding: 5px; text-align: left;">Name</th>
                     <th class="result-status" style="padding: 5px; text-align: center;">Status</th>
                     <th class="result-details" style="padding: 5px; text-align: center;">Details</th>
+                    <th class="result-diffs" style="padding: 5px; text-align: center;">Diffs</th>
                     <th class="test-history" style="padding: 5px; text-align: center;">History</th>
                 </tr>
             </thead>
@@ -31,6 +32,11 @@
                                 {{ result.ShowDetails ? 'hide' : 'show' }}
                             </button>
                         </td>
+                        <td class="result-details" style="padding: 5px; text-align: center;">
+                          <button mat-button color="primary" (click)="result.ShowDiffs = !result.ShowDiffs">
+                              {{ result.ShowDiffs ? 'hide' : 'show' }}
+                          </button>
+                        </td>
                         <td class="test-history" style="padding: 5px; text-align: center;">
                             <button mat-button color="primary" (click)="result.ShowHistory = !result.ShowHistory">
                                 {{ result.ShowHistory ? 'hide' : 'show' }}
@@ -38,12 +44,24 @@
                         </td>
                     </tr>
                     <tr *ngIf="result.ShowDetails" class="expanded-details">
-                        <td colspan="4" class="execution-output" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
+                        <td colspan="5" class="execution-output" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
                             <div [innerHTML]="result.ExecutionOutput | consoleOutputToHtml"></div>
                         </td>
                     </tr>
+                    <tr *ngIf="result.ShowDiffs" class="expanded-details">
+                      <td colspan="5" class="execution-output" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
+                          <div *ngFor="let diff of result.Diffs" class="diff-container">
+                            <div class="diff-header">
+                              <strong>Name:</strong> {{diff.Name}}
+                            </div>
+                            <div class="diff-item">
+                              <strong>Status:</strong> {{diff.Status}}
+                            </div>
+                          </div>
+                      </td>
+                  </tr>
                     <tr *ngIf="result.ShowHistory" class="expanded-history">
-                        <td colspan="4" class="test-history" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
+                        <td colspan="5" class="test-history" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
                             <app-test-history [testId]="result.TestId"></app-test-history>
                         </td>
                     </tr>
