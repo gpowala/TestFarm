@@ -2,7 +2,7 @@ const { appSettings } = require('./appsettings');
 
 const express = require('express');
 const { Sequelize } = require('sequelize');
-const { sequelize, Grid, Host, TestRun, Test, TestResult, TestResultDiff } = require('./database');
+const { sequelize, Grid, Host, TestRun, Test, TestResult, TestResultDiff, Repository } = require('./database');
 const gridsRouter = require('./grids-router');
 const repositoriesRouter = require('./reporitories-router');
 const testsRunsRouter = require('./tests-router');
@@ -435,7 +435,7 @@ app.get('/tests-run-results/:testsRunId', async (req, res) => {
         {
           model: Test,
           as: 'Test',
-          attributes: ['Name']
+          attributes: ['Name', 'RepositoryName', 'SuiteName', 'Path', 'Owner']
         },
         {
           model: TestResultDiff,
@@ -450,6 +450,10 @@ app.get('/tests-run-results/:testsRunId', async (req, res) => {
       Id: result.Id,
       TestId: result.TestId,
       TestName: result.Test.Name,
+      TestRepositoryName: result.Test.RepositoryName,
+      TestSuiteName: result.Test.SuiteName,
+      TestPath: result.Test.Path,
+      TestOwner: result.Test.Owner,
       Status: result.Status,
       ExecutionStartTimestamp: result.ExecutionStartTimestamp,
       ExecutionEndTimestamp: result.ExecutionEndTimestamp,

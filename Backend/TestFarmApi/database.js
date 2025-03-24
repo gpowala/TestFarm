@@ -121,6 +121,10 @@ const TestRun = sequelize.define('TestsRuns', {
   CreationTimestamp: {
     type: DataTypes.DATE,
     allowNull: false
+  },
+  TeamsNotificationUrl: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   tableName: 'TestsRuns',

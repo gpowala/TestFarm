@@ -7,6 +7,7 @@ const router = express.Router();
 
 const { appSettings } = require('./appsettings');
 const { Test, TestRun, TestResult, TestResultDiff, Repository, sequelize } = require('./database');
+const { sendTestRunCompletionMessageToTeams } = require('./notifications');
 
 cloneSparseRepository = (repository, localRepositoryDir) => {
   if (!fs.existsSync(localRepositoryDir))
@@ -28,7 +29,7 @@ requireRepositoryExists = (repository) => {
 
 router.post('/schedule-run', async (req, res) => {
   console.log('Scheduling test run:', req.body);
-  const { RepositoryName, SuiteName, GridName, TestRunName } = req.body;
+  const { RepositoryName, SuiteName, GridName, TestRunName, TeamsNotificationUrl } = req.body;
   const localRepositoryDir = `${appSettings.storage.repositories}/${RepositoryName}`;  
   
   try {
@@ -49,7 +50,8 @@ router.post('/schedule-run', async (req, res) => {
       SuiteName: SuiteName,
       GridName: GridName,
       Name: TestRunName,
-      CreationTimestamp: new Date()
+      CreationTimestamp: new Date(),
+      TeamsNotificationUrl: TeamsNotificationUrl
     });
 
     requestedTestsPaths.forEach(async (testPath) => {
@@ -182,6 +184,20 @@ router.post('/complete-test', async (req, res) => {
     testResult.ExecutionEndTimestamp = new Date();
     testResult.ExecutionOutput = ExecutionOutput;
     await testResult.save();
+
+    // Check if all tests in this TestRun are completed
+    const testRun = await TestRun.findByPk(testResult.TestRunId);
+    const pendingTests = await TestResult.count({
+      where: {
+        TestRunId: testResult.TestRunId,
+        Status: ['queued', 'running']
+      }
+    });
+
+    // If no more pending tests, send notification
+    if (pendingTests === 0 && testRun.TeamsNotificationUrl) {
+      sendTestRunCompletionMessageToTeams(testResult.TestRunId);
+    }
     
     res.status(200).json(testResult);
   } catch (error) {
