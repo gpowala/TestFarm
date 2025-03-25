@@ -75,13 +75,15 @@ export class GridsComponent implements OnInit, OnDestroy{
   }
 
   isRecentUpdate(timestamp: string): boolean {
-    const updateTime = new Date(timestamp);
+    // Parse the timestamp in DD/MM/YYYY HH:MM:SS format
+    const [datePart, timePart] = timestamp.split(' ');
+    const [day, month, year] = datePart.split('/').map(Number);
+    const [hours, minutes, seconds] = timePart.split(':').map(Number);
+    const updateTime = new Date(year, month - 1, day, hours, minutes, seconds);
+
     const currentTime = new Date();
 
-    // Calculate the difference in milliseconds
     const differenceInMs = currentTime.getTime() - updateTime.getTime();
-
-    // Calculate the difference in minutes
     const differenceInMinutes = differenceInMs / (1000 * 60);
 
     // Return true if the update is less than 5 minutes old
