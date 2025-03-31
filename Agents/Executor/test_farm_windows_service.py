@@ -194,15 +194,27 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
                         self.execute_command(expanded_post_step, env, new_working_dir)
 
-                    logging.info(f"Test passed! Registering results...")
-
                     test_passed = True
 
                     for diff in test_case.diffs:
                         diff_name = os.path.splitext(os.path.basename(diff.gold))[0]
 
                         gold_file = f"{new_working_dir}/{diff.gold}"
+                        if not os.path.exists(gold_file):
+                            test_passed = False
+                            upload_diff(test, diff_name, "no gold file", self._config)
+
+                            logging.info(f"Gold file {gold_file} not found!")
+                            continue
+                        
                         new_file = expand_magic_variables(diff.new)
+                        if not os.path.exists(new_file):
+                            test_passed = False
+                            upload_diff(test, diff_name, "no new file", self._config)
+
+                            logging.info(f"New file {new_file} not found!")
+                            continue
+
                         report_file = expand_magic_variables(f"$__TF_TEMP_DIR__/{diff_name}.html")
                         self.generate_html_diff(gold_file, new_file, report_file)
 
