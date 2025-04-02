@@ -32,4 +32,8 @@ export class TestsApiHttpClientService {
     getTestHistory(testId: string) {
         return this.http.get<TestHistoryResult[]>(`${environment.baseApiUrl}/test-history/${testId}`);
     }
+
+    downloadTempDirArchive(testResultId: number) {
+        return this.http.get(`${environment.baseApiUrl}/download-temp-dir-archive/${testResultId}`, { responseType: 'blob' });
+    }
 }

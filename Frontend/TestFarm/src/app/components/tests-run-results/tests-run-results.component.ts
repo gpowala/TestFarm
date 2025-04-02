@@ -4,6 +4,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TestsRunResultDescription } from '../../models/tests-run-result-description';
 import { TestsApiHttpClientService } from '../../services/tests-api-http-cient-service';
+import { catchError, retry, throwError } from 'rxjs';
 
 @Component({
   selector: 'app-tests-run-results',
@@ -37,6 +38,16 @@ export class TestsRunResultsComponent implements OnInit {
         }
       );
     }
+  }
+
+  downloadTempDirArchive(testResultId: number) {
+    this.testsApiHttpClientService.downloadTempDirArchive(testResultId).pipe(
+      retry(3),
+      catchError(error => {
+        console.error('Error downloading archive:', error);
+        return throwError(() => new Error('Failed to download archive'));
+      })
+    );
   }
 
   onMouseOver(event: MouseEvent) {

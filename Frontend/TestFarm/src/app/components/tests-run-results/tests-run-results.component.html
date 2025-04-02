@@ -6,11 +6,14 @@
         <table class="runs-table" style="width: 100%;">
             <thead>
                 <tr>
+                    <th class="test-name" style="padding: 5px; text-align: left;">Path</th>
                     <th class="test-name" style="padding: 5px; text-align: left;">Name</th>
-                    <th class="result-status" style="padding: 5px; text-align: center;">Status</th>
-                    <th class="result-details" style="padding: 5px; text-align: center;">Details</th>
-                    <th class="result-diffs" style="padding: 5px; text-align: center;">Diffs</th>
-                    <th class="test-history" style="padding: 5px; text-align: center;">History</th>
+                    <th class="result-status" style="padding: 5px 50px 5px 50px; text-align: center;">Status</th>
+                    <th class="result-status" style="padding: 5px 50px 5px 50px; text-align: center; width: 1%; min-width: fit-content; white-space: nowrap;">Execution Time</th>
+                    <th class="result-details" style="padding: 5px 30px 5px 30px; text-align: center; width: 1%; min-width: fit-content; white-space: nowrap;"></th>
+                    <th class="result-diffs" style="padding: 5px 30px 5px 30px; text-align: center; width: 1%; min-width: fit-content; white-space: nowrap;"></th>
+                    <th class="test-history" style="padding: 5px 30px 5px 30px; text-align: center; width: 1%; min-width: fit-content; white-space: nowrap;"></th>
+                    <th class="actions" style="white-space: nowrap; padding: 5px; width: 1%; min-width: fit-content;"></th>
                 </tr>
             </thead>
             <tbody>
@@ -18,8 +21,9 @@
                     <tr class="run-item" [ngClass]="{'expanded': result.ShowDetails || result.ShowHistory}" style="transition: background-color 0.3s;"
                         (mouseover)="onMouseOver($event)"
                         (mouseout)="onMouseOut($event, (result.ShowDetails || result.ShowHistory) ?? false)">
+                        <td class="test-name" style="padding: 5px; text-align: left;">{{ result.TestPath }}</td>
                         <td class="test-name" style="padding: 5px; text-align: left;">{{ result.TestName }}</td>
-                        <td class="result-status" style="padding: 5px; text-align: center;"
+                        <td class="result-status" style="padding: 5px 50px 5px 50px; text-align: center;"
                           [ngStyle]="{'background-color':
                           result.Status === 'passed' ? '#90EE90' :
                           result.Status === 'failed' ? '#FFB6C1' :
@@ -27,29 +31,35 @@
                           result.Status === 'running' ? '#FFFF99' : '#FFFFFF'}">
                           {{ result.Status }}
                         </td>
-                        <td class="result-details" style="padding: 5px; text-align: center;">
+                        <td class="test-name" style="padding: 5px; text-align: left;"></td>
+                        <td class="result-details" style="padding: 5px; text-align: center; width: 1%; min-width: fit-content; white-space: nowrap;">
                             <button mat-button color="primary" (click)="result.ShowDetails = !result.ShowDetails">
-                                {{ result.ShowDetails ? 'hide' : 'show' }}
+                                {{ result.ShowDetails ? 'details ▲' : 'details ▼' }}
                             </button>
                         </td>
-                        <td class="result-details" style="padding: 5px; text-align: center;">
+                        <td class="result-details" style="padding: 5px; text-align: center; width: 1%; min-width: fit-content; white-space: nowrap;">
                           <button mat-button color="primary" (click)="result.ShowDiffs = !result.ShowDiffs">
-                              {{ result.ShowDiffs ? 'hide' : 'show' }}
+                              {{ result.ShowDiffs ? 'diffs ▲' : 'diffs ▼' }}
                           </button>
                         </td>
-                        <td class="test-history" style="padding: 5px; text-align: center;">
+                        <td class="test-history" style="padding: 5px; text-align: center; width: 1%; min-width: fit-content; white-space: nowrap;">
                             <button mat-button color="primary" (click)="result.ShowHistory = !result.ShowHistory">
-                                {{ result.ShowHistory ? 'hide' : 'show' }}
+                                {{ result.ShowHistory ? 'history ▲' : 'history ▼' }}
                             </button>
                         </td>
+                        <td style="white-space: nowrap; padding: 5px; text-align: center; width: 1%; min-width: fit-content; white-space: nowrap;">
+                          <button mat-button color="primary" (click)="downloadTempDirArchive(result.Id)">
+                            <mat-icon>archive</mat-icon>
+                          </button>
+                      </td>
                     </tr>
                     <tr *ngIf="result.ShowDetails" class="expanded-details">
-                        <td colspan="5" class="execution-output" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
+                        <td colspan="8" class="execution-output" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
                             <div [innerHTML]="result.ExecutionOutput | consoleOutputToHtml"></div>
                         </td>
                     </tr>
                     <tr *ngIf="result.ShowDiffs" class="expanded-details">
-                      <td colspan="5" class="execution-output" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
+                      <td colspan="8" class="execution-output" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
                         <table class="runs-table" style="width: 100%;">
                           <thead>
                               <tr>
@@ -78,7 +88,7 @@
                       </td>
                   </tr>
                     <tr *ngIf="result.ShowHistory" class="expanded-history">
-                        <td colspan="5" class="test-history" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
+                        <td colspan="8" class="test-history" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
                             <app-test-history [testId]="result.TestId"></app-test-history>
                         </td>
                     </tr>

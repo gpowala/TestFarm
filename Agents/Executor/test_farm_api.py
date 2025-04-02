@@ -250,3 +250,32 @@ def upload_diff(test_result: TestResult, name: str, status: str, config: Config,
     
     if not response.ok:
         raise RuntimeError(f"Failed to upload diff with status code: {response.status_code} and message: {response.reason}")
+    
+def upload_temp_dir_archive(test_result: TestResult, config: Config, archive_file_path: str = None):
+    url = urljoin(config.test_farm_api.base_url, "upload-diff")
+    
+    form_data = {
+        'TestResultId': str(test_result.id)
+    }
+    
+    files = {}
+    
+    if archive_file_path and os.path.exists(archive_file_path):
+        files = {
+            'archive': (os.path.basename(archive_file_path), 
+                      open(archive_file_path, 'rb'), 
+                      'application/octet-stream')
+        }
+    
+    response = requests.post(
+        url=url,
+        data=form_data,
+        files=files,
+        timeout=config.test_farm_api.timeout
+    )
+    
+    if files and 'archive' in files:
+        files['archive'][1].close()
+    
+    if not response.ok:
+        raise RuntimeError(f"Failed to upload temp dir archive with status code: {response.status_code} and message: {response.reason}")

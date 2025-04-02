@@ -15,6 +15,7 @@ import subprocess
 import difflib
 import chardet
 import sys
+import py7zr
 from testfarm_agents_utils import *
 
 from test_farm_tests import DiffPair, TestCase
@@ -227,6 +228,22 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                         else:
                             logging.info(f"No differences found in {diff.gold} vs {diff.new}")
                             upload_diff(test, diff_name, "passed", self._config)
+
+                    # Archive temp directory contents
+                    temp_dir = expand_magic_variables("$__TF_TEMP_DIR__")
+                    archive_path = os.path.join(os.path.dirname(temp_dir), "result_temp_archive.7z")
+                    logging.info(f"Archiving contents of {temp_dir} to {archive_path}")
+                    
+                    try:
+                        with py7zr.SevenZipFile(archive_path, mode='w') as archive:
+                            for root, dirs, files in os.walk(temp_dir):
+                                for file in files:
+                                    file_path = os.path.join(root, file)
+                                    archive_name = os.path.relpath(file_path, temp_dir)
+                                    archive.write(file_path, archive_name)
+                        logging.info(f"Successfully created archive at {archive_path}")
+                    except Exception as e:
+                        logging.error(f"Failed to create archive: {e}")
 
                     if test_passed:
                         logging.info("Test PASSED! Publishing results...")

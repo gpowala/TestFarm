@@ -289,6 +289,34 @@ const TestResultDiff = sequelize.define('TestResultDiff', {
 TestResult.hasMany(TestResultDiff, { foreignKey: 'TestResultId', as: 'TestsResultsDiffs' });
 TestResultDiff.belongsTo(TestResult, { foreignKey: 'TestResultId', as: 'TestResult' });
 
+const TestResultsTempDirArchive = sequelize.define('TestResultsTempDirArchive', {
+  Id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+    allowNull: false
+  },
+  TestResultId: {
+    type: DataTypes.INTEGER,
+    foreignKey: true,
+    allowNull: false,
+    references: {
+      model: 'TestsResults',
+      key: 'Id'
+    }
+  },
+  ArchivePath: {
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+}, {
+  tableName: 'TestResultsTempDirArchives',
+  timestamps: false
+});
+
+TestResult.hasOne(TestResultsTempDirArchive, { foreignKey: 'TestResultId', as: 'TestResultsTempDirArchive' });
+TestResultsTempDirArchive.belongsTo(TestResult, { foreignKey: 'TestResultId', as: 'TestResult' });
+
 module.exports = {
   Grid,
   Host,

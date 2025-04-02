@@ -11,3 +11,22 @@
     text-decoration-color: rgb(255,75,130);
     text-decoration-thickness: 3px;
 }
+
+.mat-mdc-button {
+  min-width: 0px !important;
+}
+
+button[mat-raised-button] {
+  height: 36px;
+  padding: 0 16px;
+  align-self: flex-end;
+  box-shadow: none;
+}
+
+button[mat-raised-button]:active {
+  box-shadow: none !important;
+}
+
+.mat-mdc-button>.mat-icon {
+  margin-right: 0;
+}

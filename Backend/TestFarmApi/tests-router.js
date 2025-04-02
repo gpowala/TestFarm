@@ -1,5 +1,6 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
+const path = require('path');
 const { Sequelize } = require('sequelize'); // Add Sequelize import
 
 const express = require('express');
@@ -29,6 +30,7 @@ requireRepositoryExists = (repository) => {
 
 router.post('/schedule-run', async (req, res) => {
   console.log('Scheduling test run:', req.body);
+  
   const { RepositoryName, SuiteName, GridName, TestRunName, TeamsNotificationUrl } = req.body;
   const localRepositoryDir = `${appSettings.storage.repositories}/${RepositoryName}`;  
   
@@ -208,9 +210,10 @@ router.post('/complete-test', async (req, res) => {
 
 const multer = require('multer');
 const zlib = require('zlib');
-const upload = multer({ dest: 'uploads/' });
 
-router.post('/upload-diff', upload.single('report'), async (req, res) => {
+const uploadDiff = multer({ dest: 'uploads/' });
+
+router.post('/upload-diff', uploadDiff.single('report'), async (req, res) => {
   const { TestResultId, Name, Status } = req.body;
   const reportFile = req.file;
 
@@ -239,6 +242,68 @@ router.post('/upload-diff', upload.single('report'), async (req, res) => {
     res.status(201).json(testResultDiff);
   } catch (error) {
     console.error('Error uploading report:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, appSettings.storage.resultsTempDirArchives); // Set the destination directory
+  },
+  filename: (req, file, cb) => {
+    if (!req.body.TestResultId) {
+      return cb(new Error('TestResultId is required in the request body'));
+    }
+    const fileName = `${req.body.TestResultId}.7z`; // Use TestResultId to generate the filename
+    cb(null, fileName);
+  }
+});
+
+const uploadTempDirArchive = multer({ storage });
+
+router.post('/upload-temp-dir-archive', uploadTempDirArchive.single('archive'), async (req, res) => {
+  const { TestResultId } = req.body;
+
+  try {
+    const testResult = await TestResult.findByPk(TestResultId);
+
+    if (!testResult) {
+      return res.status(404).json({ message: 'Test result not found' });
+    }
+
+    const archivePath = path.join(appSettings.storage.resultsTempDirArchives, `${TestResultId}.7z`);
+
+    const testResultTempDirArchive = await TestResultsTempDirArchive.create({
+      TestResultId,
+      ArchivePath: archivePath
+    });
+
+    res.status(201).json(testResultTempDirArchive);
+  } catch (error) {
+    console.error('Error uploading temp dir archive:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
+router.get('/download-temp-dir-archive/:TestResultId', async (req, res) => {
+  const { TestResultId } = req.params;
+  
+  try {
+    const testResult = await TestResult.findByPk(TestResultId);
+    
+    if (!testResult) {
+      return res.status(404).json({ message: 'Test result not found' });
+    }
+    
+    const archivePath = path.join(appSettings.storage.resultsTempDirArchives, `${TestResultId}.7z`);
+    
+    if (!fs.existsSync(archivePath)) {
+      return res.status(404).json({ message: 'Archive file not found' });
+    }
+    
+    res.download(archivePath);
+  } catch (error) {
+    console.error('Error downloading temp dir archive:', error);
     res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 });
