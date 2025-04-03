@@ -16,6 +16,7 @@ import difflib
 import chardet
 import sys
 import py7zr
+import shutil
 from testfarm_agents_utils import *
 
 from test_farm_tests import DiffPair, TestCase
@@ -158,6 +159,8 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
             try:
                 test = get_next_test(self._config)
                 if test:
+                    self.cleanup_temp_dir()
+
                     logging.info(f"Received test: {test.test.name} (ID: {test.id})")
                     local_repository_dir = self.clone_repository(test.repository)
                     
@@ -231,7 +234,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
                     # Archive temp directory contents
                     temp_dir = expand_magic_variables("$__TF_TEMP_DIR__")
-                    archive_path = os.path.join(os.path.dirname(temp_dir), "result_temp_archive.7z")
+                    archive_path = expand_magic_variables(f"$__TF_TEMP_DIR__/result_temp_archive.7z")
                     logging.info(f"Archiving contents of {temp_dir} to {archive_path}")
                     
                     try:
@@ -263,6 +266,22 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
         
         logging.info("TestFarm service has stopped.")
 
+    def cleanup_temp_dir(self):
+        temp_dir = expand_magic_variables("$__TF_TEMP_DIR__")
+        logging.info(f"Cleaning up temp directory: {temp_dir}")
+        if os.path.exists(temp_dir):
+            try:
+                shutil.rmtree(temp_dir)
+                logging.info(f"Removed existing temp directory")
+            except Exception as e:
+                logging.error(f"Error cleaning up temp directory: {e}")
+
+        try:
+            os.makedirs(temp_dir, exist_ok=True)
+            logging.info(f"Created empty temp directory at {temp_dir}")
+        except Exception as e:
+            logging.error(f"Failed to create temp directory: {e}")
+    
     def execute_command(self, command: str, env: str, cwd: str) -> None:
         try:
             subprocess.run(command, shell=True, check=True, 
