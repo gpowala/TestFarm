@@ -7,7 +7,7 @@ const express = require('express');
 const router = express.Router();
 
 const { appSettings } = require('./appsettings');
-const { Test, TestRun, TestResult, TestResultDiff, Repository, sequelize } = require('./database');
+const { Test, TestRun, TestResult, TestResultDiff, TestResultsTempDirArchive, Repository, sequelize } = require('./database');
 const { sendTestRunCompletionMessageToTeams } = require('./notifications');
 
 cloneSparseRepository = (repository, localRepositoryDir) => {
