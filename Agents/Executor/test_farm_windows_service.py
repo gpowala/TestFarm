@@ -20,7 +20,7 @@ import shutil
 from testfarm_agents_utils import *
 
 from test_farm_tests import DiffPair, TestCase
-from test_farm_api import get_next_test, register_host, unregister_host, update_host_status, complete_test, upload_diff, Repository
+from test_farm_api import get_next_test, register_host, unregister_host, update_host_status, complete_test, upload_diff, upload_temp_dir_archive, Repository
 from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
 from logging.handlers import RotatingFileHandler
 
@@ -244,9 +244,11 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                                     file_path = os.path.join(root, file)
                                     archive_name = os.path.relpath(file_path, temp_dir)
                                     archive.write(file_path, archive_name)
-                        logging.info(f"Successfully created archive at {archive_path}")
+
+                        upload_temp_dir_archive(test, self.config, archive_path)
+                        logging.info(f"Successfully created archive at {archive_path} and uploaded")
                     except Exception as e:
-                        logging.error(f"Failed to create archive: {e}")
+                        logging.error(f"Failed to create or upload archive: {e}")
 
                     if test_passed:
                         logging.info("Test PASSED! Publishing results...")
