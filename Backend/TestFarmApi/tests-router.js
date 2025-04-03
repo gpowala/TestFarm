@@ -259,9 +259,12 @@ const storage = multer.diskStorage({
   }
 });
 
-const uploadTempDirArchive = multer({ storage });
+const uploadTempDirArchive = multer({ 
+  storage,
+  limits: { fileSize: 1024 * 1024 * 100 } // 100MB file size limit
+}).fields([{ name: 'archive', maxCount: 1 }]);
 
-router.post('/upload-temp-dir-archive', uploadTempDirArchive.single('archive'), async (req, res) => {
+router.post('/upload-temp-dir-archive', uploadTempDirArchive, async (req, res) => {
   const { TestResultId } = req.body;
 
   try {
