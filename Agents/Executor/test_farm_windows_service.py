@@ -245,7 +245,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                                     archive_name = os.path.relpath(file_path, temp_dir)
                                     archive.write(file_path, archive_name)
 
-                        upload_temp_dir_archive(test, self.config, archive_path)
+                        upload_temp_dir_archive(test, self._config, archive_path)
                         logging.info(f"Successfully created archive at {archive_path} and uploaded")
                     except Exception as e:
                         logging.error(f"Failed to create or upload archive: {e}")
