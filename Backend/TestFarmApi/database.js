@@ -325,5 +325,6 @@ module.exports = {
   TestResult,
   Repository,
   TestResultDiff,
+  TestResultsTempDirArchive,
   sequelize
 };
