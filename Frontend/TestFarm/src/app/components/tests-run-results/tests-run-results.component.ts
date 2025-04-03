@@ -41,12 +41,21 @@ export class TestsRunResultsComponent implements OnInit {
   }
 
   downloadTempDirArchive(testResultId: number) {
-    this.testsApiHttpClientService.downloadTempDirArchive(testResultId).pipe(
-      retry(3),
-      catchError(error => {
+    this.testsApiHttpClientService.downloadTempDirArchive(testResultId).subscribe(
+      (response: Blob) => {
+        const blob = new Blob([response], { type: 'application/zip' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `temp_dir_${testResultId}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        a.remove();
+      },
+      (error: any) => {
         console.error('Error downloading archive:', error);
-        return throwError(() => new Error('Failed to download archive'));
-      })
+      }
     );
   }
 
