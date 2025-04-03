@@ -253,13 +253,13 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                         complete_test(test, "failed", self.read_execution_output(test_case), self._config)
 
                     logging.info("Test completed.")
+                else:
+                    time.sleep(60)
             except Exception as e:
                 logging.error(f"Error processing test: {e}")
             finally:
                 update_host_status("Waiting for tests...", self._host, self._config)
                 logging.info(f"Host {self._host.hostname} status set to \"Waiting for tests...\"")
-
-                time.sleep(60)
         
         logging.info("TestFarm service has stopped.")
 
