@@ -252,7 +252,7 @@ def upload_diff(test_result: TestResult, name: str, status: str, config: Config,
         raise RuntimeError(f"Failed to upload diff with status code: {response.status_code} and message: {response.reason}")
     
 def upload_temp_dir_archive(test_result: TestResult, config: Config, archive_file_path: str = None):
-    url = urljoin(config.test_farm_api.base_url, "upload-diff")
+    url = urljoin(config.test_farm_api.base_url, "upload-temp-dir-archive")
     
     form_data = {
         'TestResultId': str(test_result.id)
