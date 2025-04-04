@@ -47,7 +47,7 @@ export class TestsRunResultsComponent implements OnInit {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `temp_dir_${testResultId}.zip`;
+        a.download = `temp_dir_${testResultId}.7z`;
         document.body.appendChild(a);
         a.click();
         URL.revokeObjectURL(url);

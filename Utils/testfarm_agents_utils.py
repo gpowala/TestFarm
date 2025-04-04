@@ -11,6 +11,7 @@ __all__ = [
 default_magic_variables = {
     '$__TF_TESTS_REPOS_DIR__': os.getenv('TF_TESTS_REPOS_DIR'),
     '$__TF_TOOLS_DIR__': os.getenv('TF_TOOLS_DIR'),
+    '$__TF_WORK_DIR__': os.getenv('TF_WORK_DIR'),
     '$__TF_TEMP_DIR__': os.getenv('TF_TEMP_DIR')
 }
 

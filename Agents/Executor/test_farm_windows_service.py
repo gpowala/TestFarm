@@ -219,7 +219,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                             logging.info(f"New file {new_file} not found!")
                             continue
 
-                        report_file = expand_magic_variables(f"$__TF_TEMP_DIR__/{diff_name}.html")
+                        report_file = expand_magic_variables(f"$__TF_WORK_DIR__/{diff_name}.html")
                         self.generate_html_diff(gold_file, new_file, report_file)
 
                         # Check if the diff report is not empty
@@ -233,7 +233,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                             upload_diff(test, diff_name, "passed", self._config)
 
                     # Archive temp directory contents
-                    temp_dir = expand_magic_variables("$__TF_TEMP_DIR__")
+                    temp_dir = expand_magic_variables("$__TF_WORK_DIR__")
                     archive_path = expand_magic_variables(f"$__TF_TEMP_DIR__/result_temp_archive.7z")
                     logging.info(f"Archiving contents of {temp_dir} to {archive_path}")
                     
@@ -269,7 +269,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
         logging.info("TestFarm service has stopped.")
 
     def cleanup_temp_dir(self):
-        temp_dir = expand_magic_variables("$__TF_TEMP_DIR__")
+        temp_dir = expand_magic_variables("$__TF_WORK_DIR__")
         logging.info(f"Cleaning up temp directory: {temp_dir}")
         if os.path.exists(temp_dir):
             try:
