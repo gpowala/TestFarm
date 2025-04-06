@@ -317,6 +317,9 @@ app.get('/tests-runs', async (req, res) => {
     const testRuns = await TestRun.findAll({
       attributes: [
         'Id', 
+        'RepositoryName',
+        'SuiteName',
+        'GridName',
         'Name', 
         'CreationTimestamp',
         [
@@ -440,6 +443,7 @@ app.get('/tests-run-results/:testsRunId', async (req, res) => {
         {
           model: TestResultDiff,
           as: 'TestsResultsDiffs',
+          attributes: ['Id', 'TestResultId', 'Name', 'Status'],
           required: false
         }
       ],

@@ -36,4 +36,8 @@ export class TestsApiHttpClientService {
     downloadTempDirArchive(testResultId: number) {
         return this.http.get(`${environment.baseApiUrl}/download-temp-dir-archive/${testResultId}`, { responseType: 'blob' });
     }
+
+    getDiff(testResultDiffId: number) {
+        return this.http.get<TestsRunResultDiffDescription>(`${environment.baseApiUrl}/diff/${testResultDiffId}`);
+    }
 }

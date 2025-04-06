@@ -1,4 +1,4 @@
-import { TestsRunResultDiffDescription } from "./tests-run-result-diff-description";
+import { TestsRunResultDiffShallowDescription } from "./tests-run-result-diff-shallow-description";
 
 export interface TestsRunResultDescription {
     Id: number,
@@ -12,7 +12,7 @@ export interface TestsRunResultDescription {
     ExecutionStartTimestamp: string,
     ExecutionEndTimestamp: string,
     ExecutionOutput: string,
-    Diffs?: TestsRunResultDiffDescription[],
+    Diffs?: TestsRunResultDiffShallowDescription[],
 
     ShowDetails?: boolean,
     ShowDiffs?: boolean,

@@ -31,7 +31,7 @@
                           result.Status === 'running' ? '#FFFF99' : '#FFFFFF'}">
                           {{ result.Status }}
                         </td>
-                        <td class="test-name" style="padding: 5px; text-align: left;"></td>
+                        <td class="test-name" style="padding: 5px; text-align: center;">{{calculateExecutionTime(result)}}</td>
                         <td class="result-details" style="padding: 5px; text-align: center; width: 1%; min-width: fit-content; white-space: nowrap;">
                             <button mat-button color="primary" (click)="result.ShowDetails = !result.ShowDetails">
                                 {{ result.ShowDetails ? 'details ▲' : 'details ▼' }}
@@ -79,7 +79,7 @@
                                         {{ diff.Status }}
                                       </td>
                                       <td class="result-details" style="padding: 5px; text-align: center;">
-                                          <button mat-button color="primary" (click)="showReport(diff.Report)">show</button>
+                                          <button mat-button color="primary" (click)="showReport(diff.Id)">show</button>
                                       </td>
                                   </tr>
                               </ng-container>

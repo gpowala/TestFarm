@@ -40,7 +40,10 @@
             <thead>
                 <tr>
                     <th class="run-id" style="width: 1%; white-space: nowrap; padding: 5px;">ID</th>
+                    <th class="run-name" style="padding: 5px;">Repository Name</th>
+                    <th class="run-name" style="padding: 5px;">Suite Name</th>
                     <th class="run-name" style="padding: 5px;">Name</th>
+                    <th class="run-name" style="padding: 5px;">Grid Name</th>
                     <th class="run-timestamp" style="white-space: nowrap; padding: 5px;">Created</th>
                     <th class="run-result" style="width: 1%; white-space: nowrap; padding: 5px;">Status</th>
                 </tr>
@@ -50,7 +53,10 @@
                     (mouseover)="onMouseOver($event)"
                     (mouseout)="onMouseOut($event)">
                     <td class="run-id" style="padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.Id }}</a></td>
+                    <td class="run-repository-name" style="padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.RepositoryName }}</a></td>
+                    <td class="run-suite-name" style="padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.SuiteName }}</a></td>
                     <td class="run-name" style="padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.Name }}</a></td>
+                    <td class="run-grid-name" style="padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.GridName }}</a></td>
                     <td class="run-timestamp" style="white-space: nowrap; padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.CreationTimestamp | date:'medium' }}</a></td>
                     <td class="run-result" style="width: 1%; white-space: nowrap; padding: 5px; text-align: center;"
                       [ngStyle]="{'background-color':

@@ -311,4 +311,21 @@ router.get('/download-temp-dir-archive/:TestResultId', async (req, res) => {
   }
 });
 
+router.get('/diff/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const diff = await TestResultDiff.findByPk(id);
+
+    if (diff) {
+      res.status(200).json(diff);
+    } else {
+      res.status(404).json({ message: 'Diff not found' });
+    }
+  } catch (error) {
+    console.error('Error retrieving diff:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
 module.exports = router;
