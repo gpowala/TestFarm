@@ -302,7 +302,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
         if os.path.exists(output_file_path):
             try:
-                with open(output_file_path, 'r', encoding='utf-8') as output_file:
+                with open(output_file_path, 'r', encoding='utf-8', errors='replace') as output_file:
                     return output_file.read()
             except Exception as e:
                 raise RuntimeError(f"Error reading execution output file {output_file_path}: {e}")
@@ -319,7 +319,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
         gold_encoding = self.detect_encoding(gold_file)
         new_encoding = self.detect_encoding(new_file)
         
-        with open(gold_file, 'r', encoding=gold_encoding) as f1, open(new_file, 'r', encoding=new_encoding) as f2:
+        with open(gold_file, 'r', encoding=gold_encoding, errors='replace') as f1, open(new_file, 'r', encoding=new_encoding, errors='replace') as f2:
             gold_content = f1.readlines()
             new_content = f2.readlines()
 
@@ -432,5 +432,5 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
             </html>
         """
 
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, 'w', encoding='utf-8', errors='replace') as f:
             f.write(html_content)
