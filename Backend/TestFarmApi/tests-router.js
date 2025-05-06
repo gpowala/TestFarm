@@ -213,7 +213,7 @@ const zlib = require('zlib');
 
 const uploadDiff = multer({ 
   dest: 'uploads/',
-  limits: { fileSize: 1024 * 1024 * 10 } // 10MB file size limit 
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB size limit
 });
 
 router.post('/upload-diff', uploadDiff.single('report'), async (req, res) => {
