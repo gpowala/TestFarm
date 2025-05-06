@@ -211,7 +211,10 @@ router.post('/complete-test', async (req, res) => {
 const multer = require('multer');
 const zlib = require('zlib');
 
-const uploadDiff = multer({ dest: 'uploads/' });
+const uploadDiff = multer({ 
+  dest: 'uploads/',
+  limits: { fileSize: 1024 * 1024 * 10 } // 10MB file size limit 
+});
 
 router.post('/upload-diff', uploadDiff.single('report'), async (req, res) => {
   const { TestResultId, Name, Status } = req.body;
