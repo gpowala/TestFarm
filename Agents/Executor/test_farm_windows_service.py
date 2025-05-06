@@ -387,7 +387,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
         """
         
         # Process lines for side-by-side view
-        line_size_limit = 10000
+        line_size_limit = 5000
 
         left_side = []
         right_side = []
@@ -464,5 +464,5 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
             for i in range(len(identical_lines) - 5, len(identical_lines)):
                 left_side.append(f'<td class="context">{identical_lines[i]}</td>')
                 right_side.append(f'<td class="context">{identical_lines[i]}</td>')
-                                        
-        identical_lines = []
+
+        identical_lines.clear()
