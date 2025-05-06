@@ -387,19 +387,32 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
         """
         
         # Process lines for side-by-side view
+        line_size_limit = 10000
+
         left_side = []
         right_side = []
+
+        identical_lines = []
         
         for line in diff_lines:
             if line.startswith('-'):
+                self.append_identical_lines(left_side, right_side, identical_lines)
+
                 left_side.append(f'<td class="removed">- {line[1:].rstrip()}</td>')
                 right_side.append('<td></td>')
             elif line.startswith('+'):
+                self.append_identical_lines(left_side, right_side, identical_lines)
+
                 left_side.append('<td></td>')
                 right_side.append(f'<td class="added">+ {line[1:].rstrip()}</td>')
             else:
-                left_side.append(f'<td class="context">{line}</td>')
-                right_side.append(f'<td class="context">{line}</td>')
+                identical_lines.append(line)
+
+            line_size_limit = line_size_limit - 1
+            if line_size_limit <= 0:
+                break
+
+        self.append_identical_lines(left_side, right_side, identical_lines)
 
         # Add side-by-side rows
         for left, right in zip(left_side, right_side):
@@ -434,3 +447,22 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
         with open(report_file, 'w', encoding='utf-8', errors='replace') as f:
             f.write(html_content)
+
+    def append_identical_lines(self, left_side, right_side, identical_lines):
+        if len(identical_lines) > 0 and len(identical_lines) < 10:
+            for line in identical_lines:
+                left_side.append(f'<td class="context">{line}</td>')
+                right_side.append(f'<td class="context">{line}</td>')
+        elif len(identical_lines) >= 10:
+            for i in range(5):
+                left_side.append(f'<td class="context">{identical_lines[i]}</td>')
+                right_side.append(f'<td class="context">{identical_lines[i]}</td>')
+                    
+            left_side.append(f'<td class="context">... {len(identical_lines) - 10} more identical lines ...</td>')
+            right_side.append(f'<td class="context">... {len(identical_lines) - 10} more identical lines ...</td>')
+                    
+            for i in range(len(identical_lines) - 5, len(identical_lines)):
+                left_side.append(f'<td class="context">{identical_lines[i]}</td>')
+                right_side.append(f'<td class="context">{identical_lines[i]}</td>')
+                                        
+        identical_lines = []
