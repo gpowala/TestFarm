@@ -410,6 +410,8 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
             line_size_limit = line_size_limit - 1
             if line_size_limit <= 0:
+                left_side.append(f'<td class="context">... diff content is limited to {line_size_limit} ...</td>')
+                right_side.append(f'<td class="context">... diff content is limited to {line_size_limit} ...</td>')
                 break
 
         self.append_identical_lines(left_side, right_side, identical_lines)
