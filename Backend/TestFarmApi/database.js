@@ -17,6 +17,38 @@ sequelize.verbose_sync = async function() {
   }
 };
 
+const ArtifactDefinition = sequelize.define('ArtifactDefinition', {
+  Id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+    allowNull: false
+  },
+  Name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  }, 
+  InstallScript : {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  Tags: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    get() {
+      const rawValue = this.getDataValue('Tags');
+      return rawValue ? JSON.parse(rawValue) : [];
+    },
+    set(value) {
+      this.setDataValue('Tags', value ? JSON.stringify(value) : null);
+    }
+  }
+}, {
+  tableName: 'ArtifactsDefinitions',
+  timestamps: false
+});
+
 const Grid = sequelize.define('Grid', {
   Id: {
     type: DataTypes.INTEGER,
@@ -318,6 +350,7 @@ TestResult.hasOne(TestResultsTempDirArchive, { foreignKey: 'TestResultId', as: '
 TestResultsTempDirArchive.belongsTo(TestResult, { foreignKey: 'TestResultId', as: 'TestResult' });
 
 module.exports = {
+  ArtifactDefinition,
   Grid,
   Host,
   TestRun,
