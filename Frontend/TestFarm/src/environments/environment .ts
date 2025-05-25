@@ -1,4 +1,4 @@
 export const environment = {
     production: false,
-    baseApiUrl: 'http://localhost:3000'
+    baseApiUrl: 'https://a-ext-web051.accsd.be/testfarmapi'
 };

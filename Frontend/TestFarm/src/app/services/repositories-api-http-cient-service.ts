@@ -1,11 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError, retry } from 'rxjs/operators';
-import { TestsRunDescription } from 'src/app/models/tests-run-description';
-import { TestsRunResultDescription } from 'src/app/models/tests-run-result-description';
 import { environment } from 'src/environments/environment ';
-import { TestHistoryResult } from 'src/app/models/test-history-result.description';
 import { RepositoryDescription } from '../models/repository-description';
 import { ConfirmationMessageDescription } from '../models/confirmation-message-description';
 

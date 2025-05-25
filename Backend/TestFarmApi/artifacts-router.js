@@ -42,4 +42,50 @@ router.get('/artifact-definition/:id', async (req, res) => {
   }
 });
 
+router.get('/artifacts-definitions', async (req, res) => {
+  try {
+    const artifactDefinitions = await ArtifactDefinition.findAll();
+    res.status(200).json(artifactDefinitions);
+  } catch (error) {
+    res.status(500).json({ error: `Internal Server Error: ${error}` });
+  }
+});
+
+router.put('/artifact-definition/:id', async (req, res) => {
+  const { id } = req.params;
+  const { Name, InstallScript, Tags } = req.body;
+
+  try {
+    const artifactDefinition = await ArtifactDefinition.findByPk(id);
+    if (!artifactDefinition) {
+      return res.status(404).json({ error: 'Artifact definition not found' });
+    }
+
+    artifactDefinition.Name = Name;
+    artifactDefinition.InstallScript = InstallScript;
+    artifactDefinition.Tags = Tags;
+
+    await artifactDefinition.save();
+    res.status(200).json(artifactDefinition);
+  } catch (error) {
+    res.status(500).json({ error: `Internal Server Error: ${error}` });
+  }
+});
+
+router.delete('/artifact-definition/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const artifactDefinition = await ArtifactDefinition.findByPk(id);
+    if (!artifactDefinition) {
+      return res.status(404).json({ error: 'Artifact definition not found' });
+    }
+
+    await artifactDefinition.destroy();
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: `Internal Server Error: ${error}` });
+  }
+});
+
 module.exports = router;
