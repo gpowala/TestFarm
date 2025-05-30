@@ -10,7 +10,6 @@
               <tr>
                   <th style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">ID</th>
                   <th style="white-space: nowrap; padding: 5px; text-align: center;">Name</th>
-                  <th style="white-space: nowrap; padding: 5px;">Tags</th>
                   <th style="white-space: nowrap; padding: 5px;">Actions</th>
               </tr>
           </thead>
@@ -20,11 +19,11 @@
                   (mouseover)="onMouseOver($event)"
                   (mouseout)="onMouseOut($event)" style="transition: background-color 0.3s;">
                   <td style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">{{artifact.Id}}</td>
-                  <td style="white-space: nowrap; padding: 5px; text-align: center;">{{artifact.Name}}</td>
                   <td style="white-space: nowrap; padding: 5px; text-align: center;">
-                    <mat-chip-set>
-                      <mat-chip *ngFor="let tag of artifact.Tags">{{tag}}</mat-chip>
-                    </mat-chip-set>
+                    <a [routerLink]="['/artifacts', artifact.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">
+                      {{artifact.Name}}
+                    </a>
+                    <mat-chip *ngFor="let tag of artifact.Tags">{{tag}}</mat-chip>
                   </td>
                   <td style="white-space: nowrap; padding: 5px; text-align: center;">
                       <button mat-button color="primary" (click)="removeArtifact(artifact.Id)">

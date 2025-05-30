@@ -6,6 +6,7 @@ const { sequelize, Grid, Host, TestRun, Test, TestResult, TestResultDiff, Reposi
 const gridsRouter = require('./grids-router');
 const repositoriesRouter = require('./reporitories-router');
 const testsRunsRouter = require('./tests-router');
+const artifactsRouter = require('./artifacts-router');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const cors = require('cors');
@@ -763,6 +764,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/', gridsRouter);
 app.use('/', repositoriesRouter);
 app.use('/', testsRunsRouter);
+app.use('/', artifactsRouter);
 
 app.listen(port, async () => {
   sequelize.verbose_sync();

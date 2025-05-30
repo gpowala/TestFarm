@@ -26,11 +26,14 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatCardModule } from '@angular/material/card';
 import { AddArtifactDialogComponent } from './components/builds/add-artifact-dialog/add-artifact-dialog.component';
+import { ArtifactsComponent } from './components/artifacts/artifacts.component';
 
 @NgModule({  declarations: [
     AppComponent,
     BuildsComponent,
+    ArtifactsComponent,
     TestsComponent,
     BenchmarksComponent,
     GridsComponent,
@@ -54,11 +57,11 @@ import { AddArtifactDialogComponent } from './components/builds/add-artifact-dia
     MatTooltipModule,
     MatTableModule,
     FormsModule,
-    ReactiveFormsModule,
-    MatDialogModule,
+    ReactiveFormsModule,    MatDialogModule,
     MatInputModule,
     MatFormFieldModule,
-    MatChipsModule
+    MatChipsModule,
+    MatCardModule
   ],
   providers: [
     GridsApiHttpClientService,

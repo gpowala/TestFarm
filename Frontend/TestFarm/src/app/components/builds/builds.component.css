@@ -68,3 +68,7 @@ button[mat-raised-button]:active {
 .mat-mdc-button>.mat-icon {
   margin-right: 0;
 }
+
+.mat-mdc-standard-chip {
+  margin-left: 4px !important;
+}

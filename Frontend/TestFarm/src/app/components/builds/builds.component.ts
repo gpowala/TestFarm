@@ -43,7 +43,7 @@ export class BuildsComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.artifactsApiHttpClientService.addArtifact(
+        this.artifactsApiHttpClientService.addArtifactDefinition(
           result.Name,
           result.InstallScript,
           result.Tags
@@ -61,7 +61,7 @@ export class BuildsComponent implements OnInit {
   }
 
   removeArtifact(id: number) {
-    this.artifactsApiHttpClientService.removeArtifact(id).subscribe(
+    this.artifactsApiHttpClientService.removeArtifactDefinition(id).subscribe(
       () => {
         this.fetchArtifacts();
       },

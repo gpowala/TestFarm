@@ -9,6 +9,7 @@ import { GridsComponent } from './components/grids/grids.component';
 import { RunsComponent } from './components/runs/runs.component';
 import { TestsRunResultsComponent } from './components/tests-run-results/tests-run-results.component';
 import { RepositoriesComponent } from './components/repositories/repositories.component';
+import { ArtifactsComponent } from './components/artifacts/artifacts.component';
 
 const routes: Routes = [
   {path: 'builds', component: BuildsComponent},
@@ -18,7 +19,8 @@ const routes: Routes = [
   {path: 'groups', component: GroupsComponent},
   {path: 'grids', component: GridsComponent},
   {path: 'runs', component: RunsComponent},
-  {path: 'tests-run-results/:testsRunId', component: TestsRunResultsComponent}
+  {path: 'tests-run-results/:testsRunId', component: TestsRunResultsComponent},
+  {path: 'artifacts/:artifactDefinitionId', component: ArtifactsComponent}
 ];
 
 @NgModule({

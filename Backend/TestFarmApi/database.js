@@ -1,5 +1,6 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const { appSettings } = require('./appsettings');
+const { BuildStatus } = require('azure-devops-node-api/interfaces/BuildInterfaces');
 
 sequelize = new Sequelize({
   dialect: 'sqlite',
@@ -48,6 +49,69 @@ const ArtifactDefinition = sequelize.define('ArtifactDefinition', {
   tableName: 'ArtifactsDefinitions',
   timestamps: false
 });
+
+const Artifact = sequelize.define('Artifact', {
+  Id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+    allowNull: false
+  },
+  ArtifactDefinitionId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'ArtifactsDefinitions',
+      key: 'Id'
+    }
+  },
+  Name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  Repository: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  Branch: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  Revision: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  WorkItemUrl: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  BuildPageUrl: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  Tags: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    get() {
+      const rawValue = this.getDataValue('Tags');
+      return rawValue ? JSON.parse(rawValue) : [];
+    },
+    set(value) {
+      this.setDataValue('Tags', value ? JSON.stringify(value) : null);
+    }
+  },
+  CreationTimestamp: {
+    type: DataTypes.DATE,
+    allowNull: false
+  }
+}, {
+  tableName: 'Artifacts',
+  timestamps: false
+});
+
+ArtifactDefinition.hasMany(Artifact, { foreignKey: 'ArtifactDefinitionId', as: 'Artifacts' });
+Artifact.belongsTo(ArtifactDefinition, { foreignKey: 'ArtifactDefinitionId', as: 'ArtifactDefinition' });
+
 
 const Grid = sequelize.define('Grid', {
   Id: {
@@ -351,6 +415,7 @@ TestResultsTempDirArchive.belongsTo(TestResult, { foreignKey: 'TestResultId', as
 
 module.exports = {
   ArtifactDefinition,
+  Artifact,
   Grid,
   Host,
   TestRun,
