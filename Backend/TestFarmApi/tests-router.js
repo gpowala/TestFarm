@@ -7,7 +7,7 @@ const express = require('express');
 const router = express.Router();
 
 const { appSettings } = require('./appsettings');
-const { Test, TestRun, TestResult, TestResultDiff, TestResultsTempDirArchive, Repository, sequelize } = require('./database');
+const { Artifact, Test, TestRun, TestResult, TestResultDiff, TestResultsTempDirArchive, Repository, sequelize } = require('./database');
 const { sendTestRunCompletionMessageToTeams } = require('./notifications');
 
 cloneSparseRepository = (repository, localRepositoryDir) => {
@@ -31,7 +31,7 @@ requireRepositoryExists = (repository) => {
 router.post('/schedule-run', async (req, res) => {
   console.log('Scheduling test run:', req.body);
   
-  const { RepositoryName, SuiteName, GridName, TestRunName, TeamsNotificationUrl } = req.body;
+  const { RepositoryName, SuiteName, GridName, TestRunName, ArtifactId, TeamsNotificationUrl } = req.body;
   const localRepositoryDir = `${appSettings.storage.repositories}/${RepositoryName}`;  
   
   try {

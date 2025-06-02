@@ -18,13 +18,14 @@
         <table class="artifacts-table" style="width: 100%;">
           <thead>
               <tr>
-                  <th style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">ID</th>
-                  <th style="white-space: nowrap; padding: 5px; text-align: center;">Name</th>
+                  <th style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">Artifact ID</th>
+                  <th style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">Build ID</th>
+                  <th style="white-space: nowrap; padding: 5px; text-align: center;">Build Name</th>
                   <th style="white-space: nowrap; padding: 5px; text-align: center;">Repository</th>
                   <th style="white-space: nowrap; padding: 5px; text-align: center;">Branch</th>
                   <th style="white-space: nowrap; padding: 5px; text-align: center;">Revision</th>
                   <th style="white-space: nowrap; padding: 5px; text-align: center;">Created</th>
-                  <th style="white-space: nowrap; padding: 5px;">Actions</th>
+                  <!-- <th style="white-space: nowrap; padding: 5px;">Actions</th> -->
               </tr>
           </thead>
           <tbody>
@@ -33,12 +34,13 @@
                   (mouseover)="onMouseOver($event)"
                   (mouseout)="onMouseOut($event)" style="transition: background-color 0.3s;">
                   <td style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">{{artifact.Id}}</td>
-
+                  <td style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">{{artifact.BuildId}}</td>
                   <td style="white-space: nowrap; padding: 5px; text-align: center;">
-                    <a [routerLink]="['/artifacts', artifact.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">
-                      {{artifact.Name}}
+                    {{artifact.BuildName}}
+                    <!-- <a [routerLink]="['/artifacts', artifact.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">
+                      {{artifact.BuildName}}
                     </a>
-                    <mat-chip *ngFor="let tag of artifact.Tags">{{tag}}</mat-chip>
+                    <mat-chip *ngFor="let tag of artifact.Tags">{{tag}}</mat-chip> -->
                   </td>
                   <td style="white-space: nowrap; padding: 5px; text-align: center;">
                     {{artifact.Repository}}
@@ -52,11 +54,11 @@
                   <td style="white-space: nowrap; padding: 5px; text-align: center;">
                     {{artifact.CreationTimestamp | date:'medium'}}
                   </td>
-                  <td style="white-space: nowrap; padding: 5px; text-align: center;">
-                      <!-- <button mat-button color="primary" (click)="removeArtifact(artifact.Id)">
+                  <!-- <td style="white-space: nowrap; padding: 5px; text-align: center;">
+                      <button mat-button color="primary" (click)="removeArtifact(artifact.Id)">
                         <mat-icon>delete</mat-icon>
-                      </button> -->
-                  </td>
+                      </button>
+                  </td> -->
               </tr>
           </tbody>
         </table>

@@ -1,7 +1,8 @@
 export interface Artifact {
   Id: number;
   ArtifactDefinitionId: number;
-  Name: string;
+  BuildId: number;
+  BuildName: string;
   Repository: string;
   Branch: string;
   Revision: string;

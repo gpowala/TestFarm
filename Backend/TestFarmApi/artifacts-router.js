@@ -93,7 +93,7 @@ router.delete('/artifact-definition', async (req, res) => {
 });
 
 router.post('/artifact', async (req, res) => {
-  const { ArtifactDefinitionName, Name, Repository, Branch, Revision, WorkItemUrl, BuildPageUrl, Tags } = req.body;
+  const { ArtifactDefinitionName, BuildId, BuildName, Repository, Branch, Revision, WorkItemUrl, BuildPageUrl, Tags } = req.body;
 
   try {
     const artifactDefinition = await ArtifactDefinition.findOne({ where: { Name: ArtifactDefinitionName } });
@@ -103,7 +103,8 @@ router.post('/artifact', async (req, res) => {
 
     const artifact = await Artifact.create({
       ArtifactDefinitionId: artifactDefinition.Id,
-      Name,
+      BuildId,
+      BuildName,
       Repository,
       Branch,
       Revision,

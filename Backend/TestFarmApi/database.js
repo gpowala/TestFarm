@@ -65,7 +65,11 @@ const Artifact = sequelize.define('Artifact', {
       key: 'Id'
     }
   },
-  Name: {
+  BuildId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  BuildName: {
     type: DataTypes.STRING,
     allowNull: false
   },
