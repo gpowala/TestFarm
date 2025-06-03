@@ -10,6 +10,7 @@ import os
 from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
 
 __all__ = [
+    'Artifact',
     'Repository',
     'Test',
     'TestRun',
@@ -22,6 +23,34 @@ __all__ = [
     'complete_test',
     'upload_diff'
 ]
+
+@dataclass
+class Artifact:
+    id: int
+    artifact_definition_id: int
+    build_id: int
+    build_name: str
+    repository: str
+    branch: str
+    revision: str
+    work_item_url: Optional[str]
+    build_page_url: Optional[str]
+    tags: Optional[list]
+
+    @staticmethod
+    def from_dict(data: dict) -> 'Artifact':
+        return Artifact(
+            id=data['Id'],
+            artifact_definition_id=data['ArtifactDefinitionId'],
+            build_id=data['BuildId'],
+            build_name=data['BuildName'],
+            repository=data['Repository'],
+            branch=data['Branch'],
+            revision=data['Revision'],
+            work_item_url=data['WorkItemUrl'],
+            build_page_url=data['BuildPageUrl'],
+            tags=data['Tags'] if 'Tags' in data and data['Tags'] else []
+        )
 
 @dataclass
 class Host:

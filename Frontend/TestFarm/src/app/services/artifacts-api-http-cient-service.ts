@@ -57,4 +57,18 @@ export class ArtifactsApiHttpClientService {
         }
       });
     }
+
+    addArtifact(artifactDefinitionId: number, buildId: number, buildName: string, repository: string, branch: string, revision: string, workItemUrl: string, buildPageUrl: string, tags: string[]) {
+      return this.http.post<ArtifactDefinition>(`${environment.baseApiUrl}/artifact-definition`, {
+        ArtifactDefinitionId: artifactDefinitionId,
+        BuildId: buildId,
+        BuildName: buildName,
+        Repository: repository,
+        Branch: branch,
+        Revision: revision,
+        WorkItemUrl: workItemUrl,
+        BuildPageUrl: buildPageUrl,
+        Tags: tags
+      });
+    }
 }

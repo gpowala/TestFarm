@@ -5,6 +5,7 @@ import { RepositoryDescription } from '../../models/repository-description';
 import { ConfirmationMessageDescription } from '../../models/confirmation-message-description';
 import { ArtifactsApiHttpClientService } from 'src/app/services/artifacts-api-http-cient-service';
 import { ArtifactDefinition } from 'src/app/models/artifact-definition';
+import { AddArtifactDefinitionDialogComponent } from './add-artifact-definition-dialog/add-artifact-definition-dialog.component';
 import { AddArtifactDialogComponent } from './add-artifact-dialog/add-artifact-dialog.component';
 
 @Component({
@@ -33,7 +34,35 @@ export class BuildsComponent implements OnInit {
       }
     );
   }
-  createArtifact() {
+
+  createArtifactDefinition() {
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.disableClose = true; // Prevent closing by clicking outside
+    dialogConfig.autoFocus = true;
+    dialogConfig.width = '800px';
+
+    const dialogRef = this.dialog.open(AddArtifactDefinitionDialogComponent, dialogConfig);
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.artifactsApiHttpClientService.addArtifactDefinition(
+          result.Name,
+          result.InstallScript,
+          result.Tags
+        ).subscribe(
+          (data: ArtifactDefinition) => {
+            this.fetchArtifacts();
+            console.log('Artifact added successfully:', data);
+          },
+          (error: any) => {
+            console.error('Error adding artifact:', error);
+          }
+        );
+      }
+    });
+  }
+
+  addArtifact() {
     const dialogConfig = new MatDialogConfig();
     dialogConfig.disableClose = true; // Prevent closing by clicking outside
     dialogConfig.autoFocus = true;
@@ -43,9 +72,14 @@ export class BuildsComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.artifactsApiHttpClientService.addArtifactDefinition(
+        this.artifactsApiHttpClientService.addArtifact(
+          result.BuildId,
           result.Name,
-          result.InstallScript,
+          result.Repository,
+          result.Branch,
+          result.Revision,
+          result.WorkItemUrl,
+          result.BuildPageUrl,
           result.Tags
         ).subscribe(
           (data: ArtifactDefinition) => {

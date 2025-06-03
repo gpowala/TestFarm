@@ -27,8 +27,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatCardModule } from '@angular/material/card';
-import { AddArtifactDialogComponent } from './components/builds/add-artifact-dialog/add-artifact-dialog.component';
+import { AddArtifactDefinitionDialogComponent } from './components/builds/add-artifact-definition-dialog/add-artifact-definition-dialog.component';
 import { ArtifactsComponent } from './components/artifacts/artifacts.component';
+import { AddArtifactDialogComponent } from './components/builds/add-artifact-dialog/add-artifact-dialog.component';
 
 @NgModule({  declarations: [
     AppComponent,
@@ -43,7 +44,8 @@ import { ArtifactsComponent } from './components/artifacts/artifacts.component';
     TestHistoryComponent,
     ConsoleOutputToHtmlPipe,
     RepositoriesComponent,
-    AddArtifactDialogComponent
+    AddArtifactDialogComponent,
+    AddArtifactDefinitionDialogComponent
   ],
   imports: [
     BrowserModule,

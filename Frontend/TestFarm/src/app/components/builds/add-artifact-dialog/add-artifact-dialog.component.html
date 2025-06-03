@@ -5,29 +5,70 @@
     <form [formGroup]="artifactForm">
       <div class="form-field">
         <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Name</mat-label>
-          <input matInput formControlName="name" placeholder="Enter artifact name" required>
-          <mat-error *ngIf="artifactForm.get('name')?.hasError('required')">
-            Name is required
+          <mat-label>Build ID</mat-label>
+          <input matInput formControlName="buildId" placeholder="Enter build ID" required>
+          <mat-error *ngIf="artifactForm.get('buildId')?.hasError('required')">
+            Build ID is required
           </mat-error>
         </mat-form-field>
       </div>
 
       <div class="form-field">
         <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Install Script (Python)</mat-label>
-          <textarea
-            matInput
-            formControlName="installScript"
-            placeholder="Enter Python install script"
-            required
-            cdkTextareaAutosize
-            cdkAutosizeMinRows="5"
-            cdkAutosizeMaxRows="15"
-            class="code-editor"
-          ></textarea>
-          <mat-error *ngIf="artifactForm.get('installScript')?.hasError('required')">
-            Install script is required
+          <mat-label>Build Name</mat-label>
+          <input matInput formControlName="name" placeholder="Enter build name" required>
+          <mat-error *ngIf="artifactForm.get('name')?.hasError('required')">
+            Build Name is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-field">
+        <mat-form-field appearance="fill" class="full-width">
+          <mat-label>Repository</mat-label>
+          <input matInput formControlName="repository" placeholder="Enter repository" required>
+          <mat-error *ngIf="artifactForm.get('repository')?.hasError('required')">
+            Repository is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-field">
+        <mat-form-field appearance="fill" class="full-width">
+          <mat-label>Branch</mat-label>
+          <input matInput formControlName="branch" placeholder="Enter branch" required>
+          <mat-error *ngIf="artifactForm.get('branch')?.hasError('required')">
+            Branch is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-field">
+        <mat-form-field appearance="fill" class="full-width">
+          <mat-label>Revision</mat-label>
+          <input matInput formControlName="revision" placeholder="Enter revision" required>
+          <mat-error *ngIf="artifactForm.get('revision')?.hasError('required')">
+            Revision is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-field">
+        <mat-form-field appearance="fill" class="full-width">
+          <mat-label>Work Item URL</mat-label>
+          <input matInput formControlName="workItemUrl" placeholder="Enter work item URL" required>
+          <mat-error *ngIf="artifactForm.get('workItemUrl')?.hasError('required')">
+            Work Item URL is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-field">
+        <mat-form-field appearance="fill" class="full-width">
+          <mat-label>Build Page URL</mat-label>
+          <input matInput formControlName="buildPageUrl" placeholder="Enter build page URL" required>
+          <mat-error *ngIf="artifactForm.get('buildPageUrl')?.hasError('required')">
+            Build Page URL is required
           </mat-error>
         </mat-form-field>
       </div>
