@@ -59,10 +59,14 @@ button[mat-raised-button] {
   padding: 0 16px;
   align-self: flex-end;
   box-shadow: none;
+
+  margin-right: 10px;
 }
 
 button[mat-raised-button]:active {
   box-shadow: none !important;
+
+  margin-right: 10px;
 }
 
 .mat-mdc-button>.mat-icon {

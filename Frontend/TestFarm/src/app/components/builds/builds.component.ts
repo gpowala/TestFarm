@@ -7,6 +7,7 @@ import { ArtifactsApiHttpClientService } from 'src/app/services/artifacts-api-ht
 import { ArtifactDefinition } from 'src/app/models/artifact-definition';
 import { AddArtifactDefinitionDialogComponent } from './add-artifact-definition-dialog/add-artifact-definition-dialog.component';
 import { AddArtifactDialogComponent } from './add-artifact-dialog/add-artifact-dialog.component';
+import { SelectionModel } from '@angular/cdk/collections';
 
 @Component({
   selector: 'app-builds',
@@ -15,6 +16,8 @@ import { AddArtifactDialogComponent } from './add-artifact-dialog/add-artifact-d
 })
 export class BuildsComponent implements OnInit {
   artifacts: ArtifactDefinition[] = [];
+  selection = new SelectionModel<number>(true, []); // Multiple selection enabled
+
   constructor(
     private artifactsApiHttpClientService: ArtifactsApiHttpClientService,
     private dialog: MatDialog
@@ -33,6 +36,34 @@ export class BuildsComponent implements OnInit {
         console.error('Error fetching artifacts data:', error);
       }
     );
+  }
+
+  // Toggle artifact selection
+  toggleSelection(artifactId: number): void {
+    this.selection.toggle(artifactId);
+    console.log('Selected artifact IDs:', this.selection.selected);
+  }
+
+  // Check if all artifacts are selected
+  isAllSelected(): boolean {
+    const numSelected = this.selection.selected.length;
+    const numRows = this.artifacts.length;
+    return numSelected === numRows && numRows > 0;
+  }
+
+  // Toggle all selections
+  toggleAllSelection(): void {
+    if (this.isAllSelected()) {
+      this.selection.clear();
+    } else {
+      this.artifacts.forEach(artifact => this.selection.select(artifact.Id));
+    }
+    console.log('Selected artifact IDs:', this.selection.selected);
+  }
+
+  // Get selected artifacts
+  getSelectedArtifacts(): number[] {
+    return this.selection.selected;
   }
 
   createArtifactDefinition() {
@@ -68,13 +99,18 @@ export class BuildsComponent implements OnInit {
     dialogConfig.autoFocus = true;
     dialogConfig.width = '800px';
 
+    dialogConfig.data = {
+      selectedArtifact: this.artifacts.filter(artifact => this.selection.selected.includes(artifact.Id))[0]
+    };
+
     const dialogRef = this.dialog.open(AddArtifactDialogComponent, dialogConfig);
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.artifactsApiHttpClientService.addArtifact(
+          result.ArtifactDefinitionId,
           result.BuildId,
-          result.Name,
+          result.BuildName,
           result.Repository,
           result.Branch,
           result.Revision,

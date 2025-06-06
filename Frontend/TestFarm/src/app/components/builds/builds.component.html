@@ -4,15 +4,24 @@
             <button mat-raised-button color="primary" (click)="createArtifactDefinition()">
                 Create Artifact Definition
             </button>
-      </div>
-      <div class="add-build-form">
-            <button mat-raised-button color="primary" (click)="addArtifact()">
-                Add Artifact
+            <button mat-raised-button color="primary" (click)="addArtifact()"
+              [disabled]="selection.selected.length !== 1">
+              Add Artifact
             </button>
       </div>
+      <!-- <div *ngIf="selection.selected.length > 0" class="selected-info">
+        <span>Selected artifacts: {{ selection.selected.length }}</span>
+        <button mat-button color="primary" (click)="selection.clear()">Clear Selection</button>
+      </div> -->
       <table class="repositories-table" style="width: 100%;">
           <thead>
               <tr>
+                  <th style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">
+                    <mat-checkbox (change)="toggleAllSelection()"
+                                 [checked]="isAllSelected()"
+                                 [indeterminate]="selection.hasValue() && !isAllSelected()">
+                    </mat-checkbox>
+                  </th>
                   <th style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">ID</th>
                   <th style="white-space: nowrap; padding: 5px; text-align: center;">Name</th>
                   <th style="white-space: nowrap; padding: 5px;">Actions</th>
@@ -23,6 +32,11 @@
                   class="repository-item"
                   (mouseover)="onMouseOver($event)"
                   (mouseout)="onMouseOut($event)" style="transition: background-color 0.3s;">
+                  <td style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">
+                    <mat-checkbox [checked]="selection.isSelected(artifact.Id)"
+                                 (change)="toggleSelection(artifact.Id)">
+                    </mat-checkbox>
+                  </td>
                   <td style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">{{artifact.Id}}</td>
                   <td style="white-space: nowrap; padding: 5px; text-align: center;">
                     <a [routerLink]="['/artifacts', artifact.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">

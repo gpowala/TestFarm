@@ -7,6 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTableModule } from '@angular/material/table';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -58,8 +59,10 @@ import { AddArtifactDialogComponent } from './components/builds/add-artifact-dia
     MatDividerModule,
     MatTooltipModule,
     MatTableModule,
+    MatCheckboxModule,
     FormsModule,
-    ReactiveFormsModule,    MatDialogModule,
+    ReactiveFormsModule,
+    MatDialogModule,
     MatInputModule,
     MatFormFieldModule,
     MatChipsModule,
