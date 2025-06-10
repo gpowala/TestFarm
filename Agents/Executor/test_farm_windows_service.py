@@ -20,7 +20,7 @@ import shutil
 from testfarm_agents_utils import *
 
 from test_farm_tests import DiffPair, TestCase
-from test_farm_api import get_next_test, register_host, unregister_host, update_host_status, complete_test, upload_diff, upload_temp_dir_archive, Repository
+from test_farm_api import get_artifact, get_next_test, register_host, unregister_host, update_host_status, complete_test, upload_diff, upload_temp_dir_archive, Repository
 from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
 from logging.handlers import RotatingFileHandler
 
@@ -137,6 +137,41 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
             except Exception as e:
                 logging.error(f"Error during host shutdown: {e}")
 
+    def install_artifacts(self, artifacts):
+        overall_exit_code = -1
+
+        for artifact in artifacts:
+            try:
+                logging.info(f"Preparing install script for artifact: {artifact.artifact_definition.name} (Build Name: {artifact.build_name} Build ID: {artifact.build_id})")
+
+                script_path = expand_magic_variables("$__TF_TEMP_DIR__/artifact_install_script.py")
+
+                with open(script_path, 'w') as script_file:
+                    script_file.write(artifact.artifact_definition.install_script)
+
+                logging.info(f"Executing install script: {script_path}")
+                exit_code = os.system(f"python {script_path} --build {artifact.build_id} --hostname {self._host.hostname} --timeout 60")
+                
+                if exit_code != 0:
+                    logging.error(f"Install script failed with exit code {exit_code}")
+                    overall_exit_code = exit_code
+                else:
+                    logging.info("Install script executed successfully")
+                    overall_exit_code = 0
+
+            except Exception as e:
+                logging.error(f"Error executing artifact install script: {e}")
+                overall_exit_code = -1
+
+            finally:
+                if os.path.exists(script_path):
+                    try:
+                        os.remove(script_path)
+                    except:
+                        break
+
+        return overall_exit_code
+
     def SvcDoRun(self):
         assert self._config is not None, "Configuration must be initialized before service startup."
 
@@ -154,6 +189,8 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
         
         self._running = True
         logging.info(f"Processing loop started.")
+
+        current_test_run_id = -1
 
         while self._running:
             try:
@@ -173,7 +210,28 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                     logging.info(f"Found test description file: {test_description_file}")
 
                     test_case = TestCase.from_file(test_description_file)
-                    
+
+                    if current_test_run_id != test.test_run.id:
+                        update_host_status("Installing artifacts...", self._host, self._config)
+                        logging.info(f"Installing artifacts for test run: {test.test_run.name} (ID: {test.test_run.id})")
+
+                        if self.install_artifacts(test.test_run.artifacts) != 0:
+                            update_host_status("Failed to install artifacts", self._host, self._config)
+                            logging.error(f"Artifact installation failed for test run: {test.test_run.name} (ID: {test.test_run.id})")
+
+                            complete_test(test, "failed", self.read_execution_output(test_case), self._config)
+                            logging.info("Test FAILED!")
+
+                            self.cleanup_temp_dir()
+                            continue
+                        else:
+                            logging.info("Artifacts installation succeeded.")
+                            current_test_run_id = test.test_run.id
+
+                            self.cleanup_temp_dir()
+
+                    update_host_status("Running test...", self._host, self._config)
+
                     env = os.environ.copy()
                     env["PYTHONPATH"] = f"{local_repository_dir};{env.get('PYTHONPATH', '')}"
                     logging.debug(f"env: {env}")

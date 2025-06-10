@@ -6,16 +6,19 @@ from urllib.parse import urljoin
 import socket
 import psutil
 import os
+import codecs
 
 from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
 
 __all__ = [
+    'ArtifactDefinition',
     'Artifact',
     'Repository',
     'Test',
     'TestRun',
     'TestResult',
     'Host',
+    'get_artifact',
     'get_next_test',
     'register_host',
     'unregister_host',
@@ -25,9 +28,25 @@ __all__ = [
 ]
 
 @dataclass
+class ArtifactDefinition:
+    id: int
+    name: str
+    install_script: str
+    tags: Optional[list]
+
+    @staticmethod
+    def from_dict(data: dict) -> 'ArtifactDefinition':
+        return ArtifactDefinition(
+            id=data['Id'],
+            name=data['Name'],
+            install_script=data['InstallScript'].encode('utf-8').decode('unicode_escape'),
+            tags=data['Tags'] if 'Tags' in data and data['Tags'] else []
+        )
+
+@dataclass
 class Artifact:
     id: int
-    artifact_definition_id: int
+    artifact_definition: ArtifactDefinition
     build_id: int
     build_name: str
     repository: str
@@ -41,7 +60,7 @@ class Artifact:
     def from_dict(data: dict) -> 'Artifact':
         return Artifact(
             id=data['Id'],
-            artifact_definition_id=data['ArtifactDefinitionId'],
+            artifact_definition=ArtifactDefinition.from_dict(data['ArtifactDefinition']),
             build_id=data['BuildId'],
             build_name=data['BuildName'],
             repository=data['Repository'],
@@ -128,16 +147,26 @@ class TestRun:
     name: str
     grid_name: str
     creation_timestamp: datetime
+    artifacts: Optional[list]
 
     @staticmethod
-    def from_dict(data: dict) -> 'TestRun':
+    def from_dict(config: Config, data: dict) -> 'TestRun':
+        artifacts_ids = data['Artifacts'] if 'Artifacts' in data and data['Artifacts'] else []
+
+        artifacts = []
+        for artifact_id in artifacts_ids:
+            artifact = get_artifact(config, artifact_id)
+            if artifact:
+                artifacts.append(artifact)
+
         return TestRun(
             id=data['Id'],
             repository_name=data['RepositoryName'],
             suite_name=data['SuiteName'],
             name=data['Name'],
             grid_name=data['GridName'],
-            creation_timestamp=datetime.fromisoformat(data['CreationTimestamp'].replace('Z', '+00:00'))
+            creation_timestamp=datetime.fromisoformat(data['CreationTimestamp'].replace('Z', '+00:00')),
+            artifacts=artifacts
         )
 
 @dataclass
@@ -154,7 +183,7 @@ class TestResult:
     repository: Repository
 
     @staticmethod
-    def from_dict(data: dict) -> 'TestResult':
+    def from_dict(config: Config, data: dict) -> 'TestResult':
         return TestResult(
             id=data['Id'],
             test_run_id=data['TestRunId'],
@@ -163,10 +192,22 @@ class TestResult:
             execution_start_timestamp=datetime.fromisoformat(data['ExecutionStartTimestamp'].replace('Z', '+00:00')),
             execution_end_timestamp=datetime.fromisoformat(data['ExecutionEndTimestamp'].replace('Z', '+00:00')) if data['ExecutionEndTimestamp'] else None,
             execution_output=data['ExecutionOutput'],
-            test_run=TestRun.from_dict(data['TestRun']),
+            test_run=TestRun.from_dict(config, data['TestRun']),
             test=Test.from_dict(data['Test']),
             repository=Repository.from_dict(data['Repository'])
         )
+
+def get_artifact(config: Config, artifact_id: int) -> Optional[Artifact]:
+    response = requests.get(
+        url=urljoin(config.test_farm_api.base_url, "artifact"),
+        params={'id': artifact_id},
+        timeout=config.test_farm_api.timeout
+    )
+    
+    if response.ok:
+        return Artifact.from_dict(response.json())
+    else:
+        return None
 
 def get_next_test(config: Config) -> Optional[TestResult]:
     response = requests.get(
@@ -175,7 +216,7 @@ def get_next_test(config: Config) -> Optional[TestResult]:
         timeout = config.test_farm_api.timeout
     )
     
-    return TestResult.from_dict(response.json()) if response.ok else None
+    return TestResult.from_dict(config, response.json()) if response.ok else None
 
 def get_system_info(config: Config) -> Dict[str, any]:
     hostname = socket.gethostname()

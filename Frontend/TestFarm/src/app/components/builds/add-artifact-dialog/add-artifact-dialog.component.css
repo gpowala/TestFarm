@@ -20,13 +20,31 @@
   line-height: 1.5;
 }
 
+/* Fix for form fields not showing properly on initial render */
 ::ng-deep .mat-dialog-container {
-  padding: 24px;
-  border-radius: 8px;
+  padding: 24px !important;
+  border-radius: 8px !important;
 }
 
 ::ng-deep .mat-form-field {
-  width: 100%;
+  width: 100% !important;
+  display: block !important;
+}
+
+::ng-deep .mat-form-field-flex {
+  display: flex !important;
+  align-items: baseline !important;
+  width: 100% !important;
+}
+
+::ng-deep .mat-form-field-wrapper {
+  padding-bottom: 1.25em !important;
+  width: 100% !important;
+}
+
+::ng-deep .mat-form-field-infix {
+  width: 100% !important;
+  border-top: 0.84375em solid transparent !important;
 }
 
 .mat-dialog-actions {
@@ -34,11 +52,11 @@
 }
 
 .mat-mdc-dialog-actions.mat-mdc-dialog-actions-align-end {
-  justify-content: flex-end;
-  margin-right: 16px;
-  margin-bottom: 16px;
+  justify-content: flex-end !important;
+  margin-right: 16px !important;
+  margin-bottom: 16px !important;
 }
 
 mat-chip-grid {
-  margin-bottom: 16px;
+  margin-bottom: 16px !important;
 }

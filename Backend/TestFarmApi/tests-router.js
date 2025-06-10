@@ -31,7 +31,7 @@ requireRepositoryExists = (repository) => {
 router.post('/schedule-run', async (req, res) => {
   console.log('Scheduling test run:', req.body);
   
-  const { RepositoryName, SuiteName, GridName, TestRunName, ArtifactId, TeamsNotificationUrl } = req.body;
+  const { RepositoryName, SuiteName, GridName, TestRunName, Artifacts, TeamsNotificationUrl } = req.body;
   const localRepositoryDir = `${appSettings.storage.repositories}/${RepositoryName}`;  
   
   try {
@@ -53,7 +53,8 @@ router.post('/schedule-run', async (req, res) => {
       GridName: GridName,
       Name: TestRunName,
       CreationTimestamp: new Date(),
-      TeamsNotificationUrl: TeamsNotificationUrl
+      TeamsNotificationUrl: TeamsNotificationUrl,
+      Artifacts: Artifacts
     });
 
     requestedTestsPaths.forEach(async (testPath) => {

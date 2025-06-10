@@ -225,6 +225,17 @@ const TestRun = sequelize.define('TestsRuns', {
   TeamsNotificationUrl: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  Artifacts: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    get() {
+      const rawValue = this.getDataValue('Artifacts');
+      return rawValue ? JSON.parse(rawValue) : [];
+    },
+    set(value) {
+      this.setDataValue('Artifacts', value ? JSON.stringify(value) : null);
+    }
   }
 }, {
   tableName: 'TestsRuns',

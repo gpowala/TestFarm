@@ -1,45 +1,47 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
-import { ArtifactDefinition } from 'src/app/models/artifact-definition';
+import { Artifact } from 'src/app/models/artifact';
 
 @Component({
   selector: 'app-add-artifact-dialog',
   templateUrl: './add-artifact-dialog.component.html',
   styleUrls: ['./add-artifact-dialog.component.css']
 })
-export class AddArtifactDialogComponent {
+export class AddArtifactDialogComponent implements OnInit, AfterViewInit {
   artifactForm: FormGroup;
   readonly separatorKeysCodes = [ENTER, COMMA] as const;
   tags: string[] = [];
 
-  // Monaco editor options
-  editorOptions = {
-    theme: 'vs-dark',
-    language: 'python',
-    automaticLayout: true,
-    minimap: {
-      enabled: false
-    },
-    scrollBeyondLastLine: false,
-    fontSize: 14,
-    lineNumbers: 'on',
-    renderLineHighlight: 'all',
-    lineHeight: 20
-  };
-
   constructor(
     private fb: FormBuilder,
     public dialogRef: MatDialogRef<AddArtifactDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    private cdr: ChangeDetectorRef
   ) {
     this.artifactForm = this.fb.group({
+      buildId: ['', [Validators.required]],
       name: ['', [Validators.required]],
-      installScript: ['', [Validators.required]],
+      repository: ['', [Validators.required]],
+      branch: ['', [Validators.required]],
+      revision: ['', [Validators.required]],
+      workItemUrl: ['', [Validators.required]],
+      buildPageUrl: ['', [Validators.required]],
       tags: this.fb.array([])
     });
+  }
+
+  ngOnInit(): void {
+    // Initial form setup can go here
+  }
+
+  ngAfterViewInit(): void {
+    // Force detection of changes to make sure form elements are properly rendered
+    setTimeout(() => {
+      this.cdr.detectChanges();
+    }, 0);
   }
 
   get tagsFormArray(): FormArray {
@@ -64,13 +66,17 @@ export class AddArtifactDialogComponent {
       this.tags.splice(index, 1);
       this.tagsFormArray.removeAt(index);
     }
-  }
-
-  onSubmit(): void {
+  }  onSubmit(): void {
     if (this.artifactForm.valid) {
-      const artifact: Partial<ArtifactDefinition> = {
-        Name: this.artifactForm.get('name')?.value,
-        InstallScript: this.artifactForm.get('installScript')?.value,
+      const artifact: Partial<Artifact> = {
+        ArtifactDefinitionId: this.data.selectedArtifact.Id,
+        BuildId: this.artifactForm.get('buildId')?.value,
+        BuildName: this.artifactForm.get('name')?.value,
+        Repository: this.artifactForm.get('repository')?.value,
+        Branch: this.artifactForm.get('branch')?.value,
+        Revision: this.artifactForm.get('revision')?.value,
+        WorkItemUrl: this.artifactForm.get('workItemUrl')?.value,
+        BuildPageUrl: this.artifactForm.get('buildPageUrl')?.value,
         Tags: this.tags
       };
 

@@ -59,7 +59,7 @@ export class ArtifactsApiHttpClientService {
     }
 
     addArtifact(artifactDefinitionId: number, buildId: number, buildName: string, repository: string, branch: string, revision: string, workItemUrl: string, buildPageUrl: string, tags: string[]) {
-      return this.http.post<ArtifactDefinition>(`${environment.baseApiUrl}/artifact-definition`, {
+      return this.http.post<ArtifactDefinition>(`${environment.baseApiUrl}/artifact`, {
         ArtifactDefinitionId: artifactDefinitionId,
         BuildId: buildId,
         BuildName: buildName,

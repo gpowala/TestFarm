@@ -93,16 +93,16 @@ router.delete('/artifact-definition', async (req, res) => {
 });
 
 router.post('/artifact', async (req, res) => {
-  const { ArtifactDefinitionName, BuildId, BuildName, Repository, Branch, Revision, WorkItemUrl, BuildPageUrl, Tags } = req.body;
+  const { ArtifactDefinitionId, BuildId, BuildName, Repository, Branch, Revision, WorkItemUrl, BuildPageUrl, Tags } = req.body;
 
   try {
-    const artifactDefinition = await ArtifactDefinition.findOne({ where: { Name: ArtifactDefinitionName } });
+    const artifactDefinition = await ArtifactDefinition.findByPk(ArtifactDefinitionId);
     if (!artifactDefinition) {
       return res.status(404).json({ error: 'Artifact definition not found' });
     }
 
     const artifact = await Artifact.create({
-      ArtifactDefinitionId: artifactDefinition.Id,
+      ArtifactDefinitionId,
       BuildId,
       BuildName,
       Repository,
@@ -124,7 +124,16 @@ router.get('/artifact', async (req, res) => {
   const id = req.query.id;
 
   try {
-    const artifact = await Artifact.findByPk(id);
+    if (!id) {
+      return res.status(400).json({ error: 'ID parameter is required' });
+    }
+    
+    const artifact = await Artifact.findByPk(id, {
+      include: [{
+        model: ArtifactDefinition,
+        as: 'ArtifactDefinition'
+      }]
+    });
     if (!artifact) {
       return res.status(404).json({ error: 'Artifact not found' });
     }
