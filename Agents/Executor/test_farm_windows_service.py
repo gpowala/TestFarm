@@ -278,7 +278,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                             continue
 
                         report_file = expand_magic_variables(f"$__TF_WORK_DIR__/{diff_name}.html")
-                        self.generate_html_diff(gold_file, new_file, report_file)
+                        self.generate_html_diff(gold_file, new_file, report_file, diff.encoding)
 
                         # Check if the diff report is not empty
                         if os.path.getsize(report_file) > 0:
@@ -373,11 +373,11 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
             result = chardet.detect(raw_data)
         return result['encoding'] if result['encoding'] else 'utf-8'  # Default to UTF-8 if unknown
 
-    def generate_html_diff(self, gold_file: str, new_file: str, report_file: str):
-        gold_encoding = self.detect_encoding(gold_file)
-        new_encoding = self.detect_encoding(new_file)
+    def generate_html_diff(self, gold_file: str, new_file: str, report_file: str, encoding: str):
+        # gold_encoding = self.detect_encoding(gold_file)
+        # new_encoding = self.detect_encoding(new_file)
         
-        with open(gold_file, 'r', encoding=gold_encoding, errors='replace') as f1, open(new_file, 'r', encoding=new_encoding, errors='replace') as f2:
+        with open(gold_file, 'r', encoding=encoding, errors='replace') as f1, open(new_file, 'r', encoding=encoding, errors='replace') as f2:
             gold_content = f1.readlines()
             new_content = f2.readlines()
 

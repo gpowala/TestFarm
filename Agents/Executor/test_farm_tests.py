@@ -14,6 +14,7 @@ __all__ = [
 class DiffPair:
     gold: str
     new: str
+    encoding: str
 
 @dataclass
 class TestCase:
