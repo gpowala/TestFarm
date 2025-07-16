@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "testfarmutils"
-version = "0.1.5"
+version = "0.1.6"
 authors = [
   { name="Grzegorz Powała", email="gpowala@gmail.com" }
 ]
@@ -12,3 +12,6 @@ description = "TestFarm utilities for tests creation and execution."
 readme = "README.md"
 license = { file = "LICENSE" }
 dependencies = []
+
+[tool.setuptools]
+py-modules = ["testfarm_agents_utils", "testfarm_benchmarks_utils"]

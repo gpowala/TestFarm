@@ -7,7 +7,7 @@ const express = require('express');
 const router = express.Router();
 
 const { appSettings } = require('./appsettings');
-const { Artifact, Test, TestRun, TestResult, TestResultDiff, TestResultsTempDirArchive, Repository, sequelize } = require('./database');
+const { Artifact, MicroJobsQueue, Benchmark, BenchmarksRun, BenchmarkResult, Test, TestRun, TestResult, TestResultDiff, TestResultsTempDirArchive, Repository, sequelize } = require('./database');
 const { sendTestRunCompletionMessageToTeams } = require('./notifications');
 
 cloneSparseRepository = (repository, localRepositoryDir) => {
@@ -28,8 +28,64 @@ requireRepositoryExists = (repository) => {
     throw Error('Repository does not exist');
 }
 
-router.post('/schedule-run', async (req, res) => {
-  console.log('Scheduling test run:', req.body);
+router.post('/schedule-benchmarks-run', async (req, res) => {
+  console.log('Scheduling benchmarks run:', req.body);
+
+  const { RepositoryName, SuiteName, GridName, TestRunName, Artifacts, TeamsNotificationUrl } = req.body;
+  const localRepositoryDir = `${appSettings.storage.repositories}/${RepositoryName}`;  
+  
+  try {
+    let repository = await Repository.findOne({ where: { Name: RepositoryName } });
+    requireRepositoryExists(repository);
+
+    cloneSparseRepository(repository, localRepositoryDir);
+    
+    const benchmarksConfigPath = `${localRepositoryDir}/benchmarks.testfarm`;
+    requireFileExists(benchmarksConfigPath);
+
+    const benchmarksConfig = JSON.parse(fs.readFileSync(benchmarksConfigPath, 'utf8'));
+    const requestedSuiteConfig = benchmarksConfig.suites.find(suite => suite.name === SuiteName);
+    const requestedBenchmarksPaths = requestedSuiteConfig ? requestedSuiteConfig.benchmarks : [];
+
+    let benchmarksRun = await BenchmarksRun.create({
+      RepositoryName: RepositoryName,
+      SuiteName: SuiteName,
+      GridName: GridName,
+      Name: TestRunName,
+      TeamsNotificationUrl: TeamsNotificationUrl,
+      Artifacts: Artifacts
+    });
+
+    requestedBenchmarksPaths.forEach(async (benchmarkPath) => {
+      try {
+        const benchmarkConfigPath = `${localRepositoryDir}/${benchmarkPath}/benchmark.testfarm`;
+        requireFileExists(benchmarkConfigPath);
+
+        let benchmarkConfig = JSON.parse(fs.readFileSync(benchmarkConfigPath, 'utf8'));
+
+        let benchmark = await Benchmark.findOne({ where: {RepositoryName: RepositoryName, SuiteName: SuiteName, Path: benchmarkPath, Name: benchmarkConfig.name} })
+                     ?? await Benchmark.create({ RepositoryName: RepositoryName, SuiteName: SuiteName, Path: benchmarkPath,  Name: benchmarkConfig.name, Owner: benchmarkConfig.owner, CreationTimestamp: new Date() });
+
+        await BenchmarkResult.create({ BenchmarksRunId: benchmarksRun.Id, BenchmarkId: benchmark.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null });
+
+        await MicroJobsQueue.create({ Type: 'bench', Status: 'queued', RunId: benchmarksRun.Id, ResultId: benchmark.Id });
+      }
+      catch (error) {
+        console.error(`Failed to register benchmark: ${error}`);
+      }
+    });
+
+    res.status(201).json(benchmarksRun);
+  } catch (error) {
+    res.status(500).json({ error: `Internal Server Error: ${error}` });
+  } finally {
+    if (fs.existsSync(localRepositoryDir))
+      fs.rmdirSync(localRepositoryDir, { recursive: true });
+  }
+});
+
+router.post('/schedule-tests-run', async (req, res) => {
+  console.log('Scheduling tests run:', req.body);
   
   const { RepositoryName, SuiteName, GridName, TestRunName, Artifacts, TeamsNotificationUrl } = req.body;
   const localRepositoryDir = `${appSettings.storage.repositories}/${RepositoryName}`;  
@@ -47,12 +103,11 @@ router.post('/schedule-run', async (req, res) => {
     const requestedSuiteConfig = testsConfig.suites.find(suite => suite.name === SuiteName);
     const requestedTestsPaths = requestedSuiteConfig ? requestedSuiteConfig.tests : [];
 
-    let testRun = await TestRun.create({
+    let benchmarkRun = await TestRun.create({
       RepositoryName: RepositoryName,
       SuiteName: SuiteName,
       GridName: GridName,
       Name: TestRunName,
-      CreationTimestamp: new Date(),
       TeamsNotificationUrl: TeamsNotificationUrl,
       Artifacts: Artifacts
     });
@@ -67,14 +122,16 @@ router.post('/schedule-run', async (req, res) => {
         let test = await Test.findOne({ where: {RepositoryName: RepositoryName, SuiteName: SuiteName, Path: testPath, Name: testConfig.name} })
                 ?? await Test.create({ RepositoryName: RepositoryName, SuiteName: SuiteName, Path: testPath,  Name: testConfig.name, Owner: testConfig.owner, CreationTimestamp: new Date() });
 
-        await TestResult.create({ TestRunId: testRun.Id, TestId: test.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null });
+        await TestResult.create({ TestRunId: benchmarkRun.Id, TestId: test.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null });
+
+        await MicroJobsQueue.create({ Type: 'test', Status: 'queued', RunId: benchmarkRun.Id, ResultId: test.Id });
       }
       catch (error) {
         console.error(`Failed to register test: ${error}`);
       }
     });
 
-    res.status(201).json(testRun);
+    res.status(201).json(benchmarkRun);
   } catch (error) {
     res.status(500).json({ error: `Internal Server Error: ${error}` });
   } finally {
@@ -83,38 +140,135 @@ router.post('/schedule-run', async (req, res) => {
   }
 });
 
-router.get('/get-next-test', async (req, res) => {
+router.get('/get-next-job', async (req, res) => {
   const { GridName } = req.query;
+
+  try {
+    // Use a transaction with the highest isolation level to prevent race conditions
+    const nextJob = await sequelize.transaction({
+      isolationLevel: Sequelize.Transaction.ISOLATION_LEVELS.SERIALIZABLE
+    }, async (t) => {
+      // Find the next queued job
+      const job = await MicroJobsQueue.findOne({
+        where: {
+          Status: 'queued',
+          GridName: GridName
+        },
+        order: [
+          ['Id', 'ASC'] // Select the oldest queued job
+        ],
+        lock: t.LOCK.UPDATE, // Add row-level locking to prevent other transactions from changing this row
+        transaction: t
+      });
+      
+      if (job) {
+        // Update the status atomically within the transaction
+        job.Status = 'reserved';
+        await job.save({ transaction: t });
+      }
+      
+      return job;
+    });
+
+    return nextJob ? res.status(200).json(nextJob) : res.status(404).json({ message: 'No queued jobs found for this grid' });
+
+  } catch (error) {
+    console.error('Error getting next job:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
+router.get('/get-scheduled-benchmark', async (req, res) => {
+  const { BenchmarkResultId } = req.query;
+
+  try {
+    // Use a transaction with the highest isolation level to prevent race conditions
+    const result = await sequelize.transaction({
+      isolationLevel: Sequelize.Transaction.ISOLATION_LEVELS.SERIALIZABLE
+    }, async (t) => {
+      const queuedBenchmark = await BenchmarkResult.findByPk(BenchmarkResultId, {
+        lock: t.LOCK.UPDATE, // Add row-level locking to prevent other transactions from changing this row
+        transaction: t
+      });
+
+      if (!queuedBenchmark) {
+        return null;
+      }
+
+      // Update the status atomically within the transaction
+      queuedBenchmark.Status = 'running';
+      queuedBenchmark.ExecutionStartTimestamp = new Date();
+      await queuedBenchmark.save({ transaction: t });
+
+      const job = await MicroJobsQueue.findOne({
+        where: {
+          Type: 'bench',
+          ResultId: BenchmarkResultId
+        },
+        transaction: t
+      });
+
+      if (!job) {
+        return null;
+      }
+
+      job.Status = 'running';
+      await job.save({ transaction: t });
+
+      // Retrieve the complete benchmark information with associations
+      return BenchmarkResult.findByPk(BenchmarkResultId, {
+        include: [
+          {
+            model: BenchmarkRun,
+            as: 'BenchmarkRun'
+          },
+          {
+            model: Benchmark,
+            as: 'Benchmark'
+          }
+        ],
+        transaction: t
+      }).then(async (benchmarkResult) => {
+        // Fetch the repository separately based on the RepositoryName
+        if (benchmarkResult && benchmarkResult.BenchmarkRun && benchmarkResult.BenchmarkRun.RepositoryName) {
+          const repository = await Repository.findOne({
+            where: {
+              Name: benchmarkResult.BenchmarkRun.RepositoryName
+            },
+            transaction: t
+          });
+
+          // Add repository info to the response
+          if (repository) {
+            const plainResult = benchmarkResult.get({ plain: true });
+            plainResult.Repository = repository.get({ plain: true });
+            return plainResult;
+          }
+        }
+        return benchmarkResult;
+      });
+    });
+
+    if (!result) {
+      return res.status(404).json({ message: 'No queued benchmarks found for this grid' });
+    }
+    console.log(result);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error getting next benchmark:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
+router.get('/get-scheduled-test', async (req, res) => {
+  const { BenchmarkResultId } = req.query;
   
   try {
     // Use a transaction with the highest isolation level to prevent race conditions
     const result = await sequelize.transaction({
       isolationLevel: Sequelize.Transaction.ISOLATION_LEVELS.SERIALIZABLE
     }, async (t) => {
-      // First find all TestRun IDs that match our GridName
-      const matchingTestRuns = await TestRun.findAll({
-        attributes: ['Id'],
-        where: {
-          GridName: GridName
-        },
-        transaction: t
-      });
-      
-      if (matchingTestRuns.length === 0) {
-        return null;
-      }
-      
-      const testRunIds = matchingTestRuns.map(run => run.Id);
-      
-      // Find a single test result that is queued and belongs to our grid
-      const queuedTest = await TestResult.findOne({
-        where: {
-          Status: 'queued',
-          TestRunId: testRunIds
-        },
-        order: [
-          ['Id', 'ASC'] // Select the oldest queued test
-        ],
+      const queuedTest = await TestResult.findByPk(BenchmarkResultId, {
         lock: t.LOCK.UPDATE, // Add row-level locking to prevent other transactions from changing this row
         transaction: t
       });
@@ -127,9 +281,24 @@ router.get('/get-next-test', async (req, res) => {
       queuedTest.Status = 'running';
       queuedTest.ExecutionStartTimestamp = new Date();
       await queuedTest.save({ transaction: t });
-      
+
+      const job = await MicroJobsQueue.findOne({
+        where: {
+          Type: 'test',
+          ResultId: BenchmarkResultId
+        },
+        transaction: t
+      });
+
+      if (!job) {
+        return null;
+      }
+
+      job.Status = 'running';
+      await job.save({ transaction: t });
+
       // Retrieve the complete test information with associations
-      return TestResult.findByPk(queuedTest.Id, {
+      return TestResult.findByPk(BenchmarkResultId, {
         include: [
           {
             model: TestRun,
@@ -141,24 +310,24 @@ router.get('/get-next-test', async (req, res) => {
           }
         ],
         transaction: t
-      }).then(async (testResult) => {
+      }).then(async (benchmarkResult) => {
         // Fetch the repository separately based on the RepositoryName
-        if (testResult && testResult.TestRun && testResult.TestRun.RepositoryName) {
+        if (benchmarkResult && benchmarkResult.TestRun && benchmarkResult.TestRun.RepositoryName) {
           const repository = await Repository.findOne({
             where: { 
-              Name: testResult.TestRun.RepositoryName 
+              Name: benchmarkResult.TestRun.RepositoryName 
             },
             transaction: t
           });
           
           // Add repository info to the response
           if (repository) {
-            const plainResult = testResult.get({ plain: true });
+            const plainResult = benchmarkResult.get({ plain: true });
             plainResult.Repository = repository.get({ plain: true });
             return plainResult;
           }
         }
-        return testResult;
+        return benchmarkResult;
       });
     });
 
@@ -173,36 +342,86 @@ router.get('/get-next-test', async (req, res) => {
   }
 });
 
-router.post('/complete-test', async (req, res) => {
-  const { TestResultId, Status, ExecutionOutput } = req.body;
+router.post('/complete-benchmark', async (req, res) => {
+  const { BenchmarkResultId, Result } = req.body;
   
   try {
-    const testResult = await TestResult.findByPk(TestResultId);
+    const benchmarkResult = await BenchmarkResult.findByPk(BenchmarkResultId);
     
-    if (!testResult) {
+    if (!benchmarkResult) {
       return res.status(404).json({ message: 'Test result not found' });
     }
     
-    testResult.Status = Status;
-    testResult.ExecutionEndTimestamp = new Date();
-    testResult.ExecutionOutput = ExecutionOutput;
-    await testResult.save();
+    benchmarkResult.Status = 'completed';
+    benchmarkResult.ExecutionEndTimestamp = new Date();
+    benchmarkResult.Result = Result;
+    await benchmarkResult.save();
+
+    await MicroJobsQueue.destroy({
+      where: {
+        Type: 'bench',
+        ResultId: BenchmarkResultId
+      }
+    });
+
+    // Check if all benchmarks in this BenchmarkRun are completed
+    // const benchmarkRun = await BenchmarksRun.findByPk(benchmarkResult.BenchmarksRunId);
+    // const pendingBenchmarks = await BenchmarkResult.count({
+    //   where: {
+    //     BenchmarksRunId: benchmarkResult.BenchmarksRunId,
+    //     Status: ['queued', 'running']
+    //   }
+    // });
+
+    // // If no more pending benchmarks, send notification
+    // if (pendingBenchmarks === 0 && benchmarkRun.TeamsNotificationUrl) {
+    //   sendTestRunCompletionMessageToTeams(benchmarkResult.BenchmarksRunId);
+    // }
+    
+    res.status(200).json(benchmarkResult);
+  } catch (error) {
+    console.error('Error completing benchmark:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
+router.post('/complete-test', async (req, res) => {
+  const { BenchmarkResultId, Status, ExecutionOutput } = req.body;
+  
+  try {
+    const benchmarkResult = await TestResult.findByPk(BenchmarkResultId);
+    
+    if (!benchmarkResult) {
+      return res.status(404).json({ message: 'Test result not found' });
+    }
+    
+    benchmarkResult.Status = Status;
+    benchmarkResult.ExecutionEndTimestamp = new Date();
+    benchmarkResult.ExecutionOutput = ExecutionOutput;
+    await benchmarkResult.save();
+
+    await MicroJobsQueue.destroy({
+      where: {
+        Type: 'test',
+        ResultId: benchmarkResult.Id
+      }
+    });
 
     // Check if all tests in this TestRun are completed
-    const testRun = await TestRun.findByPk(testResult.TestRunId);
+    const benchmarkRun = await TestRun.findByPk(benchmarkResult.TestRunId);
     const pendingTests = await TestResult.count({
       where: {
-        TestRunId: testResult.TestRunId,
+        TestRunId: benchmarkResult.TestRunId,
         Status: ['queued', 'running']
       }
     });
 
     // If no more pending tests, send notification
-    if (pendingTests === 0 && testRun.TeamsNotificationUrl) {
-      sendTestRunCompletionMessageToTeams(testResult.TestRunId);
+    if (pendingTests === 0 && benchmarkRun.TeamsNotificationUrl) {
+      sendTestRunCompletionMessageToTeams(benchmarkResult.TestRunId);
     }
     
-    res.status(200).json(testResult);
+    res.status(200).json(benchmarkResult);
   } catch (error) {
     console.error('Error completing test:', error);
     res.status(500).json({ error: 'Internal Server Error', details: error.message });
@@ -218,13 +437,13 @@ const uploadDiff = multer({
 });
 
 router.post('/upload-diff', uploadDiff.single('report'), async (req, res) => {
-  const { TestResultId, Name, Status } = req.body;
+  const { BenchmarkResultId, Name, Status } = req.body;
   const reportFile = req.file;
 
   try {
-    const testResult = await TestResult.findByPk(TestResultId);
+    const benchmarkResult = await TestResult.findByPk(BenchmarkResultId);
 
-    if (!testResult) {
+    if (!benchmarkResult) {
       return res.status(404).json({ message: 'Test result not found' });
     }
 
@@ -237,7 +456,7 @@ router.post('/upload-diff', uploadDiff.single('report'), async (req, res) => {
     }
 
     const testResultDiff = await TestResultDiff.create({
-      TestResultId,
+      BenchmarkResultId,
       Name,
       Status,
       Report: reportContent
@@ -255,10 +474,10 @@ const storage = multer.diskStorage({
     cb(null, appSettings.storage.resultsTempDirArchives); // Set the destination directory
   },
   filename: (req, file, cb) => {
-    if (!req.body.TestResultId) {
-      return cb(new Error('TestResultId is required in the request body'));
+    if (!req.body.BenchmarkResultId) {
+      return cb(new Error('BenchmarkResultId is required in the request body'));
     }
-    const fileName = `${req.body.TestResultId}.7z`; // Use TestResultId to generate the filename
+    const fileName = `${req.body.BenchmarkResultId}.7z`; // Use BenchmarkResultId to generate the filename
     cb(null, fileName);
   }
 });
@@ -269,19 +488,19 @@ const uploadTempDirArchive = multer({
 }).fields([{ name: 'archive', maxCount: 1 }]);
 
 router.post('/upload-temp-dir-archive', uploadTempDirArchive, async (req, res) => {
-  const { TestResultId } = req.body;
+  const { BenchmarkResultId } = req.body;
 
   try {
-    const testResult = await TestResult.findByPk(TestResultId);
+    const benchmarkResult = await TestResult.findByPk(BenchmarkResultId);
 
-    if (!testResult) {
+    if (!benchmarkResult) {
       return res.status(404).json({ message: 'Test result not found' });
     }
 
-    const archivePath = path.join(appSettings.storage.resultsTempDirArchives, `${TestResultId}.7z`);
+    const archivePath = path.join(appSettings.storage.resultsTempDirArchives, `${BenchmarkResultId}.7z`);
 
     const testResultTempDirArchive = await TestResultsTempDirArchive.create({
-      TestResultId,
+      BenchmarkResultId,
       ArchivePath: archivePath
     });
 
@@ -292,17 +511,17 @@ router.post('/upload-temp-dir-archive', uploadTempDirArchive, async (req, res) =
   }
 });
 
-router.get('/download-temp-dir-archive/:TestResultId', async (req, res) => {
-  const { TestResultId } = req.params;
+router.get('/download-temp-dir-archive/:BenchmarkResultId', async (req, res) => {
+  const { BenchmarkResultId } = req.params;
   
   try {
-    const testResult = await TestResult.findByPk(TestResultId);
+    const benchmarkResult = await TestResult.findByPk(BenchmarkResultId);
     
-    if (!testResult) {
+    if (!benchmarkResult) {
       return res.status(404).json({ message: 'Test result not found' });
     }
     
-    const archivePath = path.join(appSettings.storage.resultsTempDirArchives, `${TestResultId}.7z`);
+    const archivePath = path.join(appSettings.storage.resultsTempDirArchives, `${BenchmarkResultId}.7z`);
     
     if (!fs.existsSync(archivePath)) {
       return res.status(404).json({ message: 'Archive file not found' });

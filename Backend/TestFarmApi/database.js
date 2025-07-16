@@ -2,10 +2,29 @@ const { Sequelize, DataTypes } = require('sequelize');
 const { appSettings } = require('./appsettings');
 const { BuildStatus } = require('azure-devops-node-api/interfaces/BuildInterfaces');
 
-sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: appSettings.database.sqliteDatabasePath
-});
+let sequelize = new Sequelize({
+    dialect: 'mssql',
+    host: appSettings.database.host,
+    database: appSettings.database.database,
+    username: appSettings.database.username,
+    password: appSettings.database.password,
+    dialectOptions: {
+      options: {
+        encrypt: false,
+        trustServerCertificate: true,
+        enableArithAbort: true,
+        connectionTimeout: 60000,
+        requestTimeout: 60000
+      }
+    },
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 60000,
+      idle: 10000
+    },
+    logging: console.log
+  });
 
 sequelize.verbose_sync = async function() {
   try {
@@ -17,6 +36,37 @@ sequelize.verbose_sync = async function() {
     console.error('Unable to connect to the database:', error);
   }
 };
+
+const MicroJobsQueue = sequelize.define('MicroJobsQueue', {
+  Id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+    allowNull: false
+  },
+  // Job type (e.g. test, bench, load, unit)
+  Type: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  Status: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  // Job run ID (can be benchmarks run, tests run etc.). Can be used to correlate with other job-specific data.
+  RunId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  // Job result ID (can be benchmarks result, tests result etc.). Can be used to easily find job results which is typically used as test description.
+  ResultId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  }
+}, {
+  tableName: 'MicroJobsQueue',
+  timestamps: false
+});
 
 const ArtifactDefinition = sequelize.define('ArtifactDefinition', {
   Id: {
@@ -217,10 +267,6 @@ const TestRun = sequelize.define('TestsRuns', {
   GridName: {
     type: DataTypes.STRING,
     allowNull: true
-  },
-  CreationTimestamp: {
-    type: DataTypes.DATE,
-    allowNull: false
   },
   TeamsNotificationUrl: {
     type: DataTypes.STRING,
@@ -428,16 +474,213 @@ const TestResultsTempDirArchive = sequelize.define('TestResultsTempDirArchive', 
 TestResult.hasOne(TestResultsTempDirArchive, { foreignKey: 'TestResultId', as: 'TestResultsTempDirArchive' });
 TestResultsTempDirArchive.belongsTo(TestResult, { foreignKey: 'TestResultId', as: 'TestResult' });
 
+const BenchmarksRun = sequelize.define('BenchmarksRun', {
+  Id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+    allowNull: false
+  },
+  RepositoryName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  SuiteName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  Name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  GridName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  TeamsNotificationUrl: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  Artifacts: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    get() {
+      const rawValue = this.getDataValue('Artifacts');
+      return rawValue ? JSON.parse(rawValue) : [];
+    },
+    set(value) {
+      this.setDataValue('Artifacts', value ? JSON.stringify(value) : null);
+    }
+  }
+}, {
+  tableName: 'BenchmarksRuns',
+  timestamps: false
+});
+
+const Benchmark = sequelize.define('Benchmark', {
+  Id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+    allowNull: false
+  },
+  RepositoryName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  SuiteName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  Path: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  Name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  Owner: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  CreationTimestamp: {
+    type: DataTypes.DATE,
+    allowNull: false
+  }
+}, {
+  tableName: 'Benchmarks',
+  timestamps: false
+});
+
+class BenchmarkResultJson {
+  constructor(data) {
+    this.events = data.events || [];
+    this.metrics = data.metrics || [];
+
+    // Ensure events have required properties
+    this.events = this.events.map(event => ({
+      name: event.name || '',
+      timestamp: event.timestamp || ''
+    }));
+
+    // Ensure metrics have required properties
+    this.metrics = this.metrics.map(metric => ({
+      timestamp: metric.timestamp || '',
+      elapsed_time: metric.elapsed_time || 0,
+      process: {
+        cpu_percent: metric.process?.cpu_percent || 0,
+        cpu_times_user: metric.process?.cpu_times_user || 0,
+        cpu_times_system: metric.process?.cpu_times_system || 0,
+        cpu_times_total: metric.process?.cpu_times_total || 0,
+        memory_rss: metric.process?.memory_rss || 0,
+        memory_vms: metric.process?.memory_vms || 0,
+        memory_percent: metric.process?.memory_percent || 0,
+        num_threads: metric.process?.num_threads || 0,
+        fd_handle_count: metric.process?.fd_handle_count || 0,
+        io_read_count: metric.process?.io_read_count || 0,
+        io_write_count: metric.process?.io_write_count || 0,
+        io_read_bytes: metric.process?.io_read_bytes || 0,
+        io_write_bytes: metric.process?.io_write_bytes || 0,
+        network_bytes_sent: metric.process?.network_bytes_sent || 0,
+        network_bytes_recv: metric.process?.network_bytes_recv || 0,
+        network_packets_sent: metric.process?.network_packets_sent || 0,
+        network_packets_recv: metric.process?.network_packets_recv || 0,
+        network_connections: metric.process?.network_connections || 0,
+        context_switches: metric.process?.context_switches || 0,
+      },
+      system: {
+        cpu_percent: metric.system?.cpu_percent || 0,
+        memory_total: metric.system?.memory_total || 0,
+        memory_available: metric.system?.memory_available || 0,
+        memory_used: metric.system?.memory_used || 0,
+        memory_percent: metric.system?.memory_percent || 0,
+      }
+    }));
+  }
+
+  toJSON() {
+    return {
+      events: this.events,
+      metrics: this.metrics
+    };
+  }
+}
+
+const BenchmarkResult = sequelize.define('BenchmarkResult', {
+  Id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+    allowNull: false
+  },
+  BenchmarksRunId: {
+    type: DataTypes.INTEGER,
+    foreignKey: true,
+    allowNull: false,
+    references: {
+      model: 'BenchmarksRuns',
+      key: 'Id'
+    }
+  },
+  BenchmarkId: {
+    type: DataTypes.INTEGER,
+    foreignKey: true,
+    allowNull: false,
+    references: {
+      model: 'Benchmarks',
+      key: 'Id'
+    }
+  },
+  Status: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  ExecutionStartTimestamp: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  ExecutionEndTimestamp: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  Results: {
+    type: DataTypes.TEXT('long'),
+    allowNull: false,
+    get() {
+      const rawValue = this.getDataValue('Results');
+      return new BenchmarkResultJson(JSON.parse(rawValue));
+    },
+    set(value) {
+      this.setDataValue('Results', JSON.stringify(value));
+    }
+  }
+}, {
+  tableName: 'BenchmarksResults',
+  timestamps: false
+});
+
+BenchmarksRun.hasMany(BenchmarkResult, { foreignKey: 'BenchmarksRunId', as: 'BenchmarkResult' });
+BenchmarkResult.belongsTo(BenchmarksRun, { foreignKey: 'BenchmarksRunId', as: 'BenchmarksRun' });
+
+Benchmark.hasMany(BenchmarkResult, { foreignKey: 'BenchmarkId', as: 'BenchmarkResult' });
+BenchmarkResult.belongsTo(Benchmark, { foreignKey: 'BenchmarkId', as: 'Benchmark' });
+
 module.exports = {
   ArtifactDefinition,
   Artifact,
   Grid,
   Host,
+  MicroJobsQueue,
   TestRun,
   Test,
   TestResult,
   Repository,
   TestResultDiff,
   TestResultsTempDirArchive,
+  BenchmarksRun,
+  Benchmark,
+  BenchmarkResult,
+  BenchmarkResultJson,
   sequelize
 };

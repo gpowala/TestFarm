@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, retry } from 'rxjs/operators';
 import { GridDescription } from '../models/grid-description';
-import { environment } from 'src/environments/environment ';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
     providedIn: 'root'
