@@ -321,12 +321,11 @@ app.get('/tests-runs', async (req, res) => {
         'RepositoryName',
         'SuiteName',
         'GridName',
-        'Name', 
-        'CreationTimestamp'
+        'Name'
       ],
       where: whereClause,
-      order: [['CreationTimestamp', 'DESC']],
-      limit: parseInt(limit)
+      order: [['Id', 'DESC']],
+      limit: limit ? parseInt(limit) : 500
     });
 
     // Calculate OverallResult for each test run
