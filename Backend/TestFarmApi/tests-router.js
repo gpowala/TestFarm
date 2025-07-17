@@ -300,9 +300,9 @@ router.get('/get-scheduled-test', async (req, res) => {
       queuedTest.ExecutionStartTimestamp = new Date();
       await queuedTest.save({ transaction: t });
 
-      const testsRun = await TestsRun.findOne({
+      const testsRun = await TestRun.findOne({
         where: {
-          Id: queuedTest.TestsRunId
+          Id: queuedTest.TestRunId
         },
         transaction: t
       });
