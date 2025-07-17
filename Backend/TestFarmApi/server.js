@@ -308,12 +308,12 @@ app.get('/tests-runs', async (req, res) => {
       };
     }
     
-    if (timespan && timespan !== '-1') {
-      const timeSpanHours = parseInt(timespan);
-      whereClause.CreationTimestamp = {
-        [Sequelize.Op.gte]: new Date(Date.now() - timeSpanHours * 60 * 60 * 1000)
-      };
-    }
+    // if (timespan && timespan !== '-1') {
+    //   const timeSpanHours = parseInt(timespan);
+    //   whereClause.CreationTimestamp = {
+    //     [Sequelize.Op.gte]: new Date(Date.now() - timeSpanHours * 60 * 60 * 1000)
+    //   };
+    // }
 
     const testRuns = await TestRun.findAll({
       attributes: [
