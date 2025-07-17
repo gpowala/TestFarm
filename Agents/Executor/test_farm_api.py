@@ -123,6 +123,7 @@ class MicroJob:
     id: int
     type: str
     status: str
+    grid_name: str
     run_id: int
     result_id: int
 
@@ -132,6 +133,7 @@ class MicroJob:
             id=data['Id'],
             type=data['Type'],
             status=data['Status'],
+            grid_name=data['GridName'],
             run_id=data['RunId'],
             result_id=data['ResultId']
         )
@@ -165,8 +167,9 @@ class TestRun:
     suite_name: str
     name: str
     grid_name: str
-    creation_timestamp: datetime
     artifacts: Optional[list]
+    overall_creation_timestamp: datetime
+    overall_status: str
 
     @staticmethod
     def from_dict(config: Config, data: dict) -> 'TestRun':
@@ -184,8 +187,9 @@ class TestRun:
             suite_name=data['SuiteName'],
             name=data['Name'],
             grid_name=data['GridName'],
-            creation_timestamp=datetime.fromisoformat(data['CreationTimestamp'].replace('Z', '+00:00')),
-            artifacts=artifacts
+            artifacts=artifacts,
+            overall_creation_timestamp=datetime.fromisoformat(data['OverallCreationTimestamp'].replace('Z', '+00:00')),
+            overall_status=data['OverallStatus']
         )
 
 @dataclass
