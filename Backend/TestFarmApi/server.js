@@ -322,60 +322,57 @@ app.get('/tests-runs', async (req, res) => {
         'SuiteName',
         'GridName',
         'Name', 
-        'CreationTimestamp',
-        [
-          sequelize.literal(`(
-            SELECT CASE
-              WHEN EXISTS (
-                SELECT 1 FROM TestsResults 
-                WHERE TestsResults.TestRunId = TestsRuns.Id 
-                AND TestsResults.Status = 'running'
-              ) THEN 'running' 
-              WHEN EXISTS (
-                SELECT 1 FROM TestsResults 
-                WHERE TestsResults.TestRunId = TestsRuns.Id 
-                AND TestsResults.Status = 'failed'
-              ) THEN 'failed'
-              WHEN EXISTS (
-                SELECT 1 FROM TestsResults 
-                WHERE TestsResults.TestRunId = TestsRuns.Id 
-                AND TestsResults.Status = 'queued'
-              ) THEN 'queued'
-              WHEN NOT EXISTS (
-                SELECT 1 FROM TestsResults 
-                WHERE TestsResults.TestRunId = TestsRuns.Id
-              ) THEN 'Unknown' 
-              ELSE 'passed'
-            END
-          )`),
-          'OverallResult'
-        ]
+        'CreationTimestamp'
       ],
-      where: {
-        ...whereClause,
-        ...(result && {
-          [Sequelize.Op.and]: [
-            sequelize.literal(`(
-              SELECT CASE 
-                WHEN EXISTS (
-                  SELECT 1 FROM TestsResults 
-                  WHERE TestsResults.TestRunId = TestsRuns.Id 
-                  AND TestsResults.Status = 'Failed'
-                ) THEN 'failed'
-                WHEN NOT EXISTS (
-                  SELECT 1 FROM TestsResults 
-                  WHERE TestsResults.TestRunId = TestsRuns.Id
-                ) THEN 'Unknown' 
-                ELSE 'passed'
-              END
-            ) = '${result}'`)
-          ]
-        })
-      },
+      where: whereClause,
       order: [['CreationTimestamp', 'DESC']],
       limit: parseInt(limit)
     });
-    res.status(200).json(testRuns);
+
+    // Calculate OverallResult for each test run
+    const testRunsWithStatus = await Promise.all(testRuns.map(async (testRun) => {
+      const statusCounts = await TestResult.findAll({
+        where: { TestRunId: testRun.Id },
+        attributes: [
+          'Status',
+          [sequelize.fn('COUNT', sequelize.col('Status')), 'count']
+        ],
+        group: ['Status'],
+        raw: true
+      });
+
+      let overallResult = 'Unknown';
+      
+      if (statusCounts.length === 0) {
+        overallResult = 'Unknown';
+      } else {
+        const statusMap = statusCounts.reduce((acc, item) => {
+          acc[item.Status.toLowerCase()] = parseInt(item.count);
+          return acc;
+        }, {});
+
+        if (statusMap.running > 0) {
+          overallResult = 'running';
+        } else if (statusMap.failed > 0) {
+          overallResult = 'failed';
+        } else if (statusMap.queued > 0) {
+          overallResult = 'queued';
+        } else {
+          overallResult = 'passed';
+        }
+      }
+
+      return {
+        ...testRun.toJSON(),
+        OverallResult: overallResult
+      };
+    }));
+
+    // Filter by result if specified
+    const filteredTestRuns = result 
+      ? testRunsWithStatus.filter(tr => tr.OverallResult === result)
+      : testRunsWithStatus;
+    res.status(200).json(filteredTestRuns);
   } catch (error) {
     console.error('Error fetching test runs:', error);
     res.status(500).send('Error fetching test runs');
