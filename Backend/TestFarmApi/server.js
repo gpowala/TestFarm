@@ -307,7 +307,7 @@ app.get('/tests-runs', async (req, res) => {
       };
     }
 
-    if (result) {
+    if (result && result !== 'all') {
       whereClause.OverallStatus = {
         [Sequelize.Op.eq]: result
       };
