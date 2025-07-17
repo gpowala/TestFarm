@@ -68,9 +68,9 @@ router.post('/schedule-benchmarks-run', async (req, res) => {
         let benchmark = await Benchmark.findOne({ where: {RepositoryName: RepositoryName, SuiteName: SuiteName, Path: benchmarkPath, Name: benchmarkConfig.name} })
                      ?? await Benchmark.create({ RepositoryName: RepositoryName, SuiteName: SuiteName, Path: benchmarkPath,  Name: benchmarkConfig.name, Owner: benchmarkConfig.owner, CreationTimestamp: new Date() });
 
-        await BenchmarkResult.create({ BenchmarksRunId: benchmarksRun.Id, BenchmarkId: benchmark.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null });
+        let result = await BenchmarkResult.create({ BenchmarksRunId: benchmarksRun.Id, BenchmarkId: benchmark.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null });
 
-        await MicroJobsQueue.create({ Type: 'bench', Status: 'queued', GridName: GridName, RunId: benchmarksRun.Id, ResultId: benchmark.Id });
+        await MicroJobsQueue.create({ Type: 'bench', Status: 'queued', GridName: GridName, RunId: benchmarksRun.Id, ResultId: result.Id });
       }
       catch (error) {
         console.error(`Failed to register benchmark: ${error}`);
@@ -105,7 +105,7 @@ router.post('/schedule-tests-run', async (req, res) => {
     const requestedSuiteConfig = testsConfig.suites.find(suite => suite.name === SuiteName);
     const requestedTestsPaths = requestedSuiteConfig ? requestedSuiteConfig.tests : [];
 
-    let benchmarkRun = await TestRun.create({
+    let testsRun = await TestRun.create({
       RepositoryName: RepositoryName,
       SuiteName: SuiteName,
       GridName: GridName,
@@ -126,16 +126,16 @@ router.post('/schedule-tests-run', async (req, res) => {
         let test = await Test.findOne({ where: {RepositoryName: RepositoryName, SuiteName: SuiteName, Path: testPath, Name: testConfig.name} })
                 ?? await Test.create({ RepositoryName: RepositoryName, SuiteName: SuiteName, Path: testPath,  Name: testConfig.name, Owner: testConfig.owner, CreationTimestamp: new Date() });
 
-        await TestResult.create({ TestRunId: benchmarkRun.Id, TestId: test.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null });
+        let result = await TestResult.create({ TestRunId: testsRun.Id, TestId: test.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null });
 
-        await MicroJobsQueue.create({ Type: 'test', Status: 'queued', GridName: GridName, RunId: benchmarkRun.Id, ResultId: test.Id });
+        await MicroJobsQueue.create({ Type: 'test', Status: 'queued', GridName: GridName, RunId: testsRun.Id, ResultId: result.Id });
       }
       catch (error) {
         console.error(`Failed to register test: ${error}`);
       }
     });
 
-    res.status(201).json(benchmarkRun);
+    res.status(201).json(testsRun);
   } catch (error) {
     res.status(500).json({ error: `Internal Server Error: ${error}` });
   } finally {
