@@ -261,14 +261,14 @@ router.get('/get-scheduled-benchmark', async (req, res) => {
 });
 
 router.get('/get-scheduled-test', async (req, res) => {
-  const { BenchmarkResultId } = req.query;
+  const { TestResultId } = req.query;
   
   try {
     // Use a transaction with the highest isolation level to prevent race conditions
     const result = await sequelize.transaction({
       isolationLevel: Sequelize.Transaction.ISOLATION_LEVELS.SERIALIZABLE
     }, async (t) => {
-      const queuedTest = await TestResult.findByPk(BenchmarkResultId, {
+      const queuedTest = await TestResult.findByPk(TestResultId, {
         lock: t.LOCK.UPDATE, // Add row-level locking to prevent other transactions from changing this row
         transaction: t
       });
@@ -285,7 +285,7 @@ router.get('/get-scheduled-test', async (req, res) => {
       const job = await MicroJobsQueue.findOne({
         where: {
           Type: 'test',
-          ResultId: BenchmarkResultId
+          ResultId: TestResultId
         },
         transaction: t
       });
@@ -298,7 +298,7 @@ router.get('/get-scheduled-test', async (req, res) => {
       await job.save({ transaction: t });
 
       // Retrieve the complete test information with associations
-      return TestResult.findByPk(BenchmarkResultId, {
+      return TestResult.findByPk(TestResultId, {
         include: [
           {
             model: TestRun,
@@ -386,42 +386,42 @@ router.post('/complete-benchmark', async (req, res) => {
 });
 
 router.post('/complete-test', async (req, res) => {
-  const { BenchmarkResultId, Status, ExecutionOutput } = req.body;
-  
+  const { TestResultId, Status, ExecutionOutput } = req.body;
+
   try {
-    const benchmarkResult = await TestResult.findByPk(BenchmarkResultId);
+    const testResult = await TestResult.findByPk(TestResultId);
     
-    if (!benchmarkResult) {
+    if (!testResult) {
       return res.status(404).json({ message: 'Test result not found' });
     }
     
-    benchmarkResult.Status = Status;
-    benchmarkResult.ExecutionEndTimestamp = new Date();
-    benchmarkResult.ExecutionOutput = ExecutionOutput;
-    await benchmarkResult.save();
+    testResult.Status = Status;
+    testResult.ExecutionEndTimestamp = new Date();
+    testResult.ExecutionOutput = ExecutionOutput;
+    await testResult.save();
 
     await MicroJobsQueue.destroy({
       where: {
         Type: 'test',
-        ResultId: benchmarkResult.Id
+        ResultId: testResult.Id
       }
     });
 
     // Check if all tests in this TestRun are completed
-    const benchmarkRun = await TestRun.findByPk(benchmarkResult.TestRunId);
+    const benchmarkRun = await TestRun.findByPk(testResult.TestRunId);
     const pendingTests = await TestResult.count({
       where: {
-        TestRunId: benchmarkResult.TestRunId,
+        TestRunId: testResult.TestRunId,
         Status: ['queued', 'running']
       }
     });
 
     // If no more pending tests, send notification
     if (pendingTests === 0 && benchmarkRun.TeamsNotificationUrl) {
-      sendTestRunCompletionMessageToTeams(benchmarkResult.TestRunId);
+      sendTestRunCompletionMessageToTeams(testResult.TestRunId);
     }
     
-    res.status(200).json(benchmarkResult);
+    res.status(200).json(testResult);
   } catch (error) {
     console.error('Error completing test:', error);
     res.status(500).json({ error: 'Internal Server Error', details: error.message });

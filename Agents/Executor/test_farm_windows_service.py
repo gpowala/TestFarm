@@ -20,7 +20,7 @@ import shutil
 from testfarm_agents_utils import *
 
 from test_farm_tests import DiffPair, TestCase
-from test_farm_api import get_artifact, get_next_test, register_host, unregister_host, update_host_status, complete_test, upload_diff, upload_temp_dir_archive, Repository
+from test_farm_api import get_artifact, get_next_job, get_scheduled_test, register_host, unregister_host, update_host_status, complete_test, upload_diff, upload_temp_dir_archive, Repository, MicroJob
 from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
 from logging.handlers import RotatingFileHandler
 
@@ -194,8 +194,14 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
         while self._running:
             try:
-                test = get_next_test(self._config)
-                if test:
+                job = get_next_job(self._config)
+                if job and job.type == "test":
+                    test = get_scheduled_test(self._config, job)
+
+                    if not test:
+                        logging.warning(f"No scheduled test found for job: {job.id}")
+                        continue
+
                     self.cleanup_temp_dir()
 
                     logging.info(f"Received test: {test.test.name} (ID: {test.id})")

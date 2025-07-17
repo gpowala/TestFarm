@@ -19,7 +19,8 @@ __all__ = [
     'TestResult',
     'Host',
     'get_artifact',
-    'get_next_test',
+    'get_next_job',
+    'get_scheduled_test',
     'register_host',
     'unregister_host',
     'update_host_status',
@@ -116,6 +117,24 @@ class Repository:
             token=data['Token'],
             is_active=data['IsActive']
         )
+    
+@dataclass
+class MicroJob:
+    id: int
+    type: str
+    status: str
+    run_id: int
+    result_id: int
+
+    @staticmethod
+    def from_dict(data: dict) -> 'MicroJob':
+        return MicroJob(
+            id=data['Id'],
+            type=data['Type'],
+            status=data['Status'],
+            run_id=data['RunId'],
+            result_id=data['ResultId']
+        )
 
 @dataclass
 class Test:
@@ -209,10 +228,19 @@ def get_artifact(config: Config, artifact_id: int) -> Optional[Artifact]:
     else:
         return None
 
-def get_next_test(config: Config) -> Optional[TestResult]:
+def get_next_job(config: Config) -> Optional[MicroJob]:
     response = requests.get(
-        url = urljoin(config.test_farm_api.base_url, "get-next-test"),
+        url = urljoin(config.test_farm_api.base_url, "get-next-job"),
         params = {'GridName': config.grid.name},
+        timeout = config.test_farm_api.timeout
+    )
+
+    return MicroJob.from_dict(response.json()) if response.ok else None
+
+def get_scheduled_test(config: Config, job: MicroJob) -> Optional[TestResult]:
+    response = requests.get(
+        url = urljoin(config.test_farm_api.base_url, "get-scheduled-test"),
+        params = {'TestResultId': job.result_id},
         timeout = config.test_farm_api.timeout
     )
     
