@@ -523,10 +523,10 @@ const storage = multer.diskStorage({
     cb(null, appSettings.storage.resultsTempDirArchives); // Set the destination directory
   },
   filename: (req, file, cb) => {
-    if (!req.body.BenchmarkResultId) {
-      return cb(new Error('BenchmarkResultId is required in the request body'));
+    if (!req.body.TestResultId) {
+      return cb(new Error('TestResultId is required in the request body'));
     }
-    const fileName = `${req.body.BenchmarkResultId}.7z`; // Use BenchmarkResultId to generate the filename
+    const fileName = `${req.body.TestResultId}.7z`; // Use TestResultId to generate the filename
     cb(null, fileName);
   }
 });
