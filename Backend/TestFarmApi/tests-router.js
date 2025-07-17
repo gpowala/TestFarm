@@ -486,13 +486,13 @@ const uploadDiff = multer({
 });
 
 router.post('/upload-diff', uploadDiff.single('report'), async (req, res) => {
-  const { BenchmarkResultId, Name, Status } = req.body;
+  const { TestResultId, Name, Status } = req.body;
   const reportFile = req.file;
 
   try {
-    const benchmarkResult = await TestResult.findByPk(BenchmarkResultId);
+    const testResult = await TestResult.findByPk(TestResultId);
 
-    if (!benchmarkResult) {
+    if (!testResult) {
       return res.status(404).json({ message: 'Test result not found' });
     }
 
@@ -505,7 +505,7 @@ router.post('/upload-diff', uploadDiff.single('report'), async (req, res) => {
     }
 
     const testResultDiff = await TestResultDiff.create({
-      BenchmarkResultId,
+      TestResultId,
       Name,
       Status,
       Report: reportContent
@@ -537,19 +537,19 @@ const uploadTempDirArchive = multer({
 }).fields([{ name: 'archive', maxCount: 1 }]);
 
 router.post('/upload-temp-dir-archive', uploadTempDirArchive, async (req, res) => {
-  const { BenchmarkResultId } = req.body;
+  const { TestResultId } = req.body;
 
   try {
-    const benchmarkResult = await TestResult.findByPk(BenchmarkResultId);
+    const testResult = await TestResult.findByPk(TestResultId);
 
-    if (!benchmarkResult) {
+    if (!testResult) {
       return res.status(404).json({ message: 'Test result not found' });
     }
 
-    const archivePath = path.join(appSettings.storage.resultsTempDirArchives, `${BenchmarkResultId}.7z`);
+    const archivePath = path.join(appSettings.storage.resultsTempDirArchives, `${TestResultId}.7z`);
 
     const testResultTempDirArchive = await TestResultsTempDirArchive.create({
-      BenchmarkResultId,
+      TestResultId,
       ArchivePath: archivePath
     });
 
@@ -560,18 +560,18 @@ router.post('/upload-temp-dir-archive', uploadTempDirArchive, async (req, res) =
   }
 });
 
-router.get('/download-temp-dir-archive/:BenchmarkResultId', async (req, res) => {
-  const { BenchmarkResultId } = req.params;
+router.get('/download-temp-dir-archive/:TestResultId', async (req, res) => {
+  const { TestResultId } = req.params;
   
   try {
-    const benchmarkResult = await TestResult.findByPk(BenchmarkResultId);
-    
-    if (!benchmarkResult) {
+    const testResult = await TestResult.findByPk(TestResultId);
+
+    if (!testResult) {
       return res.status(404).json({ message: 'Test result not found' });
     }
-    
-    const archivePath = path.join(appSettings.storage.resultsTempDirArchives, `${BenchmarkResultId}.7z`);
-    
+
+    const archivePath = path.join(appSettings.storage.resultsTempDirArchives, `${TestResultId}.7z`);
+
     if (!fs.existsSync(archivePath)) {
       return res.status(404).json({ message: 'Archive file not found' });
     }
