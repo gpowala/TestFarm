@@ -6,7 +6,6 @@ from urllib.parse import urljoin
 import socket
 import psutil
 import os
-import codecs
 
 from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
 
@@ -40,7 +39,7 @@ class ArtifactDefinition:
         return ArtifactDefinition(
             id=data['Id'],
             name=data['Name'],
-            install_script=data['InstallScript'].encode('utf-8').decode('unicode_escape'),
+            install_script=data['InstallScript'],
             tags=data['Tags'] if 'Tags' in data and data['Tags'] else []
         )
 
