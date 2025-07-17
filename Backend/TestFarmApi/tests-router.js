@@ -53,7 +53,9 @@ router.post('/schedule-benchmarks-run', async (req, res) => {
       GridName: GridName,
       Name: TestRunName,
       TeamsNotificationUrl: TeamsNotificationUrl,
-      Artifacts: Artifacts
+      Artifacts: Artifacts,
+      OverallCreationTimestamp: new Date(),
+      OverallStatus: 'queued'
     });
 
     requestedBenchmarksPaths.forEach(async (benchmarkPath) => {
@@ -68,7 +70,7 @@ router.post('/schedule-benchmarks-run', async (req, res) => {
 
         await BenchmarkResult.create({ BenchmarksRunId: benchmarksRun.Id, BenchmarkId: benchmark.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null });
 
-        await MicroJobsQueue.create({ Type: 'bench', Status: 'queued', RunId: benchmarksRun.Id, ResultId: benchmark.Id });
+        await MicroJobsQueue.create({ Type: 'bench', Status: 'queued', GridName: GridName, RunId: benchmarksRun.Id, ResultId: benchmark.Id });
       }
       catch (error) {
         console.error(`Failed to register benchmark: ${error}`);
@@ -109,7 +111,9 @@ router.post('/schedule-tests-run', async (req, res) => {
       GridName: GridName,
       Name: TestRunName,
       TeamsNotificationUrl: TeamsNotificationUrl,
-      Artifacts: Artifacts
+      Artifacts: Artifacts,
+      OverallCreationTimestamp: new Date(),
+      OverallStatus: 'queued'
     });
 
     requestedTestsPaths.forEach(async (testPath) => {
@@ -124,7 +128,7 @@ router.post('/schedule-tests-run', async (req, res) => {
 
         await TestResult.create({ TestRunId: benchmarkRun.Id, TestId: test.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null });
 
-        await MicroJobsQueue.create({ Type: 'test', Status: 'queued', RunId: benchmarkRun.Id, ResultId: test.Id });
+        await MicroJobsQueue.create({ Type: 'test', Status: 'queued', GridName: GridName, RunId: benchmarkRun.Id, ResultId: test.Id });
       }
       catch (error) {
         console.error(`Failed to register test: ${error}`);
@@ -199,6 +203,20 @@ router.get('/get-scheduled-benchmark', async (req, res) => {
       queuedBenchmark.Status = 'running';
       queuedBenchmark.ExecutionStartTimestamp = new Date();
       await queuedBenchmark.save({ transaction: t });
+
+      const benchmarksRun = await BenchmarkRun.findOne({
+        where: {
+          Id: queuedBenchmark.BenchmarkRunId
+        },
+        transaction: t
+      });
+
+      if (!benchmarksRun) {
+        return null;
+      }
+
+      benchmarksRun.OverallStatus = 'running';
+      await benchmarksRun.save({ transaction: t });
 
       const job = await MicroJobsQueue.findOne({
         where: {
@@ -281,6 +299,20 @@ router.get('/get-scheduled-test', async (req, res) => {
       queuedTest.Status = 'running';
       queuedTest.ExecutionStartTimestamp = new Date();
       await queuedTest.save({ transaction: t });
+
+      const testsRun = await TestsRun.findOne({
+        where: {
+          Id: queuedTest.TestsRunId
+        },
+        transaction: t
+      });
+
+      if (!testsRun) {
+        return null;
+      }
+
+      testsRun.OverallStatus = 'running';
+      await testsRun.save({ transaction: t });
 
       const job = await MicroJobsQueue.findOne({
         where: {
@@ -365,18 +397,23 @@ router.post('/complete-benchmark', async (req, res) => {
     });
 
     // Check if all benchmarks in this BenchmarkRun are completed
-    // const benchmarkRun = await BenchmarksRun.findByPk(benchmarkResult.BenchmarksRunId);
-    // const pendingBenchmarks = await BenchmarkResult.count({
-    //   where: {
-    //     BenchmarksRunId: benchmarkResult.BenchmarksRunId,
-    //     Status: ['queued', 'running']
-    //   }
-    // });
+    const benchmarkRun = await BenchmarksRun.findByPk(benchmarkResult.BenchmarksRunId);
+    const pendingBenchmarks = await BenchmarkResult.count({
+      where: {
+        BenchmarksRunId: benchmarkResult.BenchmarksRunId,
+        Status: ['queued', 'running']
+      }
+    });
 
-    // // If no more pending benchmarks, send notification
-    // if (pendingBenchmarks === 0 && benchmarkRun.TeamsNotificationUrl) {
-    //   sendTestRunCompletionMessageToTeams(benchmarkResult.BenchmarksRunId);
-    // }
+    // If no more pending benchmarks, send notification
+    if (pendingBenchmarks === 0) {
+      benchmarkRun.OverallStatus = 'completed';
+      await benchmarkRun.save();
+
+      // if (benchmarkRun.TeamsNotificationUrl) {
+      //   sendTestRunCompletionMessageToTeams(benchmarkResult.BenchmarksRunId);
+      // }
+    }
     
     res.status(200).json(benchmarkResult);
   } catch (error) {
@@ -408,7 +445,7 @@ router.post('/complete-test', async (req, res) => {
     });
 
     // Check if all tests in this TestRun are completed
-    const benchmarkRun = await TestRun.findByPk(testResult.TestRunId);
+    const testsRun = await TestRun.findByPk(testResult.TestRunId);
     const pendingTests = await TestResult.count({
       where: {
         TestRunId: testResult.TestRunId,
@@ -417,8 +454,20 @@ router.post('/complete-test', async (req, res) => {
     });
 
     // If no more pending tests, send notification
-    if (pendingTests === 0 && benchmarkRun.TeamsNotificationUrl) {
-      sendTestRunCompletionMessageToTeams(testResult.TestRunId);
+    if (pendingTests === 0) {
+      const allTestsPassed = await TestResult.count({
+        where: {
+          TestRunId: testResult.TestRunId,
+          Status: 'failed'
+        }
+      }) === 0;
+
+      testsRun.OverallStatus = allTestsPassed ? 'passed' : 'failed';
+      await testsRun.save();
+
+      if (testsRun.TeamsNotificationUrl) {
+        sendTestRunCompletionMessageToTeams(testResult.TestRunId);
+      }
     }
     
     res.status(200).json(testResult);

@@ -297,8 +297,7 @@ app.post('/upload-specflow-tests-results', async (req, res) => {
  */
 app.get('/tests-runs', async (req, res) => {
   try {
-    const { name, timespan, result: rawResult, limit } = req.query;
-    const result = rawResult === 'all' ? null : rawResult;
+    const { name, timespan, result, limit } = req.query;
     
     let whereClause = {};
     
@@ -307,13 +306,19 @@ app.get('/tests-runs', async (req, res) => {
         [Sequelize.Op.like]: `%${name}%`
       };
     }
+
+    if (result) {
+      whereClause.OverallStatus = {
+        [Sequelize.Op.eq]: result
+      };
+    }
     
-    // if (timespan && timespan !== '-1') {
-    //   const timeSpanHours = parseInt(timespan);
-    //   whereClause.CreationTimestamp = {
-    //     [Sequelize.Op.gte]: new Date(Date.now() - timeSpanHours * 60 * 60 * 1000)
-    //   };
-    // }
+    if (timespan && timespan !== '-1') {
+      const timeSpanHours = parseInt(timespan);
+      whereClause.OverallCreationTimestamp = {
+        [Sequelize.Op.gte]: new Date(Date.now() - timeSpanHours * 60 * 60 * 1000)
+      };
+    }
 
     const testRuns = await TestRun.findAll({
       attributes: [
@@ -321,57 +326,16 @@ app.get('/tests-runs', async (req, res) => {
         'RepositoryName',
         'SuiteName',
         'GridName',
-        'Name'
+        'Name',
+        'OverallCreationTimestamp',
+        'OverallStatus'
       ],
       where: whereClause,
       order: [['Id', 'DESC']],
       limit: limit ? parseInt(limit) : 500
     });
 
-    // Calculate OverallResult for each test run
-    const testRunsWithStatus = await Promise.all(testRuns.map(async (testRun) => {
-      const statusCounts = await TestResult.findAll({
-        where: { TestRunId: testRun.Id },
-        attributes: [
-          'Status',
-          [sequelize.fn('COUNT', sequelize.col('Status')), 'count']
-        ],
-        group: ['Status'],
-        raw: true
-      });
-
-      let overallResult = 'Unknown';
-      
-      if (statusCounts.length === 0) {
-        overallResult = 'Unknown';
-      } else {
-        const statusMap = statusCounts.reduce((acc, item) => {
-          acc[item.Status.toLowerCase()] = parseInt(item.count);
-          return acc;
-        }, {});
-
-        if (statusMap.running > 0) {
-          overallResult = 'running';
-        } else if (statusMap.failed > 0) {
-          overallResult = 'failed';
-        } else if (statusMap.queued > 0) {
-          overallResult = 'queued';
-        } else {
-          overallResult = 'passed';
-        }
-      }
-
-      return {
-        ...testRun.toJSON(),
-        OverallResult: overallResult
-      };
-    }));
-
-    // Filter by result if specified
-    const filteredTestRuns = result 
-      ? testRunsWithStatus.filter(tr => tr.OverallResult === result)
-      : testRunsWithStatus;
-    res.status(200).json(filteredTestRuns);
+    res.status(200).json(testRuns);
   } catch (error) {
     console.error('Error fetching test runs:', error);
     res.status(500).send('Error fetching test runs');

@@ -53,6 +53,10 @@ const MicroJobsQueue = sequelize.define('MicroJobsQueue', {
     type: DataTypes.STRING,
     allowNull: false
   },
+  GridName: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
   // Job run ID (can be benchmarks run, tests run etc.). Can be used to correlate with other job-specific data.
   RunId: {
     type: DataTypes.INTEGER,
@@ -271,6 +275,14 @@ const TestRun = sequelize.define('TestsRuns', {
   TeamsNotificationUrl: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  OverallCreationTimestamp: {
+    type: DataTypes.DATE,
+    allowNull: false
+  },
+  OverallStatus: {
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   Artifacts: {
     type: DataTypes.TEXT,
@@ -500,6 +512,14 @@ const BenchmarksRun = sequelize.define('BenchmarksRun', {
   TeamsNotificationUrl: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  OverallCreationTimestamp: {
+    type: DataTypes.DATE,
+    allowNull: false
+  },
+  OverallStatus: {
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   Artifacts: {
     type: DataTypes.TEXT,
