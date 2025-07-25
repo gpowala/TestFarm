@@ -20,10 +20,12 @@ __all__ = [
     'get_artifact',
     'get_next_job',
     'get_scheduled_test',
+    'get_scheduled_benchmark',
     'register_host',
     'unregister_host',
     'update_host_status',
     'complete_test',
+    'complete_benchmark',
     'upload_diff'
 ]
 
@@ -158,6 +160,28 @@ class Test:
             owner=data['Owner'],
             creation_timestamp=datetime.fromisoformat(data['CreationTimestamp'].replace('Z', '+00:00'))
         )
+    
+@dataclass
+class Benchmark:
+    id: int
+    repository_name: str
+    suite_name: str
+    path: str
+    name: str
+    owner: str
+    creation_timestamp: datetime
+
+    @staticmethod
+    def from_dict(data: dict) -> 'Benchmark':
+        return Benchmark(
+            id=data['Id'],
+            repository_name=data['RepositoryName'],
+            suite_name=data['SuiteName'],
+            path=data['Path'],
+            name=data['Name'],
+            owner=data['Owner'],
+            creation_timestamp=datetime.fromisoformat(data['CreationTimestamp'].replace('Z', '+00:00'))
+        )
 
 @dataclass
 class TestRun:
@@ -166,7 +190,7 @@ class TestRun:
     suite_name: str
     name: str
     grid_name: str
-    artifacts: Optional[list]
+    artifacts: list
     overall_creation_timestamp: datetime
     overall_status: str
 
@@ -190,6 +214,38 @@ class TestRun:
             overall_creation_timestamp=datetime.fromisoformat(data['OverallCreationTimestamp'].replace('Z', '+00:00')),
             overall_status=data['OverallStatus']
         )
+    
+@dataclass
+class BenchmarkRun:
+    id: int
+    repository_name: str
+    suite_name: str
+    name: str
+    grid_name: str
+    artifacts: list
+    overall_creation_timestamp: datetime
+    overall_status: str
+
+    @staticmethod
+    def from_dict(config: Config, data: dict) -> 'BenchmarkRun':
+        artifacts_ids = data['Artifacts'] if 'Artifacts' in data and data['Artifacts'] else []
+
+        artifacts = []
+        for artifact_id in artifacts_ids:
+            artifact = get_artifact(config, artifact_id)
+            if artifact:
+                artifacts.append(artifact)
+
+        return BenchmarkRun(
+            id=data['Id'],
+            repository_name=data['RepositoryName'],
+            suite_name=data['SuiteName'],
+            name=data['Name'],
+            grid_name=data['GridName'],
+            artifacts=artifacts,
+            overall_creation_timestamp=datetime.fromisoformat(data['OverallCreationTimestamp'].replace('Z', '+00:00')),
+            overall_status=data['OverallStatus']
+        )
 
 @dataclass
 class TestResult:
@@ -198,11 +254,13 @@ class TestResult:
     test_id: int
     status: str
     execution_start_timestamp: datetime
-    execution_end_timestamp: Optional[datetime]
-    execution_output: Optional[str]
     test_run: TestRun
     test: Test
     repository: Repository
+
+    # optional fields, not present until the test is completed
+    execution_end_timestamp: Optional[datetime]
+    execution_output: Optional[str]
 
     @staticmethod
     def from_dict(config: Config, data: dict) -> 'TestResult':
@@ -212,11 +270,147 @@ class TestResult:
             test_id=data['TestId'],
             status=data['Status'],
             execution_start_timestamp=datetime.fromisoformat(data['ExecutionStartTimestamp'].replace('Z', '+00:00')),
-            execution_end_timestamp=datetime.fromisoformat(data['ExecutionEndTimestamp'].replace('Z', '+00:00')) if data['ExecutionEndTimestamp'] else None,
-            execution_output=data['ExecutionOutput'],
             test_run=TestRun.from_dict(config, data['TestRun']),
             test=Test.from_dict(data['Test']),
-            repository=Repository.from_dict(data['Repository'])
+            repository=Repository.from_dict(data['Repository']),
+
+            # optional fields
+            execution_end_timestamp=datetime.fromisoformat(data['ExecutionEndTimestamp'].replace('Z', '+00:00')) if data['ExecutionEndTimestamp'] else None,
+            execution_output=data['ExecutionOutput'] if data['ExecutionOutput'] else None,
+        )
+   
+@dataclass
+class BenchmarkResultJson:
+    ############################################################################
+    # This class is used to serialize the result of a benchmark execution to JSON.
+    # It is not used to deserialize the data back from JSON.
+    ############################################################################
+    events: list
+    metrics: list
+    
+    @dataclass
+    class Event:
+        name: str
+        timestamp: str
+    
+    @dataclass
+    class ProcessMetrics:
+        cpu_percent: float = 0
+        cpu_times_user: float = 0
+        cpu_times_system: float = 0
+        cpu_times_total: float = 0
+        memory_rss: int = 0
+        memory_vms: int = 0
+        memory_percent: float = 0
+        num_threads: int = 0
+        fd_handle_count: int = 0
+        io_read_count: int = 0
+        io_write_count: int = 0
+        io_read_bytes: int = 0
+        io_write_bytes: int = 0
+        network_bytes_sent: int = 0
+        network_bytes_recv: int = 0
+        network_packets_sent: int = 0
+        network_packets_recv: int = 0
+        network_connections: int = 0
+        context_switches: int = 0
+    
+    @dataclass
+    class SystemMetrics:
+        cpu_percent: float = 0
+        memory_total: int = 0
+        memory_available: int = 0
+        memory_used: int = 0
+        memory_percent: float = 0
+    
+    @dataclass
+    class Metric:
+        timestamp: str
+        elapsed_time: float = 0
+        process: 'BenchmarkResultJson.ProcessMetrics' = None
+        system: 'BenchmarkResultJson.SystemMetrics' = None
+    
+    @staticmethod
+    def from_dict(data: dict) -> 'BenchmarkResultJson':
+        result = BenchmarkResultJson()
+        result.events = [BenchmarkResultJson.Event(name=e['name'], timestamp=e['timestamp']) for e in data.get('events', [])]
+
+        result.metrics = []
+        for m in data.get('metrics', []):
+            process_data = m.get('process', {})
+            system_data = m.get('system', {})
+            
+            process = BenchmarkResultJson.ProcessMetrics(
+                cpu_percent=process_data['cpu_percent'],
+                cpu_times_user=process_data['cpu_times_user'],
+                cpu_times_system=process_data['cpu_times_system'],
+                cpu_times_total=process_data['cpu_times_total'],
+                memory_rss=process_data['memory_rss'],
+                memory_vms=process_data['memory_vms'],
+                memory_percent=process_data['memory_percent'],
+                num_threads=process_data['num_threads'],
+                fd_handle_count=process_data['fd_handle_count'],
+                io_read_count=process_data['io_read_count'],
+                io_write_count=process_data['io_write_count'],
+                io_read_bytes=process_data['io_read_bytes'],
+                io_write_bytes=process_data['io_write_bytes'],
+                network_bytes_sent=process_data['network_bytes_sent'],
+                network_bytes_recv=process_data['network_bytes_recv'],
+                network_packets_sent=process_data['network_packets_sent'],
+                network_packets_recv=process_data['network_packets_recv'],
+                network_connections=process_data['network_connections'],
+                context_switches=process_data['context_switches']
+            )
+            
+            system = BenchmarkResultJson.SystemMetrics(
+                cpu_percent=system_data['cpu_percent'],
+                memory_total=system_data['memory_total'],
+                memory_available=system_data['memory_available'],
+                memory_used=system_data['memory_used'],
+                memory_percent=system_data['memory_percent']
+            )
+            
+            metric = BenchmarkResultJson.Metric(
+                timestamp=m['timestamp'],
+                elapsed_time=m['elapsed_time'],
+                process=process,
+                system=system
+            )
+            
+            result.metrics.append(metric)
+            
+        return result
+    
+@dataclass
+class BenchmarkResult:
+    id: int
+    benchmarks_run_id: int
+    benchmark_id: int
+    status: str
+    execution_start_timestamp: datetime
+    benchmark_run: BenchmarkRun
+    benchmark: Benchmark
+    repository: Repository
+
+    # optional fields, not present until the benchmark is completed
+    execution_end_timestamp: Optional[datetime]
+    results: Optional[str]
+
+    @staticmethod
+    def from_dict(config: Config, data: dict) -> 'BenchmarkResult':
+        return BenchmarkResult(
+            id=data['Id'],
+            benchmarks_run_id=data['BenchmarksRunId'],
+            benchmark_id=data['BenchmarkId'],
+            status=data['Status'],
+            execution_start_timestamp=datetime.fromisoformat(data['ExecutionStartTimestamp'].replace('Z', '+00:00')),
+            benchmark_run=data['BenchmarkRun'],
+            benchmark=Benchmark.from_dict(data['Benchmark']),
+            repository=Repository.from_dict(data['Repository']),
+
+            # optional fields
+            execution_end_timestamp=datetime.fromisoformat(data['ExecutionEndTimestamp'].replace('Z', '+00:00')) if data['ExecutionEndTimestamp'] else None,
+            results=data['Results'] if data['Results'] else None,
         )
 
 def get_artifact(config: Config, artifact_id: int) -> Optional[Artifact]:
@@ -248,6 +442,15 @@ def get_scheduled_test(config: Config, job: MicroJob) -> Optional[TestResult]:
     )
     
     return TestResult.from_dict(config, response.json()) if response.ok else None
+
+def get_scheduled_benchmark(config: Config, job: MicroJob) -> Optional[BenchmarkResult]:
+    response = requests.get(
+        url = urljoin(config.test_farm_api.base_url, "get-scheduled-benchmark"),
+        params = {'BenchmarkResultId': job.result_id},
+        timeout = config.test_farm_api.timeout
+    )
+
+    return BenchmarkResult.from_dict(config, response.json()) if response.ok else None
 
 def get_system_info(config: Config) -> Dict[str, any]:
     hostname = socket.gethostname()
@@ -320,6 +523,23 @@ def complete_test(test_result: TestResult, status: str, execution_output: str, c
     
     if not response.ok:
         raise RuntimeError(f"Failed to complete test result with status code: {response.status_code} and message: {response.reason}")
+    
+def complete_benchmark(benchmark_result: BenchmarkResult, result: BenchmarkResultJson, config: Config):
+    url = urljoin(config.test_farm_api.base_url, "complete-benchmark")
+    
+    payload = {
+        "BenchmarkResultId": benchmark_result.id,
+        "Result": result
+    }
+    
+    response = requests.post(
+        url=url,
+        json=payload,
+        timeout=config.test_farm_api.timeout
+    )
+    
+    if not response.ok:
+        raise RuntimeError(f"Failed to complete benchmark result with status code: {response.status_code} and message: {response.reason}")
 
 def upload_diff(test_result: TestResult, name: str, status: str, config: Config, report_file_path: Optional[str] = None):
     url = urljoin(config.test_farm_api.base_url, "upload-diff")

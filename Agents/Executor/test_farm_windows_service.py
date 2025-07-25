@@ -19,8 +19,8 @@ import py7zr
 import shutil
 from testfarm_agents_utils import *
 
-from test_farm_tests import DiffPair, TestCase
-from test_farm_api import get_artifact, get_next_job, get_scheduled_test, register_host, unregister_host, update_host_status, complete_test, upload_diff, upload_temp_dir_archive, Repository, MicroJob
+from test_farm_tests import DiffPair, TestCase, BenchmarkCase
+from test_farm_api import get_artifact, get_next_job, get_scheduled_test, get_scheduled_benchmark, register_host, unregister_host, update_host_status, complete_test, complete_benchmark, upload_diff, upload_temp_dir_archive, Repository, MicroJob
 from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
 from logging.handlers import RotatingFileHandler
 
@@ -245,16 +245,16 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                     new_working_dir = os.path.dirname(test_description_file)
                     logging.debug(f"cwd: {new_working_dir}")
                     
-                    for pre_step in test_case.pre_steps:
-                        expanded_pre_step = expand_magic_variables(pre_step)
+                    for pre_bench_step in test_case.pre_steps:
+                        expanded_pre_step = expand_magic_variables(pre_bench_step)
                         logging.info(f"Executing pre-step: {expanded_pre_step}")
 
                         self.execute_command(expanded_pre_step, env, new_working_dir)
 
-                    expanded_test_command = expand_magic_variables(test_case.command)    
-                    logging.info(f"Executing test command: {expanded_test_command}")
+                    expanded_benchmark_command = expand_magic_variables(test_case.command)    
+                    logging.info(f"Executing test command: {expanded_benchmark_command}")
 
-                    self.execute_command(expanded_test_command, env, new_working_dir)
+                    self.execute_command(expanded_benchmark_command, env, new_working_dir)
                         
                     for post_step in test_case.post_steps:
                         expanded_post_step = expand_magic_variables(post_step)
@@ -295,6 +295,136 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                         else:
                             logging.info(f"No differences found in {diff.gold} vs {diff.new}")
                             upload_diff(test, diff_name, "passed", self._config)
+
+                    # Archive temp directory contents
+                    temp_dir = expand_magic_variables("$__TF_WORK_DIR__")
+                    archive_path = expand_magic_variables(f"$__TF_TEMP_DIR__/result_temp_archive.7z")
+                    logging.info(f"Archiving contents of {temp_dir} to {archive_path}")
+                    
+                    try:
+                        with py7zr.SevenZipFile(archive_path, mode='w') as archive:
+                            for root, dirs, files in os.walk(temp_dir):
+                                for file in files:
+                                    file_path = os.path.join(root, file)
+                                    archive_name = os.path.relpath(file_path, temp_dir)
+                                    archive.write(file_path, archive_name)
+
+                        upload_temp_dir_archive(test, self._config, archive_path)
+                        logging.info(f"Successfully created archive at {archive_path} and uploaded")
+                    except Exception as e:
+                        logging.error(f"Failed to create or upload archive: {e}")
+
+                    if test_passed:
+                        logging.info("Test PASSED! Publishing results...")
+                        complete_test(test, "passed", self.read_execution_output(test_case), self._config)
+                    else:
+                        logging.info("Test FAILED! Publishing results...")
+                        complete_test(test, "failed", self.read_execution_output(test_case), self._config)
+
+                    logging.info("Test completed.")
+
+                elif job and job.type == "bench":
+                    benchmark = get_scheduled_benchmark(self._config, job)
+
+                    if not benchmark:
+                        logging.warning(f"No scheduled benchmark found for job: {job.id}")
+                        continue
+
+                    self.cleanup_temp_dir()
+
+                    logging.info(f"Received benchmark: {benchmark.benchmark.name} (ID: {benchmark.id})")
+                    local_repository_dir = self.clone_repository(benchmark.repository)
+
+                    benchmark_description_file = f"{local_repository_dir}/{benchmark.benchmark.path}/benchmark.testfarm"
+                    logging.info(f"Looking for benchmark description under {benchmark_description_file}...")
+
+                    if not os.path.exists(benchmark_description_file):
+                        raise FileNotFoundError(f"Benchmark description file does not exist: {benchmark_description_file}")
+
+                    logging.info(f"Found benchmark description file: {benchmark_description_file}")
+
+                    benchmark_case = BenchmarkCase.from_file(benchmark_description_file)
+
+                    #TODO: Implement common current run ID or switch completelly to installed artifacts recognition.
+                    if current_test_run_id != benchmark.benchmark_run.id:
+                        update_host_status("Installing artifacts...", self._host, self._config)
+                        logging.info(f"Installing artifacts for benchmark run: {benchmark.benchmark_run.name} (ID: {benchmark.benchmark_run.id})")
+
+                        if self.install_artifacts(benchmark.benchmark_run.artifacts) != 0:
+                            update_host_status("Failed to install artifacts", self._host, self._config)
+                            logging.error(f"Artifact installation failed for benchmark run: {benchmark.benchmark_run.name} (ID: {benchmark.benchmark_run.id})")
+
+                            complete_test(benchmark, "failed", self.read_execution_output(benchmark_case), self._config)
+                            logging.info("Benchmark FAILED!")
+
+                            self.cleanup_temp_dir()
+                            continue
+                        else:
+                            logging.info("Artifacts installation succeeded.")
+                            current_test_run_id = benchmark.benchmark_run.id
+
+                            self.cleanup_temp_dir()
+
+                    update_host_status("Running benchmark...", self._host, self._config)
+
+                    env = os.environ.copy()
+                    env["PYTHONPATH"] = f"{local_repository_dir};{env.get('PYTHONPATH', '')}"
+                    logging.debug(f"env: {env}")
+
+                    new_working_dir = os.path.dirname(benchmark_description_file)
+                    logging.debug(f"cwd: {new_working_dir}")
+
+                    for pre_bench_step in benchmark_case.pre_bench_steps:
+                        expanded_pre_step = expand_magic_variables(pre_bench_step)
+                        logging.info(f"Executing pre-step: {expanded_pre_step}")
+
+                        self.execute_command(expanded_pre_step, env, new_working_dir)
+
+                    for iteration in range(benchmark_case.iterations):
+                        expanded_benchmark_command = expand_magic_variables(benchmark_case.command)
+                        logging.info(f"Executing test command: {expanded_benchmark_command}")
+
+                    self.execute_command(expanded_benchmark_command, env, new_working_dir)
+
+                    for post_bench_step in benchmark_case.post_bench_steps:
+                        expanded_post_step = expand_magic_variables(post_bench_step)
+                        logging.info(f"Executing post-step: {expanded_post_step}")
+
+                        self.execute_command(expanded_post_step, env, new_working_dir)
+
+                    test_passed = True
+
+                    # for diff in test_case.diffs:
+                    #     diff_name = os.path.splitext(os.path.basename(diff.gold))[0]
+
+                    #     gold_file = f"{new_working_dir}/{diff.gold}"
+                    #     if not os.path.exists(gold_file):
+                    #         test_passed = False
+                    #         upload_diff(test, diff_name, "no gold file", self._config)
+
+                    #         logging.info(f"Gold file {gold_file} not found!")
+                    #         continue
+                        
+                    #     new_file = expand_magic_variables(diff.new)
+                    #     if not os.path.exists(new_file):
+                    #         test_passed = False
+                    #         upload_diff(test, diff_name, "no new file", self._config)
+
+                    #         logging.info(f"New file {new_file} not found!")
+                    #         continue
+
+                    #     report_file = expand_magic_variables(f"$__TF_WORK_DIR__/{diff_name}.html")
+                    #     self.generate_html_diff(gold_file, new_file, report_file, diff.encoding)
+
+                    #     # Check if the diff report is not empty
+                    #     if os.path.getsize(report_file) > 0:
+                    #         logging.info(f"Differences found in {diff.gold} vs {diff.new}")
+                    #         logging.info(f"HTML difference report generated: {report_file}")
+                    #         test_passed = False
+                    #         upload_diff(test, diff_name, "failed", self._config, report_file)
+                    #     else:
+                    #         logging.info(f"No differences found in {diff.gold} vs {diff.new}")
+                    #         upload_diff(test, diff_name, "passed", self._config)
 
                     # Archive temp directory contents
                     temp_dir = expand_magic_variables("$__TF_WORK_DIR__")
