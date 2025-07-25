@@ -666,10 +666,10 @@ const BenchmarkResult = sequelize.define('BenchmarkResult', {
   },
   Results: {
     type: DataTypes.TEXT('long'),
-    allowNull: false,
+    allowNull: true,
     get() {
       const rawValue = this.getDataValue('Results');
-      return new BenchmarkResultJson(JSON.parse(rawValue));
+      return rawValue ? new BenchmarkResultJson(JSON.parse(rawValue)) : null;
     },
     set(value) {
       this.setDataValue('Results', JSON.stringify(value));

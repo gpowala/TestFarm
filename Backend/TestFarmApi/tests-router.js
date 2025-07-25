@@ -31,6 +31,7 @@ requireRepositoryExists = (repository) => {
 router.post('/schedule-benchmarks-run', async (req, res) => {
   console.log('Scheduling benchmarks run:', req.body);
 
+  // TODO: Rename TestRunName to BenchmarksRunName
   const { RepositoryName, SuiteName, GridName, TestRunName, Artifacts, TeamsNotificationUrl } = req.body;
   const localRepositoryDir = `${appSettings.storage.repositories}/${RepositoryName}`;  
   
@@ -68,11 +69,12 @@ router.post('/schedule-benchmarks-run', async (req, res) => {
         let benchmark = await Benchmark.findOne({ where: {RepositoryName: RepositoryName, SuiteName: SuiteName, Path: benchmarkPath, Name: benchmarkConfig.name} })
                      ?? await Benchmark.create({ RepositoryName: RepositoryName, SuiteName: SuiteName, Path: benchmarkPath,  Name: benchmarkConfig.name, Owner: benchmarkConfig.owner, CreationTimestamp: new Date() });
 
-        let result = await BenchmarkResult.create({ BenchmarksRunId: benchmarksRun.Id, BenchmarkId: benchmark.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null });
+        let result = await BenchmarkResult.create({ BenchmarksRunId: benchmarksRun.Id, BenchmarkId: benchmark.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null, Results: null });
 
         await MicroJobsQueue.create({ Type: 'bench', Status: 'queued', GridName: GridName, RunId: benchmarksRun.Id, ResultId: result.Id });
       }
       catch (error) {
+        // TODO: Should be in single transaction together with benchmarks run creation, if errors happen anywhere, we can't leave state inconsistent
         console.error(`Failed to register benchmark: ${error}`);
       }
     });
@@ -479,6 +481,7 @@ router.post('/complete-test', async (req, res) => {
 
 const multer = require('multer');
 const zlib = require('zlib');
+const { Result } = require('pg');
 
 const uploadDiff = multer({ 
   dest: 'uploads/',
