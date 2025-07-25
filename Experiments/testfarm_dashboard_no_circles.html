@@ -645,14 +645,29 @@
         }
 
         /* Breadcrumb */
+        .breadcrumb-island {
+            background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%);
+            border-radius: 16px;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.06), 
+                        inset -1px 0 0 rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .breadcrumb-island:hover {
+            background: linear-gradient(315deg, #edeeef 0%, #fafbfc 100%);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
         .breadcrumb {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            padding: 0.75rem 0;
             font-size: 0.875rem;
             color: #6c757d;
+            margin: 0;
         }
 
         .breadcrumb-item {
@@ -903,19 +918,21 @@
         <!-- Main Content -->
         <main class="main-content">
             <!-- Breadcrumb Navigation -->
-            <nav class="breadcrumb">
-                <div class="breadcrumb-item">
-                    <a href="#">TestFarm</a>
-                </div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="breadcrumb-separator" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
-                </svg>
-                <div class="breadcrumb-item active">
-                    Dashboard
-                </div>
-            </nav>
+            <div class="breadcrumb-island">
+                <nav class="breadcrumb">
+                    <div class="breadcrumb-item">
+                        <a href="#">TestFarm</a>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="breadcrumb-separator" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                    <div class="breadcrumb-item active">
+                        Dashboard Overview
+                    </div>
+                </nav>
+            </div>
 
-            <header class="header">
+            <!-- <header class="header">
                 <h2>Dashboard Overview</h2>
                 <div class="header-actions">
                     <button class="btn btn-secondary">
@@ -931,7 +948,7 @@
                         New Test
                     </button>
                 </div>
-            </header>
+            </header> -->
 
             <!-- Stats Row -->
             <div class="stats-row">
