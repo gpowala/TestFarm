@@ -1238,6 +1238,45 @@
         let currentData = [...testData];
         let sortDirection = {};
 
+        // Set to track reviewed rows
+        const reviewedRows = new Set();
+
+        // Handle row hover effects
+        function handleRowHover(row, isHovering) {
+            const isReviewed = row.classList.contains('reviewed');
+            
+            if (isHovering) {
+                if (isReviewed) {
+                    row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.10) 0%, rgba(108, 123, 138, 0.06) 100%)';
+                } else {
+                    row.style.background = 'linear-gradient(315deg, rgba(255, 165, 0, 0.08) 0%, rgba(255, 140, 0, 0.05) 100%)';
+                }
+            } else {
+                if (isReviewed) {
+                    row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.06) 0%, rgba(108, 123, 138, 0.03) 100%)';
+                } else {
+                    row.style.background = 'transparent';
+                }
+            }
+        }
+
+        // Toggle row reviewed state
+        function toggleRowReviewed(row) {
+            const testId = row.dataset.testId;
+            
+            if (row.classList.contains('reviewed')) {
+                // Remove reviewed state
+                row.classList.remove('reviewed');
+                reviewedRows.delete(testId);
+                row.style.background = 'transparent';
+            } else {
+                // Add reviewed state
+                row.classList.add('reviewed');
+                reviewedRows.add(testId);
+                row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.06) 0%, rgba(108, 123, 138, 0.03) 100%)';
+            }
+        }
+
         // Initialize the table
         function renderTable(data = currentData) {
             const tbody = document.getElementById('testTableBody');
@@ -1251,9 +1290,14 @@
             
             noResults.style.display = 'none';
             
-            tbody.innerHTML = data.map(test => `
-                <tr style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease;" onmouseover="this.style.background='linear-gradient(315deg, rgba(255, 165, 0, 0.08) 0%, rgba(255, 140, 0, 0.05) 100%)'" onmouseout="this.style.background='transparent'">
-                    <td style="padding: 1rem; font-weight: 500; color: #2c3e50;">${test.name}</td>
+            tbody.innerHTML = data.map((test, index) => `
+                <tr data-test-id="${index}" style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease; cursor: pointer;" 
+                    onmouseover="handleRowHover(this, true)" 
+                    onmouseout="handleRowHover(this, false)"
+                    onclick="toggleRowReviewed(this)">
+                    <td style="padding: 1rem; font-weight: 500; color: #2c3e50;">
+                        ${test.name}
+                    </td>
                     <td style="padding: 1rem; color: #6c757d;">
                         <span style="padding: 0.25rem 0.75rem; background: linear-gradient(315deg, #e9ecef 0%, #f8f9fa 100%); border-radius: 12px; font-size: 0.75rem; font-weight: 600; border: 1px solid #dee2e6;">${test.suite}</span>
                     </td>
@@ -1264,6 +1308,17 @@
                     <td style="padding: 1rem; color: #6c757d; font-size: 0.875rem;">${test.timestamp}</td>
                 </tr>
             `).join('');
+
+            // Restore reviewed state after re-rendering
+            setTimeout(() => {
+                reviewedRows.forEach(testId => {
+                    const row = tbody.querySelector(`[data-test-id="${testId}"]`);
+                    if (row) {
+                        row.classList.add('reviewed');
+                        row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.06) 0%, rgba(108, 123, 138, 0.03) 100%)';
+                    }
+                });
+            }, 10);
         }
 
         // Sort functionality
