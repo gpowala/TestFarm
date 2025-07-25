@@ -1240,19 +1240,25 @@
 
         // Set to track reviewed rows
         const reviewedRows = new Set();
+        let currentlyActiveRow = null;
 
         // Handle row hover effects
         function handleRowHover(row, isHovering) {
             const isReviewed = row.classList.contains('reviewed');
+            const isActive = row === currentlyActiveRow;
             
             if (isHovering) {
-                if (isReviewed) {
+                if (isActive) {
+                    row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.20) 0%, rgba(108, 123, 138, 0.15) 100%)';
+                } else if (isReviewed) {
                     row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.10) 0%, rgba(108, 123, 138, 0.06) 100%)';
                 } else {
                     row.style.background = 'linear-gradient(315deg, rgba(255, 165, 0, 0.08) 0%, rgba(255, 140, 0, 0.05) 100%)';
                 }
             } else {
-                if (isReviewed) {
+                if (isActive) {
+                    row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.15) 0%, rgba(108, 123, 138, 0.10) 100%)';
+                } else if (isReviewed) {
                     row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.06) 0%, rgba(108, 123, 138, 0.03) 100%)';
                 } else {
                     row.style.background = 'transparent';
@@ -1264,17 +1270,45 @@
         function toggleRowReviewed(row) {
             const testId = row.dataset.testId;
             
+            // Set this row as currently active
+            currentlyActiveRow = row;
+            
             if (row.classList.contains('reviewed')) {
-                // Remove reviewed state
+                // Remove reviewed state but keep as active
                 row.classList.remove('reviewed');
                 reviewedRows.delete(testId);
-                row.style.background = 'transparent';
+                row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.15) 0%, rgba(108, 123, 138, 0.10) 100%)';
             } else {
-                // Add reviewed state
+                // Add reviewed state and set as active
                 row.classList.add('reviewed');
                 reviewedRows.add(testId);
-                row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.06) 0%, rgba(108, 123, 138, 0.03) 100%)';
+                row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.15) 0%, rgba(108, 123, 138, 0.10) 100%)';
             }
+            
+            // Update all other rows to reflect their non-active state
+            updateAllRowBackgrounds();
+        }
+        
+        // Update all row backgrounds based on their state
+        function updateAllRowBackgrounds() {
+            const tbody = document.getElementById('testTableBody');
+            const rows = tbody.querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                const isReviewed = row.classList.contains('reviewed');
+                const isActive = row === currentlyActiveRow;
+                
+                if (isActive) {
+                    // Active row gets the darkest background
+                    row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.15) 0%, rgba(108, 123, 138, 0.10) 100%)';
+                } else if (isReviewed) {
+                    // Reviewed but not active rows get lighter background
+                    row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.06) 0%, rgba(108, 123, 138, 0.03) 100%)';
+                } else {
+                    // Unreviewed rows are transparent
+                    row.style.background = 'transparent';
+                }
+            });
         }
 
         // Initialize the table
@@ -1315,9 +1349,11 @@
                     const row = tbody.querySelector(`[data-test-id="${testId}"]`);
                     if (row) {
                         row.classList.add('reviewed');
-                        row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.06) 0%, rgba(108, 123, 138, 0.03) 100%)';
                     }
                 });
+                
+                // Update all backgrounds and maintain active row
+                updateAllRowBackgrounds();
             }, 10);
         }
 
