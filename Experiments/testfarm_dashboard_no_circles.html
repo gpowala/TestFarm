@@ -1248,16 +1248,20 @@
             const isActive = row === currentlyActiveRow;
             
             if (isHovering) {
-                if (isActive) {
+                if (isActive && isReviewed) {
                     row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.20) 0%, rgba(108, 123, 138, 0.15) 100%)';
+                } else if (isActive && !isReviewed) {
+                    row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.15) 0%, rgba(108, 123, 138, 0.10) 100%)';
                 } else if (isReviewed) {
                     row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.10) 0%, rgba(108, 123, 138, 0.06) 100%)';
                 } else {
                     row.style.background = 'linear-gradient(315deg, rgba(255, 165, 0, 0.08) 0%, rgba(255, 140, 0, 0.05) 100%)';
                 }
             } else {
-                if (isActive) {
+                if (isActive && isReviewed) {
                     row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.15) 0%, rgba(108, 123, 138, 0.10) 100%)';
+                } else if (isActive && !isReviewed) {
+                    row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.10) 0%, rgba(108, 123, 138, 0.06) 100%)';
                 } else if (isReviewed) {
                     row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.06) 0%, rgba(108, 123, 138, 0.03) 100%)';
                 } else {
@@ -1266,27 +1270,36 @@
             }
         }
 
-        // Toggle row reviewed state
-        function toggleRowReviewed(row) {
+        // Mark row as reviewed (single click)
+        function markRowReviewed(row) {
             const testId = row.dataset.testId;
             
             // Set this row as currently active
             currentlyActiveRow = row;
             
-            if (row.classList.contains('reviewed')) {
-                // Remove reviewed state but keep as active
-                row.classList.remove('reviewed');
-                reviewedRows.delete(testId);
-                row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.15) 0%, rgba(108, 123, 138, 0.10) 100%)';
-            } else {
-                // Add reviewed state and set as active
+            // Always add to reviewed state on single click
+            if (!row.classList.contains('reviewed')) {
                 row.classList.add('reviewed');
                 reviewedRows.add(testId);
-                row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.15) 0%, rgba(108, 123, 138, 0.10) 100%)';
             }
             
-            // Update all other rows to reflect their non-active state
+            // Update all row backgrounds
             updateAllRowBackgrounds();
+        }
+        
+        // Remove row from reviewed state (double click)
+        function removeRowFromReviewed(row) {
+            const testId = row.dataset.testId;
+            
+            // Remove from reviewed state
+            if (row.classList.contains('reviewed')) {
+                row.classList.remove('reviewed');
+                reviewedRows.delete(testId);
+                
+                // Clear active row since we're "unreviewing" it
+                currentlyActiveRow = null;
+                updateAllRowBackgrounds();
+            }
         }
         
         // Update all row backgrounds based on their state
@@ -1298,9 +1311,12 @@
                 const isReviewed = row.classList.contains('reviewed');
                 const isActive = row === currentlyActiveRow;
                 
-                if (isActive) {
-                    // Active row gets the darkest background
+                if (isActive && isReviewed) {
+                    // Active and reviewed row gets the darkest background
                     row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.15) 0%, rgba(108, 123, 138, 0.10) 100%)';
+                } else if (isActive && !isReviewed) {
+                    // Active but not reviewed row gets a medium background
+                    row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.10) 0%, rgba(108, 123, 138, 0.06) 100%)';
                 } else if (isReviewed) {
                     // Reviewed but not active rows get lighter background
                     row.style.background = 'linear-gradient(315deg, rgba(108, 123, 138, 0.06) 0%, rgba(108, 123, 138, 0.03) 100%)';
@@ -1328,7 +1344,8 @@
                 <tr data-test-id="${index}" style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease; cursor: pointer;" 
                     onmouseover="handleRowHover(this, true)" 
                     onmouseout="handleRowHover(this, false)"
-                    onclick="toggleRowReviewed(this)">
+                    onclick="markRowReviewed(this)"
+                    ondblclick="removeRowFromReviewed(this)">
                     <td style="padding: 1rem; font-weight: 500; color: #2c3e50;">
                         ${test.name}
                     </td>
