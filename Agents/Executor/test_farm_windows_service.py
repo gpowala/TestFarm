@@ -376,15 +376,31 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
                     for pre_bench_step in benchmark_case.pre_bench_steps:
                         expanded_pre_step = expand_magic_variables(pre_bench_step)
-                        logging.info(f"Executing pre-step: {expanded_pre_step}")
+                        logging.info(f"Executing pre-iter-step: {expanded_pre_step}")
 
                         self.execute_command(expanded_pre_step, env, new_working_dir)
 
                     for iteration in range(benchmark_case.iterations):
+                        logging.info(f"Starting iteration {iteration + 1} of {benchmark_case.iterations}")
+
+                        for pre_iter_step in benchmark_case.pre_iter_steps:
+                            expanded_pre_iter_step = expand_magic_variables(pre_iter_step)
+                            logging.info(f"Executing pre-iter-step: {expanded_pre_iter_step}")
+
+                            self.execute_command(expanded_pre_iter_step, env, new_working_dir)
+
                         expanded_benchmark_command = expand_magic_variables(benchmark_case.command)
                         logging.info(f"Executing test command: {expanded_benchmark_command}")
 
-                    self.execute_command(expanded_benchmark_command, env, new_working_dir)
+                        self.execute_command(expanded_benchmark_command, env, new_working_dir)
+
+                        for post_iter_step in benchmark_case.post_iter_steps:
+                            expanded_post_iter_step = expand_magic_variables(post_iter_step)
+                            logging.info(f"Executing post-iter-step: {expanded_post_iter_step}")
+
+                            self.execute_command(expanded_post_iter_step, env, new_working_dir)
+
+                        logging.info(f"Iteration {iteration + 1} of {benchmark_case.iterations} completed")
 
                     for post_bench_step in benchmark_case.post_bench_steps:
                         expanded_post_step = expand_magic_variables(post_bench_step)
@@ -392,7 +408,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
                         self.execute_command(expanded_post_step, env, new_working_dir)
 
-                    test_passed = True
+                    # test_passed = True
 
                     # for diff in test_case.diffs:
                     #     diff_name = os.path.splitext(os.path.basename(diff.gold))[0]
@@ -427,29 +443,31 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                     #         upload_diff(test, diff_name, "passed", self._config)
 
                     # Archive temp directory contents
-                    temp_dir = expand_magic_variables("$__TF_WORK_DIR__")
-                    archive_path = expand_magic_variables(f"$__TF_TEMP_DIR__/result_temp_archive.7z")
-                    logging.info(f"Archiving contents of {temp_dir} to {archive_path}")
+                    # temp_dir = expand_magic_variables("$__TF_WORK_DIR__")
+                    # archive_path = expand_magic_variables(f"$__TF_TEMP_DIR__/result_temp_archive.7z")
+                    # logging.info(f"Archiving contents of {temp_dir} to {archive_path}")
                     
-                    try:
-                        with py7zr.SevenZipFile(archive_path, mode='w') as archive:
-                            for root, dirs, files in os.walk(temp_dir):
-                                for file in files:
-                                    file_path = os.path.join(root, file)
-                                    archive_name = os.path.relpath(file_path, temp_dir)
-                                    archive.write(file_path, archive_name)
+                    # try:
+                    #     with py7zr.SevenZipFile(archive_path, mode='w') as archive:
+                    #         for root, dirs, files in os.walk(temp_dir):
+                    #             for file in files:
+                    #                 file_path = os.path.join(root, file)
+                    #                 archive_name = os.path.relpath(file_path, temp_dir)
+                    #                 archive.write(file_path, archive_name)
 
-                        upload_temp_dir_archive(test, self._config, archive_path)
-                        logging.info(f"Successfully created archive at {archive_path} and uploaded")
-                    except Exception as e:
-                        logging.error(f"Failed to create or upload archive: {e}")
+                    #     upload_temp_dir_archive(test, self._config, archive_path)
+                    #     logging.info(f"Successfully created archive at {archive_path} and uploaded")
+                    # except Exception as e:
+                    #     logging.error(f"Failed to create or upload archive: {e}")
 
-                    if test_passed:
-                        logging.info("Test PASSED! Publishing results...")
-                        complete_test(test, "passed", self.read_execution_output(test_case), self._config)
-                    else:
-                        logging.info("Test FAILED! Publishing results...")
-                        complete_test(test, "failed", self.read_execution_output(test_case), self._config)
+                    logging.info("Benchmark finished! Publishing results...")
+                    # complete_test(test, "passed", self.read_execution_output(test_case), self._config)
+                    # if test_passed:
+                    #     logging.info("Test PASSED! Publishing results...")
+                    #     complete_test(test, "passed", self.read_execution_output(test_case), self._config)
+                    # else:
+                    #     logging.info("Test FAILED! Publishing results...")
+                    #     complete_test(test, "failed", self.read_execution_output(test_case), self._config)
 
                     logging.info("Test completed.")
                 else:
