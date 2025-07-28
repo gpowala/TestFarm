@@ -376,7 +376,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
                     for pre_bench_step in benchmark_case.pre_bench_steps:
                         expanded_pre_step = expand_magic_variables(pre_bench_step)
-                        logging.info(f"Executing pre-iter-step: {expanded_pre_step}")
+                        logging.info(f"Executing pre-bench-step: {expanded_pre_step}")
 
                         self.execute_command(expanded_pre_step, env, new_working_dir)
 
@@ -404,7 +404,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
                     for post_bench_step in benchmark_case.post_bench_steps:
                         expanded_post_step = expand_magic_variables(post_bench_step)
-                        logging.info(f"Executing post-step: {expanded_post_step}")
+                        logging.info(f"Executing post-bench-step: {expanded_post_step}")
 
                         self.execute_command(expanded_post_step, env, new_working_dir)
 

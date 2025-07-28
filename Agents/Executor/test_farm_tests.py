@@ -60,10 +60,8 @@ class BenchmarkCase:
     
     command: str
 
-    metrics: str
+    results: str
     output: str
-
-    diffs: List[DiffPair] = None
     
     pre_bench_steps: List[str] = None
     post_bench_steps: List[str] = None
@@ -83,9 +81,6 @@ class BenchmarkCase:
             self.pre_iter_steps = []
         if self.post_iter_steps is None:
             self.post_iter_steps = []
-
-        if self.diffs is None:
-            self.diffs = []
     
     @staticmethod
     def from_file(file_path: str) -> "BenchmarkCase":
