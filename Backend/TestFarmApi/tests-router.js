@@ -206,9 +206,9 @@ router.get('/get-scheduled-benchmark', async (req, res) => {
       queuedBenchmark.ExecutionStartTimestamp = new Date();
       await queuedBenchmark.save({ transaction: t });
 
-      const benchmarksRun = await BenchmarkRun.findOne({
+      const benchmarksRun = await BenchmarksRun.findOne({
         where: {
-          Id: queuedBenchmark.BenchmarkRunId
+          Id: queuedBenchmark.BenchmarksRunId
         },
         transaction: t
       });
