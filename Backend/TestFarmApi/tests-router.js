@@ -250,10 +250,10 @@ router.get('/get-scheduled-benchmark', async (req, res) => {
         transaction: t
       }).then(async (benchmarkResult) => {
         // Fetch the repository separately based on the RepositoryName
-        if (benchmarkResult && benchmarkResult.BenchmarkRun && benchmarkResult.BenchmarkRun.RepositoryName) {
+        if (benchmarkResult && benchmarkResult.BenchmarksRun && benchmarkResult.BenchmarksRun.RepositoryName) {
           const repository = await Repository.findOne({
             where: {
-              Name: benchmarkResult.BenchmarkRun.RepositoryName
+              Name: benchmarkResult.BenchmarksRun.RepositoryName
             },
             transaction: t
           });
