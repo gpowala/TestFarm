@@ -672,7 +672,7 @@ const BenchmarkResult = sequelize.define('BenchmarkResult', {
       return rawValue ? new BenchmarkResultJson(JSON.parse(rawValue)) : null;
     },
     set(value) {
-      this.setDataValue('Results', JSON.stringify(value));
+      this.setDataValue('Results', value ? JSON.stringify(value) : null);
     }
   }
 }, {
