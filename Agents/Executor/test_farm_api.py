@@ -404,7 +404,7 @@ class BenchmarkResult:
             benchmark_id=data['BenchmarkId'],
             status=data['Status'],
             execution_start_timestamp=datetime.fromisoformat(data['ExecutionStartTimestamp'].replace('Z', '+00:00')),
-            benchmark_run=BenchmarkRun.from_dict(data['BenchmarksRun']),
+            benchmark_run=BenchmarkRun.from_dict(config, data['BenchmarksRun']),
             benchmark=Benchmark.from_dict(data['Benchmark']),
             repository=Repository.from_dict(data['Repository']),
 
