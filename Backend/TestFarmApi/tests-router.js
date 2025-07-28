@@ -239,8 +239,8 @@ router.get('/get-scheduled-benchmark', async (req, res) => {
       return BenchmarkResult.findByPk(BenchmarkResultId, {
         include: [
           {
-            model: BenchmarkRun,
-            as: 'BenchmarkRun'
+            model: BenchmarksRun,
+            as: 'BenchmarksRun'
           },
           {
             model: Benchmark,
