@@ -10,7 +10,7 @@ __all__ = [
 
 
 def reset_bench_iter():
-    set_magic_variable('$__TF_BENCH_ITER__', 0)
+    set_magic_variable('$__TF_BENCH_ITER__', str(0))
 
 
 def get_bench_iter() -> int:
@@ -18,5 +18,5 @@ def get_bench_iter() -> int:
 
 
 def incr_bench_iter():
-    set_magic_variable('$__TF_BENCH_ITER__', get_bench_iter() + 1)
+    set_magic_variable('$__TF_BENCH_ITER__', str(get_bench_iter() + 1))
 
