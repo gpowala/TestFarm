@@ -18,6 +18,7 @@ import sys
 import py7zr
 import shutil
 from testfarm_agents_utils import *
+from testfarm_benchmarks_utils import *
 
 from test_farm_tests import DiffPair, TestCase, BenchmarkCase
 from test_farm_api import get_artifact, get_next_job, get_scheduled_test, get_scheduled_benchmark, register_host, unregister_host, update_host_status, complete_test, complete_benchmark, upload_diff, upload_temp_dir_archive, Repository, MicroJob
@@ -401,6 +402,8 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                             self.execute_command(expanded_post_iter_step, env, new_working_dir)
 
                         logging.info(f"Iteration {iteration + 1} of {benchmark_case.iterations} completed")
+
+                        incr_bench_iter()
 
                     for post_bench_step in benchmark_case.post_bench_steps:
                         expanded_post_step = expand_magic_variables(post_bench_step)
