@@ -16,6 +16,7 @@ mdurl==0.1.2
 more-itertools==10.6.0
 nh3==0.2.21
 packaging==24.2
+psutil==7.0.0
 Pygments==2.19.1
 pyproject_hooks==1.2.0
 pywin32-ctypes==0.2.3
