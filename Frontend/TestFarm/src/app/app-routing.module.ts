@@ -12,7 +12,8 @@ import { RepositoriesComponent } from './components/repositories/repositories.co
 import { ArtifactsComponent } from './components/artifacts/artifacts.component';
 
 const routes: Routes = [
-  {path: 'builds', component: BuildsComponent},
+  {path: '', redirectTo: '/artifacts', pathMatch: 'full'},
+  {path: 'artifacts', component: BuildsComponent},
   {path: 'repositories', component: RepositoriesComponent},
   {path: 'tests', component: TestsComponent},
   {path: 'benchmarks', component: BenchmarksComponent},

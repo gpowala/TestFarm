@@ -1,5 +1,222 @@
-<div class="artifacts-container">
-    <!-- Artifact Definition Overview Section -->
+<main class="main-content">
+  <!-- Breadcrumb Navigation -->
+  <div class="breadcrumb-island">
+      <nav class="breadcrumb">
+          <div class="breadcrumb-item">
+              <a href="#">TestFarm</a>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="breadcrumb-separator" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+          </svg>
+          <div class="breadcrumb-item active">
+              Dashboard Overview
+          </div>
+      </nav>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-row">
+      <div class="stat-card">
+          <div class="stat-number">247</div>
+          <div class="stat-label">Total Tests</div>
+      </div>
+      <div class="stat-card">
+          <div class="stat-number">89%</div>
+          <div class="stat-label">Pass Rate</div>
+      </div>
+      <div class="stat-card">
+          <div class="stat-number">42</div>
+          <div class="stat-label">Active Suites</div>
+      </div>
+      <div class="stat-card">
+          <div class="stat-number">2.3s</div>
+          <div class="stat-label">Avg. Runtime</div>
+      </div>
+  </div>
+
+  <!-- Islands Grid -->
+  <div class="islands-grid">
+      <!-- Recent Test Results -->
+      <div class="island">
+          <div class="island-header">
+              <h3 class="island-title">
+                  <svg class="island-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  Recent Test Results
+              </h3>
+          </div>
+          <div class="test-item">
+              <span class="test-name">User Authentication</span>
+              <span class="test-status status-passed">Passed</span>
+          </div>
+          <div class="test-item">
+              <span class="test-name">Payment Processing</span>
+              <span class="test-status status-failed">Failed</span>
+          </div>
+          <div class="test-item">
+              <span class="test-name">Data Validation</span>
+              <span class="test-status status-passed">Passed</span>
+          </div>
+          <div class="test-item">
+              <span class="test-name">API Integration</span>
+              <span class="test-status status-pending">Running</span>
+          </div>
+      </div>
+
+      <!-- Test Coverage -->
+      <div class="island">
+          <div class="island-header">
+              <h3 class="island-title">
+                  <svg class="island-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                  </svg>
+                  Test Coverage
+              </h3>
+          </div>
+          <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>Code Coverage</span>
+                  <span style="font-weight: 600;">87%</span>
+              </div>
+              <div class="progress-bar">
+                  <div class="progress-fill" style="width: 87%;"></div>
+              </div>
+          </div>
+          <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>Feature Coverage</span>
+                  <span style="font-weight: 600;">92%</span>
+              </div>
+              <div class="progress-bar">
+                  <div class="progress-fill" style="width: 92%;"></div>
+              </div>
+          </div>
+          <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>API Coverage</span>
+                  <span style="font-weight: 600;">78%</span>
+              </div>
+              <div class="progress-bar">
+                  <div class="progress-fill" style="width: 78%;"></div>
+              </div>
+          </div>
+      </div>
+
+      <!-- Active Test Suites -->
+      <div class="island">
+          <div class="island-header">
+              <h3 class="island-title">
+                  <svg class="island-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                  </svg>
+                  Active Test Suites
+              </h3>
+          </div>
+          <div class="test-item">
+              <span class="test-name">E2E User Flows</span>
+              <span style="color: #6c757d; font-size: 0.875rem;">15 tests</span>
+          </div>
+          <div class="test-item">
+              <span class="test-name">API Testing</span>
+              <span style="color: #6c757d; font-size: 0.875rem;">32 tests</span>
+          </div>
+          <div class="test-item">
+              <span class="test-name">Performance Tests</span>
+              <span style="color: #6c757d; font-size: 0.875rem;">8 tests</span>
+          </div>
+          <div class="test-item">
+              <span class="test-name">Security Validation</span>
+              <span style="color: #6c757d; font-size: 0.875rem;">12 tests</span>
+          </div>
+      </div>
+
+      <!-- Test Execution History -->
+      <div class="island island-large">
+          <div class="island-header">
+              <h3 class="island-title">
+                  <svg class="island-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  Test Execution History
+              </h3>
+          </div>
+
+          <!-- Search and Filter Controls -->
+          <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 200px;">
+                  <input type="text" id="testSearch" placeholder="Search tests..."
+                      style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; transition: all 0.2s ease;">
+              </div>
+              <select id="statusFilter" style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;">
+                  <option value="">All Status</option>
+                  <option value="passed">Passed</option>
+                  <option value="failed">Failed</option>
+                  <option value="pending">Pending</option>
+              </select>
+              <select id="suiteFilter" style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 140px;">
+                  <option value="">All Suites</option>
+                  <option value="E2E">E2E Tests</option>
+                  <option value="API">API Tests</option>
+                  <option value="Unit">Unit Tests</option>
+                  <option value="Integration">Integration</option>
+              </select>
+          </div>
+
+          <!-- Data Table -->
+          <div style="overflow-x: auto; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); border-radius: 8px; border: 1px solid #e9ecef;">
+              <table id="testTable" style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                      <tr style="background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%); border-bottom: 2px solid #e9ecef;">
+                          <th class="sortable" data-sort="name" style="padding: 1rem; text-align: left; font-weight: 600; color: #2c3e50; cursor: pointer; user-select: none; transition: all 0.2s ease; position: relative;">
+                              Test Name
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="sortable" data-sort="suite" style="padding: 1rem; text-align: left; font-weight: 600; color: #2c3e50; cursor: pointer; user-select: none; transition: all 0.2s ease; position: relative;">
+                              Suite
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="sortable" data-sort="status" style="padding: 1rem; text-align: left; font-weight: 600; color: #2c3e50; cursor: pointer; user-select: none; transition: all 0.2s ease; position: relative;">
+                              Status
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="sortable" data-sort="duration" style="padding: 1rem; text-align: left; font-weight: 600; color: #2c3e50; cursor: pointer; user-select: none; transition: all 0.2s ease; position: relative;">
+                              Duration
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="sortable" data-sort="timestamp" style="padding: 1rem; text-align: left; font-weight: 600; color: #2c3e50; cursor: pointer; user-select: none; transition: all 0.2s ease; position: relative;">
+                              Executed
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                      </tr>
+                  </thead>
+                  <tbody id="testTableBody">
+                      <!-- Data will be populated by JavaScript -->
+                  </tbody>
+              </table>
+          </div>
+
+          <div id="noResults" style="text-align: center; padding: 2rem; color: #6c757d; display: none;">
+              <svg style="width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.467.881-6.077 2.33l-.853-.894A9.96 9.96 0 0112 13.5a9.96 9.96 0 016.93 2.936l-.853.894z"></path>
+              </svg>
+              <div>No tests match your current filters</div>
+          </div>
+      </div>
+  </div>
+</main>
+<!-- <div class="artifacts-container">
+
     <div class="artifact-definition-overview" *ngIf="artifactDefinition">
       <div>
         <mat-icon>widgets</mat-icon>
@@ -25,7 +242,6 @@
                   <th style="white-space: nowrap; padding: 5px; text-align: center;">Branch</th>
                   <th style="white-space: nowrap; padding: 5px; text-align: center;">Revision</th>
                   <th style="white-space: nowrap; padding: 5px; text-align: center;">Created</th>
-                  <!-- <th style="white-space: nowrap; padding: 5px;">Actions</th> -->
               </tr>
           </thead>
           <tbody>
@@ -37,10 +253,7 @@
                   <td style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">{{artifact.BuildId}}</td>
                   <td style="white-space: nowrap; padding: 5px; text-align: center;">
                     {{artifact.BuildName}}
-                    <!-- <a [routerLink]="['/artifacts', artifact.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">
-                      {{artifact.BuildName}}
-                    </a>
-                    <mat-chip *ngFor="let tag of artifact.Tags">{{tag}}</mat-chip> -->
+
                   </td>
                   <td style="white-space: nowrap; padding: 5px; text-align: center;">
                     {{artifact.Repository}}
@@ -54,11 +267,6 @@
                   <td style="white-space: nowrap; padding: 5px; text-align: center;">
                     {{artifact.CreationTimestamp | date:'medium'}}
                   </td>
-                  <!-- <td style="white-space: nowrap; padding: 5px; text-align: center;">
-                      <button mat-button color="primary" (click)="removeArtifact(artifact.Id)">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                  </td> -->
               </tr>
           </tbody>
         </table>
@@ -73,4 +281,4 @@
         </div>
       </ng-template>
     </div>
-</div>
+</div> -->

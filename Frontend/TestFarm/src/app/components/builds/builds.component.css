@@ -1,4 +1,92 @@
-.builds-container {
+.row-checked-and-active {
+  background: linear-gradient(315deg, rgba(108, 123, 138, 0.15) 0%, rgba(108, 123, 138, 0.10) 100%);
+}
+
+.row-reviewed {
+  background: linear-gradient(315deg, rgba(108, 123, 138, 0.06) 0%, rgba(108, 123, 138, 0.03) 100%);
+}
+
+.row-active {
+  background: linear-gradient(315deg, rgba(108, 123, 138, 0.10) 0%, rgba(108, 123, 138, 0.06) 100%);
+}
+
+.row-inactive {
+  background: 'transparent'
+}
+
+.row-checked-and-active-hovering {
+  background: linear-gradient(315deg, rgba(108, 123, 138, 0.20) 0%, rgba(108, 123, 138, 0.15) 100%);
+}
+
+.row-reviewed-hovering {
+  background: linear-gradient(315deg, rgba(108, 123, 138, 0.10) 0%, rgba(108, 123, 138, 0.06) 100%);
+}
+
+.row-active-hovering {
+  background: linear-gradient(180deg, rgba(108, 123, 138, 0.15) 0%, rgba(108, 123, 138, 0.10) 100%);
+}
+
+.row-inactive-hovering {
+  background: linear-gradient(180deg, rgba(213, 94, 0, 0.005) 0%, rgba(213, 94, 0, 0.03) 100%);
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.cell {
+  padding: 0.5rem; font-weight: 500; color: #2c3e50; text-align: center;
+}
+
+.row-link {
+  text-decoration: none;
+  color: #d55e00;
+}
+
+.row-link:hover {
+  text-decoration: underline;
+}
+
+.action-item {
+  display: inline-block;
+  margin: 0 10px;
+}
+
+.row-action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: #6c757d;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.row-action-link:hover {
+  color: #d55e00;
+}
+
+.column {
+  padding: 1rem; font-weight: 600; color: #2c3e50; cursor: pointer; user-select: none; transition: all 0.2s ease; position: relative; text-align: center;
+}
+
+.column-sortable {
+  padding: 1rem; font-weight: 600; color: #2c3e50; cursor: pointer; user-select: none; transition: all 0.2s ease; position: relative; text-align: center;
+}
+
+.column-sortable:hover {
+  color: #d55e00;
+  box-shadow: inset 0 -3px 0 rgba(213, 94, 0, 0.3);
+}
+
+.column.fit-content {
+  white-space: nowrap; width: 1%;
+}
+
+.column-sortable.fit-content {
+  white-space: nowrap;
+  width: 1%;
+}
+
+/* .builds-container {
   margin: 0 10px 0 10px
 }
 
@@ -75,4 +163,4 @@ button[mat-raised-button]:active {
 
 .mat-mdc-standard-chip {
   margin-left: 4px !important;
-}
+} */
