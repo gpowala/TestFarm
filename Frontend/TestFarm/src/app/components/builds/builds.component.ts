@@ -47,15 +47,29 @@ export class BuildsComponent implements OnInit {
     ).subscribe();
   }
 
-  renderRow(row: ArtifactDefinitionRow, event: MouseEvent, isHovering: boolean): void {
+  renderAllRows(): void {
+    // Use setTimeout to ensure DOM has been updated
+    setTimeout(() => {
+      // Get all table rows and update their styles based on current state
+      const tableRows = document.querySelectorAll('tbody tr');
+      tableRows.forEach((rowElement, index) => {
+        if (index < this.artifactsRows.length) {
+          const row = this.artifactsRows[index];
+          this.updateRowClass(rowElement as HTMLElement, row, false);
+        }
+      });
+    }, 0);
+  }
+
+  updateRowClass(element: HTMLElement, row: ArtifactDefinitionRow, isHovering: boolean): void {
     if (row.checked && row.active) {
-      (event.currentTarget as HTMLElement).className = isHovering ? 'row-checked-and-active-hovering' : 'row-checked-and-active';
+      element.className = isHovering ? 'row-checked-and-active-hovering' : 'row-checked-and-active';
     } else if (row.checked && !row.active) {
-      (event.currentTarget as HTMLElement).className = isHovering ? 'row-checked-hovering' : 'row-checked';
+      element.className = isHovering ? 'row-checked-hovering' : 'row-checked';
     } else if (!row.checked && row.active) {
-      (event.currentTarget as HTMLElement).className = isHovering ? 'row-active-hovering' : 'row-active';
+      element.className = isHovering ? 'row-active-hovering' : 'row-active';
     } else {
-      (event.currentTarget as HTMLElement).className = isHovering ? 'row-inactive-hovering' : 'row-inactive';
+      element.className = isHovering ? 'row-inactive-hovering' : 'row-inactive';
     }
   }
 
@@ -65,22 +79,24 @@ export class BuildsComponent implements OnInit {
     this.artifactsRows.forEach(row => row.active = false);
     row.active = true;
 
-    this.renderRow(row, event, true);
+    // Re-render all rows to update their styles
+    this.renderAllRows();
   }
 
   removeRowFromReviewed(row: ArtifactDefinitionRow, event: MouseEvent): void {
     row.checked = false;
     this.artifactsRows.forEach(row => row.active = false);
 
-    this.renderRow(row, event, true);
+    // Re-render all rows to update their styles
+    this.renderAllRows();
   }
 
   onRowMouseOver(row: ArtifactDefinitionRow, event: MouseEvent): void {
-    this.renderRow(row, event, true);
+    this.updateRowClass(event.currentTarget as HTMLElement, row, true);
   }
 
   onRowMouseOut(row: ArtifactDefinitionRow, event: MouseEvent): void {
-    this.renderRow(row, event, false);
+    this.updateRowClass(event.currentTarget as HTMLElement, row, false);
   }
 
   // // Toggle artifact selection
