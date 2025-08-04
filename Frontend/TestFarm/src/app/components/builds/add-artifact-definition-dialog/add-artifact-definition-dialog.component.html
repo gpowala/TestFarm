@@ -1,70 +1,101 @@
-<div class="dialog-container">
-  <h2 mat-dialog-title>Add New Artifact</h2>
+<div class="dialog-overlay" (click)="onCancel()">
+  <div class="dialog-container" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h2 class="dialog-title">Create Artifact Definition</h2>
+      <button class="close-btn" (click)="onCancel()" type="button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
 
-  <mat-dialog-content>
-    <form [formGroup]="artifactForm">
-      <div class="form-field">
-        <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Name</mat-label>
-          <input matInput formControlName="name" placeholder="Enter artifact name" required>
-          <mat-error *ngIf="artifactForm.get('name')?.hasError('required')">
-            Name is required
-          </mat-error>
-        </mat-form-field>
-      </div>
+    <div class="dialog-content">
+      <form [formGroup]="artifactForm">
+        <!-- Name Field -->
+        <div class="form-field">
+          <label class="form-label" for="name">Name <span class="required">*</span></label>
+          <input
+            id="name"
+            type="text"
+            class="form-input"
+            [class.form-input-error]="isFieldInvalid('name')"
+            formControlName="name"
+            placeholder="Enter artifact name">
+          <div class="form-error" *ngIf="isFieldInvalid('name')">
+            {{ getFieldError('name') }}
+          </div>
+        </div>
 
-      <div class="form-field">
-        <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Install Script (Python)</mat-label>
+        <!-- Install Script Field -->
+        <div class="form-field">
+          <label class="form-label" for="installScript">Install Script (Python) <span class="required">*</span></label>
           <textarea
-            matInput
+            id="installScript"
+            class="form-textarea"
+            [class.form-input-error]="isFieldInvalid('installScript')"
             formControlName="installScript"
             placeholder="Enter Python install script"
-            required
-            cdkTextareaAutosize
-            cdkAutosizeMinRows="5"
-            cdkAutosizeMaxRows="15"
-            class="code-editor"
-          ></textarea>
-          <mat-error *ngIf="artifactForm.get('installScript')?.hasError('required')">
-            Install script is required
-          </mat-error>
-        </mat-form-field>
-      </div>
+            rows="8">
+          </textarea>
+          <div class="form-error" *ngIf="isFieldInvalid('installScript')">
+            {{ getFieldError('installScript') }}
+          </div>
+        </div>
 
-      <div class="form-field">
-        <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Tags</mat-label>
-          <mat-chip-grid #chipGrid aria-label="Enter tags">
-            <mat-chip-row
-              *ngFor="let tag of tags"
-              (removed)="removeTag(tag)"
-              [editable]="true"
-              [removable]="true">
-              {{tag}}
-              <button matChipRemove aria-label="'remove ' + tag">
-                <mat-icon>cancel</mat-icon>
+        <!-- Tags Field -->
+        <div class="form-field">
+          <label class="form-label" for="tagInput">Tags</label>
+          <div class="tags-container">
+            <!-- Existing Tags -->
+            <div class="tags-list" *ngIf="tags.length > 0">
+              <span *ngFor="let tag of tags" class="tag-chip">
+                {{ tag }}
+                <button type="button" class="tag-remove" (click)="removeTag(tag)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </span>
+            </div>
+            <!-- Tag Input -->
+            <div class="tag-input-container">
+              <input
+                id="tagInput"
+                type="text"
+                class="form-input tag-input"
+                [(ngModel)]="newTagInput"
+                [ngModelOptions]="{standalone: true}"
+                (keydown)="onTagInputKeyDown($event)"
+                placeholder="Add tag and press Enter">
+              <button type="button" class="add-tag-btn" (click)="addTag()" [disabled]="!newTagInput.trim()">
+                Add
               </button>
-            </mat-chip-row>
-            <input
-              placeholder="New tag..."
-              [matChipInputFor]="chipGrid"
-              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-              (matChipInputTokenEnd)="addTag($event)" />
-          </mat-chip-grid>
-        </mat-form-field>
-      </div>
-    </form>
-  </mat-dialog-content>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
 
-  <mat-dialog-actions align="end">
-    <button mat-button (click)="onCancel()">Cancel</button>
-    <button
-      mat-raised-button
-      color="primary"
-      [disabled]="artifactForm.invalid"
-      (click)="onSubmit()">
-      Create Artifact
-    </button>
-  </mat-dialog-actions>
+    <div class="dialog-actions">
+      <button class="btn btn-secondary btn-modal" (click)="onCancel()">
+        Cancel
+      </button>
+      <button class="btn btn-primary btn-modal" [disabled]="artifactForm.invalid" (click)="onSubmit()">
+        Create
+      </button>
+
+      <!-- <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="artifactForm.invalid"
+        (click)="onSubmit()">
+        Create Artifact
+      </button> -->
+    </div>
+  </div>
 </div>

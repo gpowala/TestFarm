@@ -1,39 +1,22 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Output, EventEmitter } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { ArtifactDefinition } from 'src/app/models/artifact-definition';
 
 @Component({
-  selector: 'app-add-artifact-dialog',
+  selector: 'app-add-artifact-definition-dialog',
   templateUrl: './add-artifact-definition-dialog.component.html',
   styleUrls: ['./add-artifact-definition-dialog.component.css']
 })
 export class AddArtifactDefinitionDialogComponent {
-  artifactForm: FormGroup;
-  readonly separatorKeysCodes = [ENTER, COMMA] as const;
-  tags: string[] = [];
+  @Output() artifactCreated = new EventEmitter<Partial<ArtifactDefinition>>();
+  @Output() dialogClosed = new EventEmitter<void>();
 
-  // Monaco editor options
-  editorOptions = {
-    theme: 'vs-dark',
-    language: 'python',
-    automaticLayout: true,
-    minimap: {
-      enabled: false
-    },
-    scrollBeyondLastLine: false,
-    fontSize: 14,
-    lineNumbers: 'on',
-    renderLineHighlight: 'all',
-    lineHeight: 20
-  };
+  artifactForm: FormGroup;
+  tags: string[] = [];
+  newTagInput: string = '';
 
   constructor(
-    private fb: FormBuilder,
-    public dialogRef: MatDialogRef<AddArtifactDefinitionDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
+    private fb: FormBuilder
   ) {
     this.artifactForm = this.fb.group({
       name: ['', [Validators.required]],
@@ -46,15 +29,21 @@ export class AddArtifactDefinitionDialogComponent {
     return this.artifactForm.get('tags') as FormArray;
   }
 
-  addTag(event: MatChipInputEvent): void {
-    const value = (event.value || '').trim();
+  addTag(): void {
+    const value = this.newTagInput.trim();
 
-    if (value) {
+    if (value && !this.tags.includes(value)) {
       this.tags.push(value);
       this.tagsFormArray.push(this.fb.control(value));
+      this.newTagInput = '';
     }
+  }
 
-    event.chipInput!.clear();
+  onTagInputKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault();
+      this.addTag();
+    }
   }
 
   removeTag(tag: string): void {
@@ -66,6 +55,22 @@ export class AddArtifactDefinitionDialogComponent {
     }
   }
 
+  // Form field validation helpers
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.artifactForm.get(fieldName);
+    return !!(field && field.invalid && (field.dirty || field.touched));
+  }
+
+  getFieldError(fieldName: string): string {
+    const field = this.artifactForm.get(fieldName);
+    if (field && field.errors) {
+      if (field.errors['required']) {
+        return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
+      }
+    }
+    return '';
+  }
+
   onSubmit(): void {
     if (this.artifactForm.valid) {
       const artifact: Partial<ArtifactDefinition> = {
@@ -74,11 +79,11 @@ export class AddArtifactDefinitionDialogComponent {
         Tags: this.tags
       };
 
-      this.dialogRef.close(artifact);
+      this.artifactCreated.emit(artifact);
     }
   }
 
   onCancel(): void {
-    this.dialogRef.close();
+    this.dialogClosed.emit();
   }
 }

@@ -1,12 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { RepositoriesApiHttpClientService } from '../../services/repositories-api-http-cient-service';
 import { RepositoryDescription } from '../../models/repository-description';
 import { ConfirmationMessageDescription } from '../../models/confirmation-message-description';
 import { ArtifactsApiHttpClientService } from 'src/app/services/artifacts-api-http-cient-service';
 import { ArtifactDefinition } from 'src/app/models/artifact-definition';
-import { AddArtifactDefinitionDialogComponent } from './add-artifact-definition-dialog/add-artifact-definition-dialog.component';
-import { AddArtifactDialogComponent } from './add-artifact-dialog/add-artifact-dialog.component';
 import { SelectionModel } from '@angular/cdk/collections';
 import { catchError, of, tap } from 'rxjs';
 
@@ -25,10 +22,10 @@ class ArtifactDefinitionRow {
 export class BuildsComponent implements OnInit {
   artifacts: ArtifactDefinition[] = [];
   artifactsRows: ArtifactDefinitionRow[] = [];
+  showAddArtifactDialog: boolean = false;
 
   constructor(
-    private artifactsApiHttpClientService: ArtifactsApiHttpClientService,
-    private dialog: MatDialog
+    private artifactsApiHttpClientService: ArtifactsApiHttpClientService
   ) {}
 
   ngOnInit() {
@@ -115,67 +112,31 @@ export class BuildsComponent implements OnInit {
   // }
 
   createArtifactDefinition() {
-    const dialogConfig = new MatDialogConfig();
-    dialogConfig.disableClose = true; // Prevent closing by clicking outside
-    dialogConfig.autoFocus = true;
-    dialogConfig.width = '800px';
+    this.showAddArtifactDialog = true;
+  }
 
-    const dialogRef = this.dialog.open(AddArtifactDefinitionDialogComponent, dialogConfig);
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.artifactsApiHttpClientService.addArtifactDefinition(
-          result.Name,
-          result.InstallScript,
-          result.Tags
-        ).subscribe(
-          (data: ArtifactDefinition) => {
-            this.fetchArtifacts();
-            console.log('Artifact added successfully:', data);
-          },
-          (error: any) => {
-            console.error('Error adding artifact:', error);
-          }
-        );
-      }
-    });
+  onDialogClose(result?: any) {
+    this.showAddArtifactDialog = false;
+    if (result) {
+      this.artifactsApiHttpClientService.addArtifactDefinition(
+        result.Name,
+        result.InstallScript,
+        result.Tags
+      ).subscribe(
+        (data: ArtifactDefinition) => {
+          this.fetchArtifacts();
+          console.log('Artifact added successfully:', data);
+        },
+        (error: any) => {
+          console.error('Error adding artifact:', error);
+        }
+      );
+    }
   }
 
   addArtifact() {
-    const dialogConfig = new MatDialogConfig();
-    dialogConfig.disableClose = true; // Prevent closing by clicking outside
-    dialogConfig.autoFocus = true;
-    dialogConfig.width = '800px';
-
-    dialogConfig.data = {
-      // selectedArtifact: this.artifactsRows.filter(row => this.selection.selected.includes(row.artifact.Id))[0]
-    };
-
-    const dialogRef = this.dialog.open(AddArtifactDialogComponent, dialogConfig);
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.artifactsApiHttpClientService.addArtifact(
-          result.ArtifactDefinitionId,
-          result.BuildId,
-          result.BuildName,
-          result.Repository,
-          result.Branch,
-          result.Revision,
-          result.WorkItemUrl,
-          result.BuildPageUrl,
-          result.Tags
-        ).subscribe(
-          (data: ArtifactDefinition) => {
-            this.fetchArtifacts();
-            console.log('Artifact added successfully:', data);
-          },
-          (error: any) => {
-            console.error('Error adding artifact:', error);
-          }
-        );
-      }
-    });
+    // TODO: Implement add artifact functionality
+    console.log('Add artifact functionality not implemented yet');
   }
 
   removeArtifact(id: number) {

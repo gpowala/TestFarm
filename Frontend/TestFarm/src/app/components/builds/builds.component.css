@@ -2,7 +2,7 @@
   background: linear-gradient(315deg, rgba(108, 123, 138, 0.15) 0%, rgba(108, 123, 138, 0.10) 100%);
 }
 
-.row-reviewed {
+.row-checked {
   background: linear-gradient(315deg, rgba(108, 123, 138, 0.06) 0%, rgba(108, 123, 138, 0.03) 100%);
 }
 
@@ -18,7 +18,7 @@
   background: linear-gradient(315deg, rgba(108, 123, 138, 0.20) 0%, rgba(108, 123, 138, 0.15) 100%);
 }
 
-.row-reviewed-hovering {
+.row-checked-hovering {
   background: linear-gradient(315deg, rgba(108, 123, 138, 0.10) 0%, rgba(108, 123, 138, 0.06) 100%);
 }
 
@@ -28,7 +28,7 @@
 
 .row-inactive-hovering {
   background: linear-gradient(180deg, rgba(213, 94, 0, 0.005) 0%, rgba(213, 94, 0, 0.03) 100%);
-  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+  /* box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1); */
 }
 
 .cell {
