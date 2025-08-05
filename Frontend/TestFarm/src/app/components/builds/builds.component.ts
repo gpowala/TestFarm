@@ -23,6 +23,7 @@ export class BuildsComponent implements OnInit {
   artifacts: ArtifactDefinition[] = [];
   artifactsRows: ArtifactDefinitionRow[] = [];
   showAddArtifactDialog: boolean = false;
+  sortDirection: { [key: string]: 'asc' | 'desc' } = {};
 
   constructor(
     private artifactsApiHttpClientService: ArtifactsApiHttpClientService
@@ -38,6 +39,8 @@ export class BuildsComponent implements OnInit {
         next: (data: ArtifactDefinition[]) => {
           this.artifacts = data;
           this.artifactsRows = data.map(artifact => new ArtifactDefinitionRow(artifact));
+          // Reset sort indicators when data is refreshed
+          this.resetSortIndicators();
         }
       }),
       catchError((error: any) => {
@@ -97,6 +100,77 @@ export class BuildsComponent implements OnInit {
 
   onRowMouseOut(row: ArtifactDefinitionRow, event: MouseEvent): void {
     this.updateRowClass(event.currentTarget as HTMLElement, row, false);
+  }
+
+  sortTable(column: string): void {
+    const isCurrentSort = this.sortDirection[column];
+    const direction: 'asc' | 'desc' = isCurrentSort === 'asc' ? 'desc' : 'asc';
+    this.sortDirection = { [column]: direction };
+
+    this.artifactsRows.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      // Get the values to compare based on column
+      switch (column) {
+        case 'id':
+          aValue = a.artifact.Id;
+          bValue = b.artifact.Id;
+          break;
+        case 'name':
+          aValue = a.artifact.Name;
+          bValue = b.artifact.Name;
+          break;
+        default:
+          aValue = '';
+          bValue = '';
+      }
+
+      // Handle string comparison
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
+      // Compare values
+      if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    // Update sort indicators in the UI
+    this.updateSortIndicators(column, direction);
+
+    // Re-render all rows to maintain styling after sorting
+    this.renderAllRows();
+  }
+
+  updateSortIndicators(activeColumn: string, direction: 'asc' | 'desc'): void {
+    // Reset all sort indicators
+    document.querySelectorAll('.column-sortable svg').forEach(svg => {
+      (svg as HTMLElement).style.opacity = '0.5';
+      svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>';
+    });
+
+    // Set active sort indicator
+    const activeSortSvg = document.querySelector(`[data-sort="${activeColumn}"] svg`);
+    if (activeSortSvg) {
+      (activeSortSvg as HTMLElement).style.opacity = '1';
+      activeSortSvg.innerHTML = direction === 'asc'
+        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>'
+        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>';
+    }
+  }
+
+  resetSortIndicators(): void {
+    this.sortDirection = {};
+    // Use setTimeout to ensure DOM is rendered
+    setTimeout(() => {
+      document.querySelectorAll('.column-sortable svg').forEach(svg => {
+        (svg as HTMLElement).style.opacity = '0.5';
+        svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>';
+      });
+    }, 0);
   }
 
   // // Toggle artifact selection
