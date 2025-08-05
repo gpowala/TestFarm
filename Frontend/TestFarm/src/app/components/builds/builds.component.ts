@@ -22,8 +22,10 @@ class ArtifactDefinitionRow {
 export class BuildsComponent implements OnInit {
   artifacts: ArtifactDefinition[] = [];
   artifactsRows: ArtifactDefinitionRow[] = [];
+  filteredArtifactsRows: ArtifactDefinitionRow[] = [];
   showAddArtifactDialog: boolean = false;
   sortDirection: { [key: string]: 'asc' | 'desc' } = {};
+  searchTerm: string = '';
 
   constructor(
     private artifactsApiHttpClientService: ArtifactsApiHttpClientService
@@ -39,6 +41,7 @@ export class BuildsComponent implements OnInit {
         next: (data: ArtifactDefinition[]) => {
           this.artifacts = data;
           this.artifactsRows = data.map(artifact => new ArtifactDefinitionRow(artifact));
+          this.filteredArtifactsRows = [...this.artifactsRows];
           // Reset sort indicators when data is refreshed
           this.resetSortIndicators();
         }
@@ -56,8 +59,8 @@ export class BuildsComponent implements OnInit {
       // Get all table rows and update their styles based on current state
       const tableRows = document.querySelectorAll('tbody tr');
       tableRows.forEach((rowElement, index) => {
-        if (index < this.artifactsRows.length) {
-          const row = this.artifactsRows[index];
+        if (index < this.filteredArtifactsRows.length) {
+          const row = this.filteredArtifactsRows[index];
           this.updateRowClass(rowElement as HTMLElement, row, false);
         }
       });
@@ -79,7 +82,7 @@ export class BuildsComponent implements OnInit {
   markRowReviewed(row: ArtifactDefinitionRow, event: MouseEvent): void {
     row.checked = true;
 
-    this.artifactsRows.forEach(row => row.active = false);
+    this.filteredArtifactsRows.forEach(row => row.active = false);
     row.active = true;
 
     // Re-render all rows to update their styles
@@ -88,7 +91,7 @@ export class BuildsComponent implements OnInit {
 
   removeRowFromReviewed(row: ArtifactDefinitionRow, event: MouseEvent): void {
     row.checked = false;
-    this.artifactsRows.forEach(row => row.active = false);
+    this.filteredArtifactsRows.forEach(row => row.active = false);
 
     // Re-render all rows to update their styles
     this.renderAllRows();
@@ -107,7 +110,7 @@ export class BuildsComponent implements OnInit {
     const direction: 'asc' | 'desc' = isCurrentSort === 'asc' ? 'desc' : 'asc';
     this.sortDirection = { [column]: direction };
 
-    this.artifactsRows.sort((a, b) => {
+    this.filteredArtifactsRows.sort((a, b) => {
       let aValue: any;
       let bValue: any;
 
@@ -171,6 +174,33 @@ export class BuildsComponent implements OnInit {
         svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>';
       });
     }, 0);
+  }
+
+  onSearchChange(event: any): void {
+    this.searchTerm = event.target.value.toLowerCase();
+    this.filterData();
+  }
+
+  filterData(): void {
+    if (!this.searchTerm.trim()) {
+      this.filteredArtifactsRows = [...this.artifactsRows];
+    } else {
+      this.filteredArtifactsRows = this.artifactsRows.filter(row => {
+        const artifact = row.artifact;
+
+        // Search across all relevant fields
+        const searchableContent = [
+          artifact.Id?.toString() || '',
+          artifact.Name || '',
+          ...(artifact.Tags || [])
+        ].join(' ').toLowerCase();
+
+        return searchableContent.includes(this.searchTerm);
+      });
+    }
+
+    // Re-render all rows after filtering
+    this.renderAllRows();
   }
 
   // // Toggle artifact selection

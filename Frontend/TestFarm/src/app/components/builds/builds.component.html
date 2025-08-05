@@ -44,7 +44,9 @@
           <!-- Search and Filter Controls -->
           <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
               <div style="flex: 1; min-width: 200px;">
-                  <input type="text" id="testSearch" placeholder="Search..."
+                  <input type="text" id="dataSearch" placeholder="Search..."
+                      [(ngModel)]="searchTerm"
+                      (input)="onSearchChange($event)"
                       style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; transition: all 0.2s ease;">
               </div>
               <!-- <select id="statusFilter" style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;">
@@ -93,7 +95,7 @@
                       </tr>
                   </thead>
                   <tbody>
-                      <tr *ngFor="let row of artifactsRows" style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease; cursor: pointer;"
+                      <tr *ngFor="let row of filteredArtifactsRows" style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease; cursor: pointer;"
                         (mouseover)="onRowMouseOver(row, $event)"
                         (mouseout)="onRowMouseOut(row, $event)"
                         (click)="markRowReviewed(row, $event)"
@@ -150,11 +152,11 @@
                   </tbody>
               </table>
           </div>
-          <div id="noResults" style="text-align: center; padding: 2rem; color: #6c757d; display: none;">
+          <div id="noResults" *ngIf="filteredArtifactsRows.length === 0" style="text-align: center; padding: 2rem; color: #6c757d;">
               <svg style="width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.467.881-6.077 2.33l-.853-.894A9.96 9.96 0 0112 13.5a9.96 9.96 0 016.93 2.936l-.853.894z"></path>
               </svg>
-              <div>No tests match your current filters</div>
+              <div>{{ searchTerm ? 'No artifacts match your search criteria' : 'No artifacts found' }}</div>
           </div>
       </div>
   </div>
