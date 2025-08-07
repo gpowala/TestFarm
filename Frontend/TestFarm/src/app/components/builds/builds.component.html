@@ -1,6 +1,4 @@
 <div >
-<!--  -->
-  <!-- Breadcrumb Navigation -->
   <div class="breadcrumb-island">
       <nav class="breadcrumb">
           <div class="breadcrumb-item">
@@ -14,21 +12,8 @@
           </div>
       </nav>
   </div>
-
-
-
-  <!-- Islands Grid -->
   <div class="islands-grid">
-      <!-- Test Execution History -->
       <div class="island island-large">
-          <!-- <div class="island-header">
-              <h3 class="island-title">
-                  <svg class="island-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                  Test Execution History
-              </h3>
-          </div> -->
           <button class="btn btn-primary" (click)="createArtifactDefinition()">
             <svg width="16" height="16" fill="currentColor" stroke="none" viewBox="0 0 24 24">
                 <path d="M 5.25 2 C 4.0162029 2 3 3.0162029 3 4.25 L 3 19.75 C 3 20.983797 4.0162029 22 5.25 22 L 12 22 A 0.750075 0.750075 0 1 0 12 20.5 L 5.25 20.5 C 4.8277971 20.5 4.5 20.172203 4.5 19.75 L 4.5 4.25 C 4.5 3.8277971 4.8277971 3.5 5.25 3.5 L 13 3.5 L 13 7.25 A 0.750075 0.750075 0 0 0 13.75 8 L 17.5 8 L 17.5 11.75 A 0.750075 0.750075 0 1 0 19 11.75 L 19 6.75 A 0.750075 0.750075 0 0 0 18.78125 6.21875 L 14.78125 2.21875 A 0.750075 0.750075 0 0 0 14.25 2 L 5.25 2 z M 14.5 4.0605469 L 16.939453 6.5 L 14.5 6.5 L 14.5 4.0605469 z M 8 10 A 1 1 0 0 0 8 12 A 1 1 0 0 0 8 10 z M 10.75 10.25 A 0.750075 0.750075 0 1 0 10.75 11.75 L 14.25 11.75 A 0.750075 0.750075 0 1 0 14.25 10.25 L 10.75 10.25 z M 8 13 A 1 1 0 0 0 8 15 A 1 1 0 0 0 8 13 z M 10.75 13.25 A 0.750075 0.750075 0 1 0 10.75 14.75 L 13.5 14.75 A 0.750075 0.750075 0 1 0 13.5 13.25 L 10.75 13.25 z M 19 14 C 16.239 14 14 16.239 14 19 C 14 21.761 16.239 24 19 24 C 21.761 24 24 21.761 24 19 C 24 16.239 21.761 14 19 14 z M 8 16 A 1 1 0 0 0 8 18 A 1 1 0 0 0 8 16 z M 19 16 C 19.345 16 19.625 16.28 19.625 16.625 L 19.625 18.375 L 21.375 18.375 C 21.72 18.375 22 18.655 22 19 C 22 19.345 21.72 19.625 21.375 19.625 L 19.625 19.625 L 19.625 21.375 C 19.625 21.72 19.345 22 19 22 C 18.655 22 18.375 21.72 18.375 21.375 L 18.375 19.625 L 16.625 19.625 C 16.28 19.625 16 19.345 16 19 C 16 18.655 16.28 18.375 16.625 18.375 L 18.375 18.375 L 18.375 16.625 C 18.375 16.28 18.655 16 19 16 z M 10.75 16.25 A 0.750075 0.750075 0 1 0 10.75 17.75 L 12.25 17.75 A 0.750075 0.750075 0 1 0 12.25 16.25 L 10.75 16.25 z"></path>
@@ -41,7 +26,6 @@
             </svg>
             Add Artifact
           </button>
-          <!-- Search and Filter Controls -->
           <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
               <div style="flex: 1; min-width: 200px;">
                   <input type="text" id="dataSearch" placeholder="Search..."
@@ -49,22 +33,7 @@
                       (input)="onSearchChange($event)"
                       style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; transition: all 0.2s ease;">
               </div>
-              <!-- <select id="statusFilter" style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;">
-                  <option value="">All Status</option>
-                  <option value="passed">Passed</option>
-                  <option value="failed">Failed</option>
-                  <option value="pending">Pending</option>
-              </select>
-              <select id="suiteFilter" style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 140px;">
-                  <option value="">All Suites</option>
-                  <option value="E2E">E2E Tests</option>
-                  <option value="API">API Tests</option>
-                  <option value="Unit">Unit Tests</option>
-                  <option value="Integration">Integration</option>
-              </select> -->
           </div>
-
-          <!-- Data Table -->
           <div style="overflow-x: auto; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); border-radius: 8px; border: 1px solid #e9ecef;">
               <table id="testTable" style="width: 100%; border-collapse: collapse;">
                   <thead>
@@ -146,8 +115,6 @@
 
                             </div>
                         </td>
-                        <!-- <td style="padding: 1rem; color: #6c757d; font-family: monospace;">${test.duration}</td>
-                        <td style="padding: 1rem; color: #6c757d; font-size: 0.875rem;">${test.timestamp}</td> -->
                     </tr>
                   </tbody>
               </table>
@@ -160,63 +127,8 @@
           </div>
       </div>
   </div>
-<!--  -->
 </div>
 
-<!-- <div class="builds-container">
-    <div class="builds-content">
-      <div class="add-build-form">
-            <button mat-raised-button color="primary" (click)="createArtifactDefinition()">
-                Create Artifact Definition
-            </button>
-            <button mat-raised-button color="primary" (click)="addArtifact()"
-              [disabled]="selection.selected.length !== 1">
-              Add Artifact
-            </button>
-      </div>
-      <table class="repositories-table" style="width: 100%;">
-          <thead>
-              <tr>
-                  <th style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">
-                    <mat-checkbox (change)="toggleAllSelection()"
-                                 [checked]="isAllSelected()"
-                                 [indeterminate]="selection.hasValue() && !isAllSelected()">
-                    </mat-checkbox>
-                  </th>
-                  <th style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">ID</th>
-                  <th style="white-space: nowrap; padding: 5px; text-align: center;">Name</th>
-                  <th style="white-space: nowrap; padding: 5px;">Actions</th>
-              </tr>
-          </thead>
-          <tbody>
-              <tr *ngFor="let artifact of artifacts"
-                  class="repository-item"
-                  (mouseover)="onMouseOver($event)"
-                  (mouseout)="onMouseOut($event)" style="transition: background-color 0.3s;">
-                  <td style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">
-                    <mat-checkbox [checked]="selection.isSelected(artifact.Id)"
-                                 (change)="toggleSelection(artifact.Id)">
-                    </mat-checkbox>
-                  </td>
-                  <td style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">{{artifact.Id}}</td>
-                  <td style="white-space: nowrap; padding: 5px; text-align: center;">
-                    <a [routerLink]="['/artifacts', artifact.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">
-                      {{artifact.Name}}
-                    </a>
-                    <mat-chip *ngFor="let tag of artifact.Tags">{{tag}}</mat-chip>
-                  </td>
-                  <td style="white-space: nowrap; padding: 5px; text-align: center;">
-                      <button mat-button color="primary" (click)="removeArtifact(artifact.Id)">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                  </td>
-              </tr>
-          </tbody>
-      </table>
-    </div>
-</div> -->
-
-<!-- Add Artifact Definition Dialog -->
 <app-add-artifact-definition-dialog
   *ngIf="showAddArtifactDialog"
   (artifactCreated)="onDialogClose($event)"
