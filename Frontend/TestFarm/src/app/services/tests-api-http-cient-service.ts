@@ -7,12 +7,17 @@ import { TestsRunResultDescription } from 'src/app/models/tests-run-result-descr
 import { environment } from 'src/environments/environment';
 import { TestHistoryResult } from 'src/app/models/test-history-result.description';
 import { TestsRunResultDiffDescription } from '../models/tests-run-result-diff-description';
+import { TestsRunDetailsDescription } from '../models/tests-run-details-description';
 
 @Injectable({
     providedIn: 'root'
   })
 export class TestsApiHttpClientService {
     constructor(private http: HttpClient) { }
+
+    getTestsRunDetails(testsRunId: string): Observable<TestsRunDetailsDescription> {
+        return this.http.get<TestsRunDetailsDescription>(`${environment.baseApiUrl}/tests-run-details/${testsRunId}`);
+    }
 
     getAllTestsRunsData(name: string, timespan: number, result: string, limit: number) {
         return this.http.get<TestsRunDescription[]>(`${environment.baseApiUrl}/tests-runs`, {

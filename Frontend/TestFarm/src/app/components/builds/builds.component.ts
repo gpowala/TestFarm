@@ -42,13 +42,13 @@ export class BuildsComponent implements OnInit {
           this.artifacts = data;
           this.artifactsRows = data.map(artifact => new ArtifactDefinitionRow(artifact));
           this.filteredArtifactsRows = [...this.artifactsRows];
-          // Reset sort indicators when data is refreshed
+
           this.resetSortIndicators();
         }
       }),
       catchError((error: any) => {
         console.error('Error fetching artifacts data:', error);
-        return of([]); // Return an empty array as a fallback
+        return of([]);
       })
     ).subscribe();
   }
@@ -57,7 +57,7 @@ export class BuildsComponent implements OnInit {
     // Use setTimeout to ensure DOM has been updated
     setTimeout(() => {
       // Get all table rows and update their styles based on current state
-      const tableRows = document.querySelectorAll('tbody tr');
+      const tableRows = document.querySelectorAll('#artifactsDefinitionsTable tbody tr');
       tableRows.forEach((rowElement, index) => {
         if (index < this.filteredArtifactsRows.length) {
           const row = this.filteredArtifactsRows[index];
@@ -143,12 +143,12 @@ export class BuildsComponent implements OnInit {
   }
 
   updateSortIndicators(activeColumn: string, direction: 'asc' | 'desc'): void {
-    document.querySelectorAll('.column-sortable svg').forEach(svg => {
+    document.querySelectorAll('#artifactsDefinitionsTable .column-sortable svg').forEach(svg => {
       (svg as HTMLElement).style.opacity = '0.5';
       svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>';
     });
 
-    const activeSortSvg = document.querySelector(`[data-sort="${activeColumn}"] svg`);
+    const activeSortSvg = document.querySelector(`#artifactsDefinitionsTable [data-sort="${activeColumn}"] svg`);
     if (activeSortSvg) {
       (activeSortSvg as HTMLElement).style.opacity = '1';
       activeSortSvg.innerHTML = direction === 'asc'
@@ -231,13 +231,5 @@ export class BuildsComponent implements OnInit {
         console.error('Error fetching artifacts data:', error);
       }
     );
-  }
-
-  onMouseOver(event: MouseEvent) {
-    (event.currentTarget as HTMLElement).style.backgroundColor = '#f0f0f0';
-  }
-
-  onMouseOut(event: MouseEvent) {
-    (event.currentTarget as HTMLElement).style.backgroundColor = '';
   }
 }

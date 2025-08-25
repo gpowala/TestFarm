@@ -1,4 +1,168 @@
-<div class="runs-container">
+<div >
+  <div class="breadcrumb-island">
+      <nav class="breadcrumb">
+          <div class="breadcrumb-item">
+              <a href="#">TestFarm</a>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="breadcrumb-separator" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+          </svg>
+          <div class="breadcrumb-item active">
+              Tests Runs
+          </div>
+      </nav>
+  </div>
+  <div class="islands-grid">
+      <div class="island island-large">
+          <!-- <button class="btn btn-primary" (click)="createArtifactDefinition()">
+            <svg width="16" height="16" fill="currentColor" stroke="none" viewBox="0 0 24 24">
+                <path d="M 5.25 2 C 4.0162029 2 3 3.0162029 3 4.25 L 3 19.75 C 3 20.983797 4.0162029 22 5.25 22 L 12 22 A 0.750075 0.750075 0 1 0 12 20.5 L 5.25 20.5 C 4.8277971 20.5 4.5 20.172203 4.5 19.75 L 4.5 4.25 C 4.5 3.8277971 4.8277971 3.5 5.25 3.5 L 13 3.5 L 13 7.25 A 0.750075 0.750075 0 0 0 13.75 8 L 17.5 8 L 17.5 11.75 A 0.750075 0.750075 0 1 0 19 11.75 L 19 6.75 A 0.750075 0.750075 0 0 0 18.78125 6.21875 L 14.78125 2.21875 A 0.750075 0.750075 0 0 0 14.25 2 L 5.25 2 z M 14.5 4.0605469 L 16.939453 6.5 L 14.5 6.5 L 14.5 4.0605469 z M 8 10 A 1 1 0 0 0 8 12 A 1 1 0 0 0 8 10 z M 10.75 10.25 A 0.750075 0.750075 0 1 0 10.75 11.75 L 14.25 11.75 A 0.750075 0.750075 0 1 0 14.25 10.25 L 10.75 10.25 z M 8 13 A 1 1 0 0 0 8 15 A 1 1 0 0 0 8 13 z M 10.75 13.25 A 0.750075 0.750075 0 1 0 10.75 14.75 L 13.5 14.75 A 0.750075 0.750075 0 1 0 13.5 13.25 L 10.75 13.25 z M 19 14 C 16.239 14 14 16.239 14 19 C 14 21.761 16.239 24 19 24 C 21.761 24 24 21.761 24 19 C 24 16.239 21.761 14 19 14 z M 8 16 A 1 1 0 0 0 8 18 A 1 1 0 0 0 8 16 z M 19 16 C 19.345 16 19.625 16.28 19.625 16.625 L 19.625 18.375 L 21.375 18.375 C 21.72 18.375 22 18.655 22 19 C 22 19.345 21.72 19.625 21.375 19.625 L 19.625 19.625 L 19.625 21.375 C 19.625 21.72 19.345 22 19 22 C 18.655 22 18.375 21.72 18.375 21.375 L 18.375 19.625 L 16.625 19.625 C 16.28 19.625 16 19.345 16 19 C 16 18.655 16.28 18.375 16.625 18.375 L 18.375 18.375 L 18.375 16.625 C 18.375 16.28 18.655 16 19 16 z M 10.75 16.25 A 0.750075 0.750075 0 1 0 10.75 17.75 L 12.25 17.75 A 0.750075 0.750075 0 1 0 12.25 16.25 L 10.75 16.25 z"></path>
+            </svg>
+            Create Artifact Definition
+          </button>
+          <button class="btn btn-secondary">
+            <svg width="16" height="16" fill="currentColor" stroke="none" viewBox="0 0 24 24">
+                <path d="M 12 2 C 6.4860328 2 2 6.4860368 2 12 C 2 17.513963 6.4860328 22 12 22 C 17.513967 22 22 17.513963 22 12 C 22 6.4860368 17.513967 2 12 2 z M 12 3.5 C 16.703308 3.5 20.5 7.2966955 20.5 12 C 20.5 16.703304 16.703308 20.5 12 20.5 C 7.2966924 20.5 3.5 16.703304 3.5 12 C 3.5 7.2966955 7.2966924 3.5 12 3.5 z M 11.988281 6.9902344 A 0.750075 0.750075 0 0 0 11.25 7.75 L 11.25 11.25 L 7.75 11.25 A 0.750075 0.750075 0 1 0 7.75 12.75 L 11.25 12.75 L 11.25 16.25 A 0.750075 0.750075 0 1 0 12.75 16.25 L 12.75 12.75 L 16.25 12.75 A 0.750075 0.750075 0 1 0 16.25 11.25 L 12.75 11.25 L 12.75 7.75 A 0.750075 0.750075 0 0 0 11.988281 6.9902344 z"></path>
+            </svg>
+            Add Artifact
+          </button> -->
+
+          <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 200px;">
+                  <input type="text" id="dataSearch" placeholder="Search..."
+                      [(ngModel)]="searchTerm"
+                      (input)="onSearchChange($event)"
+                      style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; transition: all 0.2s ease;">
+
+              </div>
+                  <select id="statusFilter" style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;"
+                    [(ngModel)]="selectedTimespan" (change)="fetchTestsRuns()">
+                      <option *ngFor="let timespan of timespanPresets | keyvalue" [value]="timespan.key">
+                        {{timespan.value}}
+                      </option>
+                  </select>
+                  <select id="statusFilter" style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;"
+                    [(ngModel)]="selectedResult" (change)="fetchTestsRuns()">
+                      <option *ngFor="let result of resultPresets | keyvalue" [value]="result.key">
+                        {{result.value}}
+                      </option>
+                  </select>
+          </div>
+          <div style="overflow-x: auto; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); border-radius: 8px; border: 1px solid #e9ecef;">
+              <table id="testsRunsTable" style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                      <tr style="background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%); border-bottom: 2px solid #e9ecef;">
+                            <th class="column-sortable fit-content" data-sort="id"
+                            (click)="sortTable('id')">
+                              Id
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                            </th>
+                          <th class="column-sortable" data-sort="name" style="text-align: center;"
+                          (click)="sortTable('name')">
+                              Name
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="column" style="text-align: center;">
+                              Status
+                          </th>
+                          <th class="column-sortable" data-sort="repository" style="text-align: center;"
+                          (click)="sortTable('repository')">
+                              Repository
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="column-sortable" data-sort="suite" style="text-align: center;"
+                          (click)="sortTable('suite')">
+                              Suite
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="column-sortable" data-sort="grid" style="text-align: center;"
+                          (click)="sortTable('grid')">
+                              Grid
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="column" style="text-align: center;">
+                              Created
+                          </th>
+                  </thead>
+                  <tbody>
+                      <tr *ngFor="let row of filteredTestsRunsRows" style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease; cursor: pointer;"
+                        (mouseover)="onRowMouseOver(row, $event)"
+                        (mouseout)="onRowMouseOut(row, $event)"
+                        (click)="markRowReviewed(row, $event)"
+                        (dblclick)="removeRowFromReviewed(row, $event)">
+                        <td class="cell">
+                           {{row.testsRun.Id}}
+                        </td>
+                        <td class="cell">
+                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+                            <a [routerLink]="['/tests-run-results', row.testsRun.Id]" class="row-link">
+                            {{row.testsRun.Name}}
+                            </a>
+                          </div>
+                        </td>
+                        <td class="cell">
+                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+
+                            <span class="test-status status-{{ row.testsRun.OverallStatus }}">{{ row.testsRun.OverallStatus }}</span>
+
+                          </div>
+                        </td>
+                        <td class="cell">
+                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+
+                            {{row.testsRun.RepositoryName}}
+
+                          </div>
+                        </td>
+                        <td class="cell">
+                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+
+                            {{row.testsRun.SuiteName}}
+
+                          </div>
+                        </td>
+                        <td class="cell">
+                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+
+                            {{row.testsRun.GridName}}
+
+                          </div>
+                        </td>
+                        <td class="cell">
+                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+
+                            {{ row.testsRun.OverallCreationTimestamp | date:'dd/MM/yyyy HH:mm' }}
+
+                          </div>
+                        </td>
+
+
+                    </tr>
+                  </tbody>
+              </table>
+          </div>
+          <div id="noResults" *ngIf="filteredTestsRunsRows.length === 0" style="text-align: center; padding: 2rem; color: #6c757d;">
+              <svg style="width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.467.881-6.077 2.33l-.853-.894A9.96 9.96 0 0112 13.5a9.96 9.96 0 016.93 2.936l-.853.894z"></path>
+              </svg>
+              <div>{{ searchTerm ? 'No tests runs match your search criteria' : 'No tests runs found' }}</div>
+          </div>
+      </div>
+  </div>
+</div>
+
+
+<!-- <div class="runs-container">
     <div class="runs-header">
         Runs
     </div>
@@ -57,15 +221,15 @@
                     <td class="run-suite-name" style="padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.SuiteName }}</a></td>
                     <td class="run-name" style="padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.Name }}</a></td>
                     <td class="run-grid-name" style="padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.GridName }}</a></td>
-                    <td class="run-timestamp" style="white-space: nowrap; padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.CreationTimestamp | date:'medium' }}</a></td>
+                    <td class="run-timestamp" style="white-space: nowrap; padding: 5px;"><a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">{{ run.OverallCreationTimestamp | date:'medium' }}</a></td>
                     <td class="run-result" style="width: 1%; white-space: nowrap; padding: 5px; text-align: center;"
                       [ngStyle]="{'background-color':
-                        run.OverallResult === 'passed' ? '#90EE90' :
-                        run.OverallResult === 'failed' ? '#FFB6C1' :
-                        run.OverallResult === 'queued' ? '#D3D3D3' :
-                        run.OverallResult === 'running' ? '#FFFF99' : '#FFFFFF'}">
+                        run.OverallStatus === 'passed' ? '#90EE90' :
+                        run.OverallStatus === 'failed' ? '#FFB6C1' :
+                        run.OverallStatus === 'queued' ? '#D3D3D3' :
+                        run.OverallStatus === 'running' ? '#FFFF99' : '#FFFFFF'}">
                       <a [routerLink]="['/tests-run-results', run.Id]" class="run-link" style="text-decoration: none; color: #007bff; transition: color 0.3s;">
-                        {{ run.OverallResult }}
+                        {{ run.OverallStatus }}
                       </a>
                     </td>
                 </tr>
@@ -84,4 +248,4 @@
             </tbody>
         </table>
     </div>
-</div>
+</div> -->

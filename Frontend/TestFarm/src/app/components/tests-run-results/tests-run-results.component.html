@@ -1,4 +1,377 @@
-<div class="runs-container">
+<div >
+  <div class="breadcrumb-island">
+      <nav class="breadcrumb">
+          <div class="breadcrumb-item">
+              <a href="/">TestFarm</a>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="breadcrumb-separator" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+          </svg>
+          <div class="breadcrumb-item">
+              <a href="/runs">Tests Runs</a>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="breadcrumb-separator" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+          </svg>
+          <div class="breadcrumb-item active">
+              Tests Run Results
+          </div>
+      </nav>
+  </div>
+  <div  class="islands-grid">
+    <div class="island">
+      <div class="island-header">
+          <h3 class="island-title">
+              <svg class="island-icon" fill="currentColor" stroke="none" viewBox="0 0 24 24">
+                  <path d="M 6.25 2 C 5.0162029 2 4 3.0162029 4 4.25 L 4 18.75 C 4 19.983797 5.0162029 21 6.25 21 L 11.75 21 A 0.750075 0.750075 0 1 0 11.75 19.5 L 6.25 19.5 C 5.8277971 19.5 5.5 19.172203 5.5 18.75 L 5.5 4.25 C 5.5 3.8277971 5.8277971 3.5 6.25 3.5 L 17.75 3.5 C 18.172203 3.5 18.5 3.8277971 18.5 4.25 L 18.5 10.75 A 0.750075 0.750075 0 1 0 20 10.75 L 20 4.25 C 20 3.0162029 18.983797 2 17.75 2 L 6.25 2 z M 8.75 6 A 0.750075 0.750075 0 1 0 8.75 7.5 L 15.25 7.5 A 0.750075 0.750075 0 1 0 15.25 6 L 8.75 6 z M 8.75 10.25 A 0.750075 0.750075 0 1 0 8.75 11.75 L 15.25 11.75 A 0.750075 0.750075 0 1 0 15.25 10.25 L 8.75 10.25 z M 19 13 C 17.729167 13 16.681074 13.503567 16.001953 14.267578 C 15.322832 15.03159 15 16.020833 15 17 C 15 17.900269 15.287566 18.800738 15.859375 19.535156 L 13.244141 22.695312 C 12.984141 23.015312 13.025703 23.485859 13.345703 23.755859 C 13.485703 23.865859 13.654219 23.925781 13.824219 23.925781 C 14.044219 23.925781 14.254297 23.834297 14.404297 23.654297 L 17.013672 20.501953 C 17.581016 20.80683 18.244478 21 19 21 C 20.270833 21 21.318926 20.496433 21.998047 19.732422 C 22.677168 18.96841 23 17.979167 23 17 C 23 16.020833 22.677168 15.03159 21.998047 14.267578 C 21.318926 13.503567 20.270833 13 19 13 z M 8.75 14.5 A 0.750075 0.750075 0 1 0 8.75 16 L 12.75 16 A 0.750075 0.750075 0 1 0 12.75 14.5 L 8.75 14.5 z M 19 14.5 C 19.895833 14.5 20.472741 14.808933 20.876953 15.263672 C 21.281165 15.71841 21.5 16.354167 21.5 17 C 21.5 17.645833 21.281165 18.28159 20.876953 18.736328 C 20.472741 19.191067 19.895833 19.5 19 19.5 C 18.104167 19.5 17.527259 19.191067 17.123047 18.736328 C 16.718835 18.28159 16.5 17.645833 16.5 17 C 16.5 16.354167 16.718835 15.71841 17.123047 15.263672 C 17.527259 14.808933 18.104167 14.5 19 14.5 z"></path>
+              </svg>
+              Tests Run Details
+          </h3>
+      </div>
+      <div class="test-item">
+          <span class="test-name">Name</span>
+          <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.Name }}</span>
+      </div>
+      <div class="test-item">
+          <span class="test-name">Repository</span>
+          <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.RepositoryName }}</span>
+      </div>
+      <div class="test-item">
+          <span class="test-name">Suite</span>
+          <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.SuiteName }}</span>
+      </div>
+      <div class="test-item">
+          <span class="test-name">Grid</span>
+          <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.GridName }}</span>
+      </div>
+    </div>
+
+    <div class="island">
+      <div class="island-header">
+          <h3 class="island-title">
+              <svg class="island-icon" fill="currentColor" stroke="none" viewBox="0 0 24 24">
+                  <path d="M 2.7382812 1.9902344 A 0.750075 0.750075 0 0 0 2 2.75 L 2 21.25 A 0.750075 0.750075 0 1 0 3.5 21.25 L 3.5 20 L 12 20 A 0.750075 0.750075 0 0 0 12.177734 19.978516 C 12.585834 21.150669 13.689792 22 15 22 C 16.309554 22 17.413663 21.151708 17.822266 19.980469 A 0.750075 0.750075 0 0 0 18 20 L 21.25 20 A 0.750075 0.750075 0 1 0 21.25 18.5 L 18 18.5 A 0.750075 0.750075 0 0 0 17.949219 18.501953 C 17.7102 17.085506 16.48425 16 15 16 C 13.51575 16 12.2898 17.085506 12.050781 18.501953 A 0.750075 0.750075 0 0 0 12 18.5 L 3.5 18.5 L 3.5 13 L 6 13 A 0.750075 0.750075 0 0 0 6.1777344 12.978516 C 6.5858344 14.150669 7.6897917 15 9 15 C 10.309554 15 11.413663 14.151708 11.822266 12.980469 A 0.750075 0.750075 0 0 0 12 13 L 21.25 13 A 0.750075 0.750075 0 1 0 21.25 11.5 L 12 11.5 A 0.750075 0.750075 0 0 0 11.949219 11.501953 C 11.7102 10.085506 10.48425 9 9 9 C 7.5157498 9 6.2898002 10.085506 6.0507812 11.501953 A 0.750075 0.750075 0 0 0 6 11.5 L 3.5 11.5 L 3.5 6 L 12 6 A 0.750075 0.750075 0 0 0 12.177734 5.9785156 C 12.585834 7.1506688 13.689792 8 15 8 C 16.309554 8 17.413663 7.1517083 17.822266 5.9804688 A 0.750075 0.750075 0 0 0 18 6 L 21.25 6 A 0.750075 0.750075 0 1 0 21.25 4.5 L 18 4.5 A 0.750075 0.750075 0 0 0 17.949219 4.5019531 C 17.7102 3.0855058 16.48425 2 15 2 C 13.51575 2 12.2898 3.0855058 12.050781 4.5019531 A 0.750075 0.750075 0 0 0 12 4.5 L 3.5 4.5 L 3.5 2.75 A 0.750075 0.750075 0 0 0 2.7382812 1.9902344 z M 15 3.5 C 15.827 3.5 16.5 4.173 16.5 5 C 16.5 5.827 15.827 6.5 15 6.5 C 14.173 6.5 13.5 5.827 13.5 5 C 13.5 4.173 14.173 3.5 15 3.5 z M 9 10.5 C 9.827 10.5 10.5 11.173 10.5 12 C 10.5 12.827 9.827 13.5 9 13.5 C 8.173 13.5 7.5 12.827 7.5 12 C 7.5 11.173 8.173 10.5 9 10.5 z M 15 17.5 C 15.827 17.5 16.5 18.173 16.5 19 C 16.5 19.827 15.827 20.5 15 20.5 C 14.173 20.5 13.5 19.827 13.5 19 C 13.5 18.173 14.173 17.5 15 17.5 z"></path>
+              </svg>
+              Execution Timeline
+          </h3>
+      </div>
+      <div class="test-item">
+          <span class="test-name">Scheduled</span>
+          <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.OverallCreationTimestamp | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+      </div>
+      <div class="test-item">
+          <span class="test-name">Started</span>
+          <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.OverallExecutionStartTimestamp | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+      </div>
+      <div class="test-item">
+          <span class="test-name">Finished</span>
+          <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.OverallExecutionEndTimestamp ? (testsRunDetails?.OverallExecutionEndTimestamp | date:'dd/MM/yyyy HH:mm:ss') : 'N/A' }}</span>
+      </div>
+      <div class="test-item">
+          <span class="test-name">Duration</span>
+          <span style="color: #6c757d; font-size: 0.875rem;">
+            {{ testsRunDetails?.TotalDurationMs
+                ? (((testsRunDetails?.TotalDurationMs ?? 0) / 60000) | number:'1.0-0') + 'm ' +
+                  ((((testsRunDetails?.TotalDurationMs ?? 0) / 1000) % 60) | number:'1.0-0') + 's'
+                : 'N/A' }}
+          </span>
+      </div>
+    </div>
+
+    <div class="island-chart">
+      <!-- <div class="island-header">
+          <h3 class="island-title">
+              <svg class="island-icon" fill="currentColor" stroke="none" viewBox="0 0 24 24">
+                  <path d="M 2.7382812 1.9902344 A 0.750075 0.750075 0 0 0 2 2.75 L 2 21.25 A 0.750075 0.750075 0 1 0 3.5 21.25 L 3.5 20 L 12 20 A 0.750075 0.750075 0 0 0 12.177734 19.978516 C 12.585834 21.150669 13.689792 22 15 22 C 16.309554 22 17.413663 21.151708 17.822266 19.980469 A 0.750075 0.750075 0 0 0 18 20 L 21.25 20 A 0.750075 0.750075 0 1 0 21.25 18.5 L 18 18.5 A 0.750075 0.750075 0 0 0 17.949219 18.501953 C 17.7102 17.085506 16.48425 16 15 16 C 13.51575 16 12.2898 17.085506 12.050781 18.501953 A 0.750075 0.750075 0 0 0 12 18.5 L 3.5 18.5 L 3.5 13 L 6 13 A 0.750075 0.750075 0 0 0 6.1777344 12.978516 C 6.5858344 14.150669 7.6897917 15 9 15 C 10.309554 15 11.413663 14.151708 11.822266 12.980469 A 0.750075 0.750075 0 0 0 12 13 L 21.25 13 A 0.750075 0.750075 0 1 0 21.25 11.5 L 12 11.5 A 0.750075 0.750075 0 0 0 11.949219 11.501953 C 11.7102 10.085506 10.48425 9 9 9 C 7.5157498 9 6.2898002 10.085506 6.0507812 11.501953 A 0.750075 0.750075 0 0 0 6 11.5 L 3.5 11.5 L 3.5 6 L 12 6 A 0.750075 0.750075 0 0 0 12.177734 5.9785156 C 12.585834 7.1506688 13.689792 8 15 8 C 16.309554 8 17.413663 7.1517083 17.822266 5.9804688 A 0.750075 0.750075 0 0 0 18 6 L 21.25 6 A 0.750075 0.750075 0 1 0 21.25 4.5 L 18 4.5 A 0.750075 0.750075 0 0 0 17.949219 4.5019531 C 17.7102 3.0855058 16.48425 2 15 2 C 13.51575 2 12.2898 3.0855058 12.050781 4.5019531 A 0.750075 0.750075 0 0 0 12 4.5 L 3.5 4.5 L 3.5 2.75 A 0.750075 0.750075 0 0 0 2.7382812 1.9902344 z M 15 3.5 C 15.827 3.5 16.5 4.173 16.5 5 C 16.5 5.827 15.827 6.5 15 6.5 C 14.173 6.5 13.5 5.827 13.5 5 C 13.5 4.173 14.173 3.5 15 3.5 z M 9 10.5 C 9.827 10.5 10.5 11.173 10.5 12 C 10.5 12.827 9.827 13.5 9 13.5 C 8.173 13.5 7.5 12.827 7.5 12 C 7.5 11.173 8.173 10.5 9 10.5 z M 15 17.5 C 15.827 17.5 16.5 18.173 16.5 19 C 16.5 19.827 15.827 20.5 15 20.5 C 14.173 20.5 13.5 19.827 13.5 19 C 13.5 18.173 14.173 17.5 15 17.5 z"></path>
+              </svg>
+              Execution Timeline
+          </h3>
+      </div>
+      <div class="test-item">
+          <span class="test-name">Scheduled</span>
+          <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.OverallCreationTimestamp | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+      </div>
+      <div class="test-item">
+          <span class="test-name">Started</span>
+          <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.OverallExecutionStartTimestamp | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+      </div>
+      <div class="test-item">
+          <span class="test-name">Finished</span>
+          <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.OverallExecutionEndTimestamp | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+      </div>
+      <div class="test-item">
+          <span class="test-name">Duration</span>
+          <span style="color: #6c757d; font-size: 0.875rem;">
+            {{ testsRunDetails?.TotalDurationMs
+                ? (((testsRunDetails?.TotalDurationMs ?? 0) / 60000) | number:'1.0-0') + 'm ' +
+                  ((((testsRunDetails?.TotalDurationMs ?? 0) / 1000) % 60) | number:'1.0-0') + 's'
+                : 'N/A' }}
+          </span>
+      </div> -->
+      <canvas #resultsChart data-chart="results"></canvas>
+    </div>
+  </div>
+  <div id="testsRunDetails" class="islands-grid">
+
+    <div class="island island-large" *ngIf="testsRunDetails">
+      <div class="island-header">
+        <h3 class="island-title">
+          <svg xmlns="http://www.w3.org/2000/svg" class="island-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+          </svg>
+          Test Run Details
+        </h3>
+      </div>
+
+      <!-- Main Test Run Info -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+        <div>
+          <h4 style="color: #2c3e50; margin-bottom: 1rem; font-size: 1.1rem;">Run Information</h4>
+          <div style="display: grid; gap: 0.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+              <span style="font-weight: 500; color: #6c757d;">ID:</span>
+              <span style="color: #2c3e50;">#{{ testsRunDetails.Id }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+              <span style="font-weight: 500; color: #6c757d;">Name:</span>
+              <span style="color: #2c3e50; text-align: right;">{{ testsRunDetails.Name }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+              <span style="font-weight: 500; color: #6c757d;">Repository:</span>
+              <span style="color: #2c3e50;">{{ testsRunDetails.RepositoryName }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+              <span style="font-weight: 500; color: #6c757d;">Suite:</span>
+              <span style="color: #2c3e50;">{{ testsRunDetails.SuiteName }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+              <span style="font-weight: 500; color: #6c757d;">Grid:</span>
+              <span style="color: #2c3e50;">{{ testsRunDetails.GridName }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 style="color: #2c3e50; margin-bottom: 1rem; font-size: 1.1rem;">Execution Timeline</h4>
+          <div style="display: grid; gap: 0.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+              <span style="font-weight: 500; color: #6c757d;">Created:</span>
+              <span style="color: #2c3e50;">{{ testsRunDetails.OverallCreationTimestamp | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+              <span style="font-weight: 500; color: #6c757d;">Started:</span>
+              <span style="color: #2c3e50;">{{ testsRunDetails.OverallExecutionStartTimestamp | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+              <span style="font-weight: 500; color: #6c757d;">Ended:</span>
+              <span style="color: #2c3e50;">{{ testsRunDetails.OverallExecutionEndTimestamp ? (testsRunDetails.OverallExecutionEndTimestamp | date:'dd/MM/yyyy HH:mm:ss') : 'In Progress' }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+              <span style="font-weight: 500; color: #6c757d;">Duration:</span>
+              <span style="color: #2c3e50;">{{ testsRunDetails.TotalDurationMs ? (testsRunDetails.TotalDurationMs / 1000 | number:'1.1-1') + 's' : 'N/A' }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+              <span style="font-weight: 500; color: #6c757d;">Status:</span>
+              <span class="test-status"
+                    [ngClass]="{
+                      'status-passed': testsRunDetails.OverallStatus === 'passed',
+                      'status-failed': testsRunDetails.OverallStatus === 'failed',
+                      'status-running': testsRunDetails.OverallStatus === 'running',
+                      'status-queued': testsRunDetails.OverallStatus === 'queued'
+                    }">
+                {{ testsRunDetails.OverallStatus }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Test Statistics -->
+      <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem; align-items: start;">
+
+
+        <!-- Status Chart -->
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <h4 style="color: #2c3e50; margin-bottom: 1rem; font-size: 1.1rem; text-align: center;">Status Distribution</h4>
+          <div style="width: 330px; height: 220px; position: relative; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
+            <!-- <canvas #resultsChart data-chart="results"></canvas> -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div style="margin-top: 1.5rem;" *ngIf="testsRunDetails.TotalTests > 0">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span style="font-size: 0.875rem; color: #6c757d;">Test Progress</span>
+          <span style="font-size: 0.875rem; color: #6c757d;">{{ testsRunDetails.PassedTests + testsRunDetails.FailedTests }} / {{ testsRunDetails.TotalTests }} completed</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill"
+               [style.width.%]="((testsRunDetails.PassedTests + testsRunDetails.FailedTests) / testsRunDetails.TotalTests) * 100">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="stats-row" *ngIf="testsRunDetails">
+    <div class="stat-card">
+        <div class="stat-number">{{ testsRunDetails.TotalTests }}</div>
+        <div class="stat-label">Total Tests</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ testsRunDetails.TotalTests > 0 ? ((testsRunDetails.PassedTests / testsRunDetails.TotalTests) * 100 | number:'1.0-0') + '%' : '0%' }}</div>
+        <div class="stat-label">Pass Rate</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ testsRunDetails.PassedTests }}</div>
+        <div class="stat-label">Passed Tests</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ testsRunDetails.FailedTests }}</div>
+        <div class="stat-label">Failed Tests</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ testsRunDetails.TotalDurationMs ? (testsRunDetails.TotalDurationMs / 1000 | number:'1.1-1') + 's' : 'N/A' }}</div>
+        <div class="stat-label">Total Duration</div>
+    </div>
+</div>
+  <div class="islands-grid">
+      <!-- <div class="island island-large">
+          <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 200px;">
+                  <input type="text" id="dataSearch" placeholder="Search..."
+                      [(ngModel)]="searchTerm"
+                      (input)="onSearchChange($event)"
+                      style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; transition: all 0.2s ease;">
+
+              </div>
+                  <select id="statusFilter" style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;"
+                    [(ngModel)]="selectedTimespan" (change)="fetchTestsRuns()">
+                      <option *ngFor="let timespan of timespanPresets | keyvalue" [value]="timespan.key">
+                        {{timespan.value}}
+                      </option>
+                  </select>
+                  <select id="statusFilter" style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;"
+                    [(ngModel)]="selectedResult" (change)="fetchTestsRuns()">
+                      <option *ngFor="let result of resultPresets | keyvalue" [value]="result.key">
+                        {{result.value}}
+                      </option>
+                  </select>
+          </div>
+          <div style="overflow-x: auto; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); border-radius: 8px; border: 1px solid #e9ecef;">
+              <table id="testsRunsTable" style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                      <tr style="background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%); border-bottom: 2px solid #e9ecef;">
+                            <th class="column-sortable fit-content" data-sort="id"
+                            (click)="sortTable('id')">
+                              Id
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                            </th>
+                          <th class="column-sortable" data-sort="name" style="text-align: center;"
+                          (click)="sortTable('name')">
+                              Name
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="column" style="text-align: center;">
+                              Status
+                          </th>
+                          <th class="column-sortable" data-sort="repository" style="text-align: center;"
+                          (click)="sortTable('repository')">
+                              Repository
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="column-sortable" data-sort="suite" style="text-align: center;"
+                          (click)="sortTable('suite')">
+                              Suite
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="column-sortable" data-sort="grid" style="text-align: center;"
+                          (click)="sortTable('grid')">
+                              Grid
+                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="column" style="text-align: center;">
+                              Created
+                          </th>
+                  </thead>
+                  <tbody>
+                      <tr *ngFor="let row of filteredTestsRunsRows" style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease; cursor: pointer;"
+                        (mouseover)="onRowMouseOver(row, $event)"
+                        (mouseout)="onRowMouseOut(row, $event)"
+                        (click)="markRowReviewed(row, $event)"
+                        (dblclick)="removeRowFromReviewed(row, $event)">
+                        <td class="cell">
+                           {{row.testsRun.Id}}
+                        </td>
+                        <td class="cell">
+                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+                            <a [routerLink]="['/tests-run-results', row.testsRun.Id]" class="row-link">
+                            {{row.testsRun.Name}}
+                            </a>
+                          </div>
+                        </td>
+                        <td class="cell">
+                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+
+                            <span class="test-status status-{{ row.testsRun.OverallStatus }}">{{ row.testsRun.OverallStatus }}</span>
+
+                          </div>
+                        </td>
+                        <td class="cell">
+                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+
+                            {{row.testsRun.RepositoryName}}
+
+                          </div>
+                        </td>
+                        <td class="cell">
+                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+
+                            {{row.testsRun.SuiteName}}
+
+                          </div>
+                        </td>
+                        <td class="cell">
+                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+
+                            {{row.testsRun.GridName}}
+
+                          </div>
+                        </td>
+                        <td class="cell">
+                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+
+                            {{ row.testsRun.OverallCreationTimestamp | date:'dd/MM/yyyy HH:mm' }}
+
+                          </div>
+                        </td>
+
+
+                    </tr>
+                  </tbody>
+              </table>
+          </div>
+          <div id="noResults" *ngIf="filteredTestsRunsRows.length === 0" style="text-align: center; padding: 2rem; color: #6c757d;">
+              <svg style="width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.467.881-6.077 2.33l-.853-.894A9.96 9.96 0 0112 13.5a9.96 9.96 0 016.93 2.936l-.853.894z"></path>
+              </svg>
+              <div>{{ searchTerm ? 'No tests runs match your search criteria' : 'No tests runs found' }}</div>
+          </div>
+      </div> -->
+  </div>
+</div>
+
+<!-- <div class="runs-container">
     <div class="runs-header">
         Tests Run Results
     </div>
@@ -96,4 +469,4 @@
             </tbody>
         </table>
     </div>
-</div>
+</div> -->

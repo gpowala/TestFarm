@@ -485,6 +485,19 @@ body::after {
   background: linear-gradient(315deg, #edeeef 0%, #fafbfc 100%);
 }
 
+.island-chart {
+  /* background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 1px 0 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05),
+    inset -1px 0 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease; */
+}
+
 .island-header {
   display: flex;
   justify-content: between;
@@ -622,10 +635,16 @@ body::after {
   border-color: #f44336;
 }
 
-.status-pending {
+.status-running {
   background: linear-gradient(315deg, #ffeaa7 0%, #fff3e0 100%);
   color: #ef6c00;
   border-color: #ff9800;
+}
+
+.status-queued {
+  background: linear-gradient(315deg, #e3eafc 0%, #f0f4ff 100%);
+  color: #1565c0;
+  border-color: #1976d2;
 }
 
 /* Progress Bar */

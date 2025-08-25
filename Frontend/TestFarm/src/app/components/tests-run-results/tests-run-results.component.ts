@@ -1,31 +1,62 @@
 import * as pako from 'pako';
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TestsRunResultDescription } from '../../models/tests-run-result-description';
 import { TestsApiHttpClientService } from '../../services/tests-api-http-cient-service';
 import { catchError, retry, throwError } from 'rxjs';
 import { TestsRunResultDiffDescription } from 'src/app/models/tests-run-result-diff-description';
+import { TestsRunDetailsDescription } from 'src/app/models/tests-run-details-description';
+import { Chart, ChartConfiguration, registerables } from 'chart.js';
+
+Chart.register(...registerables);
 
 @Component({
   selector: 'app-tests-run-results',
   templateUrl: './tests-run-results.component.html',
   styleUrls: ['./tests-run-results.component.css']
 })
-export class TestsRunResultsComponent implements OnInit {
+export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('resultsChart', { static: false }) statusChartRef!: ElementRef<HTMLCanvasElement>;
+
   testsRunId: string | null = null;
+  testsRunDetails: TestsRunDetailsDescription | null = null;
   testsRunResults: TestsRunResultDescription[] = [];
+  statusChart: Chart | null = null;
+  private viewInitialized = false;
 
   constructor(private route: ActivatedRoute, private testsApiHttpClientService: TestsApiHttpClientService) {}
 
   ngOnInit() {
     this.testsRunId = this.route.snapshot.paramMap.get('testsRunId');
+    console.log('Fetched testsRunId:', this.testsRunId);
+
+    this.fetchTestsRunDetailsData();
     this.fetchTestsRunResultsData();
+
     this.testsRunResults = this.testsRunResults.map(result => ({
       ...result,
       ShowDetails: false,
       ShowHistory: false
     }));
+  }
+
+  ngAfterViewInit() {
+    this.viewInitialized = true;
+    console.log('View initialized, statusChartRef:', this.statusChartRef);
+
+    // Use setTimeout to ensure the view is fully rendered
+    setTimeout(() => {
+      if (this.testsRunDetails) {
+        this.createStatusChart(this.testsRunDetails);
+      }
+    }, 0);
+  }
+
+  ngOnDestroy() {
+    if (this.statusChart) {
+      this.statusChart.destroy();
+    }
   }
 
   private fetchTestsRunResultsData() {
@@ -39,6 +70,137 @@ export class TestsRunResultsComponent implements OnInit {
         }
       );
     }
+  }
+
+  private fetchTestsRunDetailsData() {
+    if (this.testsRunId) {
+      this.testsApiHttpClientService.getTestsRunDetails(this.testsRunId).subscribe(
+        (data: TestsRunDetailsDescription) => {
+          this.testsRunDetails = data;
+          console.log('Fetched tests run details:', this.testsRunDetails);
+
+          // Only create chart if view is initialized, with a small delay to ensure DOM is ready
+          if (this.viewInitialized) {
+            setTimeout(() => {
+              this.createStatusChart(data);
+            }, 100);
+          }
+        },
+        (error: any) => {
+          console.error('Error fetching tests run details data:', error);
+        }
+      );
+    }
+  }
+
+  private createStatusChart(testsRunDetails: TestsRunDetailsDescription) {
+    if (!testsRunDetails) {
+      console.log('No test run details available for chart creation.');
+      return;
+    }
+
+    console.log('Attempting to create chart, statusChartRef:', this.statusChartRef);
+
+    if (!this.statusChartRef || !this.statusChartRef.nativeElement) {
+      console.log('Canvas element not found via ViewChild, trying direct DOM access as fallback...');
+
+      // Fallback to direct DOM access
+      const ctx = document.querySelector('canvas[data-chart="results"]') as HTMLCanvasElement;
+      if (!ctx) {
+        console.error('No canvas element found for chart creation - neither ViewChild nor DOM query worked');
+        return;
+      }
+
+      console.log('Using fallback canvas element');
+      this.createChartWithContext(ctx, testsRunDetails);
+      return;
+    }
+
+    const ctx = this.statusChartRef.nativeElement;
+    console.log('Creating status chart with ViewChild canvas, data:', testsRunDetails);
+    this.createChartWithContext(ctx, testsRunDetails);
+  }
+
+  private createChartWithContext(ctx: HTMLCanvasElement, testsRunDetails: TestsRunDetailsDescription) {
+    const data = {
+      labels: ['Passed', 'Failed', 'Running', 'Queued'],
+      datasets: [{
+        data: [
+          testsRunDetails.PassedTests,
+          testsRunDetails.FailedTests,
+          testsRunDetails.RunningTests,
+          testsRunDetails.QueuedTests
+        ],
+        backgroundColor: [
+          '#4caf50', // Green for passed
+          '#f44336', // Red for failed
+          '#ff9800', // Orange for running
+          '#2196f3'  // Blue for queued
+        ],
+        // borderColor: '#ffffff',
+        // borderWidth: 3,
+        cutout: '60%',
+        hoverOffset: 8,
+        // hoverBorderWidth: 4
+      }]
+    };
+
+    const config: ChartConfiguration<'doughnut'> = {
+      type: 'doughnut',
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'right',
+            labels: {
+              padding: 15,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              font: {
+                size: 13,
+                weight: 500
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            borderColor: '#ffffff',
+            borderWidth: 1,
+            cornerRadius: 8,
+            displayColors: true,
+            callbacks: {
+              label: (context) => {
+                const label = context.label || '';
+                const value = context.parsed;
+                const total = this.testsRunDetails!.TotalTests;
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                return `${label}: ${value} tests (${percentage}%)`;
+              }
+            }
+          }
+        },
+        elements: {
+          arc: {
+            borderRadius: 4
+          }
+        },
+        layout: {
+          padding: {
+            top: 20,
+            bottom: 20,
+            left: 10,
+            right: 10
+          }
+        }
+      }
+    };
+
+    this.statusChart = new Chart(ctx, config);
   }
 
   downloadTempDirArchive(testResultId: number) {

@@ -4,6 +4,6 @@ export interface TestsRunDescription {
     RepositoryName?: string,
     SuiteName?: string,
     GridName?: string,
-    CreationTimestamp: string,
-    OverallResult: string
+    OverallCreationTimestamp: string,
+    OverallStatus: string
 }

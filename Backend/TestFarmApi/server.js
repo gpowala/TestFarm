@@ -433,6 +433,81 @@ app.get('/tests-run-results/:testsRunId', async (req, res) => {
   }
 });
 
+app.get('/tests-run-details/:testsRunId', async (req, res) => {
+  try {
+    const testsRunId = parseInt(req.params.testsRunId);
+    
+    const testsRun = await TestRun.findByPk(testsRunId);
+    if (!testsRun) {
+      return res.status(404).json({ message: 'Tests run not found' });
+    }
+
+    const testsResults = await TestResult.findAll({
+      where: { TestRunId: testsRunId },
+      attributes: ['Id', 'Status', 'ExecutionStartTimestamp', 'ExecutionEndTimestamp']
+    });
+
+    const totalTests = testsResults.length;
+    const passedTests = testsResults.filter(r => r.Status.toLowerCase() === 'passed').length;
+    const failedTests = testsResults.filter(r => r.Status.toLowerCase() === 'failed').length;
+    const queuedTests = testsResults.filter(r => r.Status.toLowerCase() === 'queued').length;
+    const runningTests = testsResults.filter(r => r.Status.toLowerCase() === 'running').length;
+
+    // calculate overall start, end and total duration of the tests run
+    const startTimes = testsResults
+      .filter(r => r.ExecutionStartTimestamp)
+      .map(r => new Date(r.ExecutionStartTimestamp).getTime());
+
+    let overallStart, overallEnd, totalDurationMs;
+
+    if (queuedTests > 0 || runningTests > 0) {
+      const minStartMs = Math.min(...startTimes);
+      overallStart = new Date(minStartMs);
+      
+      // Skip calculating overall end and duration when there are queued or running tests
+      overallEnd = null;
+      totalDurationMs = null;
+    } else {
+      const endTimes = testsResults
+        .filter(r => r.ExecutionEndTimestamp)
+        .map(r => new Date(r.ExecutionEndTimestamp).getTime());
+
+      const minStartMs = Math.min(...startTimes);
+      const maxEndMs = Math.max(...endTimes);
+
+      overallStart = new Date(minStartMs);
+      overallEnd = new Date(maxEndMs);
+      totalDurationMs = maxEndMs - minStartMs;
+    }
+
+    const formattedDetails = {
+      Id: testsRun.Id,
+      RepositoryName: testsRun.RepositoryName,
+      SuiteName: testsRun.SuiteName,
+      Name: testsRun.Name,
+      GridName: testsRun.GridName,
+      TeamsNotificationUrl: testsRun.TeamsNotificationUrl,
+      OverallCreationTimestamp: testsRun.OverallCreationTimestamp,
+      OverallStatus: testsRun.OverallStatus,
+
+      OverallExecutionStartTimestamp: overallStart,
+      OverallExecutionEndTimestamp: overallEnd,
+      TotalDurationMs: totalDurationMs,
+
+      TotalTests: totalTests,
+      PassedTests: passedTests,
+      FailedTests: failedTests,
+      QueuedTests: queuedTests,
+      RunningTests: runningTests
+    };
+
+    res.status(200).json(formattedDetails);
+  } catch (error) {
+    console.error('Error fetching tests run details:', error);
+    res.status(500).send('Error fetching tests run details');
+  }
+});
+
 /**
  * @swagger
  * /test-history/{testId}:
