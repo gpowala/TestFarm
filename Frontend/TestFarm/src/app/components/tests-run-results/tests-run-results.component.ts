@@ -263,7 +263,7 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
     // Use setTimeout to ensure DOM has been updated
     setTimeout(() => {
       // Get all table rows and update their styles based on current state
-      const tableRows = document.querySelectorAll('#testsRunsTable tbody tr');
+      const tableRows = document.querySelectorAll('#testsRunsTable tbody tr#result');
       tableRows.forEach((rowElement, index) => {
         if (index < this.filteredTestsRunResultsRows.length) {
           const row = this.filteredTestsRunResultsRows[index];

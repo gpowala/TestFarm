@@ -377,7 +377,7 @@ router.get('/get-scheduled-test', async (req, res) => {
 });
 
 router.post('/complete-benchmark', async (req, res) => {
-  const { BenchmarkResultId, Result } = req.body;
+  const { BenchmarkResultId } = req.body;
   
   try {
     const benchmarkResult = await BenchmarkResult.findByPk(BenchmarkResultId);
@@ -388,9 +388,8 @@ router.post('/complete-benchmark', async (req, res) => {
     
     benchmarkResult.Status = 'completed';
     benchmarkResult.ExecutionEndTimestamp = new Date();
-    benchmarkResult.Result = Result;
     await benchmarkResult.save();
-
+    
     await MicroJobsQueue.destroy({
       where: {
         Type: 'bench',
@@ -486,6 +485,35 @@ const { Result } = require('pg');
 const uploadDiff = multer({ 
   dest: 'uploads/',
   limits: { fileSize: 100 * 1024 * 1024 } // 100MB size limit
+});
+
+router.post('/upload-benchmark-results', uploadDiff.single('report'), async (req, res) => {
+  const { BenchmarkResultId } = req.body;
+  const reportFile = req.file;
+
+  try {
+    const benchmarkResult = await BenchmarkResult.findByPk(BenchmarkResultId);
+
+    if (!benchmarkResult) {
+      return res.status(404).json({ message: 'Benchmark result not found' });
+    }
+
+    let reportContent = null;
+    if (reportFile) {
+      const filePath = reportFile.path;
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      reportContent = zlib.gzipSync(fileContent).toString('base64');
+      fs.unlinkSync(filePath); // Clean up the uploaded file
+    }
+
+    benchmarkResult.Results = reportContent;
+    await benchmarkResult.save();
+
+    res.status(201);
+  } catch (error) {
+    console.error('Error uploading report:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
 });
 
 router.post('/upload-diff', uploadDiff.single('report'), async (req, res) => {

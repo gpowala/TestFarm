@@ -26,7 +26,8 @@ __all__ = [
     'update_host_status',
     'complete_test',
     'complete_benchmark',
-    'upload_diff'
+    'upload_diff',
+    'upload_benchmark_results'
 ]
 
 @dataclass
@@ -524,12 +525,11 @@ def complete_test(test_result: TestResult, status: str, execution_output: str, c
     if not response.ok:
         raise RuntimeError(f"Failed to complete test result with status code: {response.status_code} and message: {response.reason}")
     
-def complete_benchmark(benchmark_result: BenchmarkResult, result: BenchmarkResultJson, config: Config):
+def complete_benchmark(benchmark_result: BenchmarkResult, config: Config):
     url = urljoin(config.test_farm_api.base_url, "complete-benchmark")
     
     payload = {
-        "BenchmarkResultId": benchmark_result.id,
-        "Result": result
+        "BenchmarkResultId": benchmark_result.id
     }
     
     response = requests.post(
@@ -540,6 +540,35 @@ def complete_benchmark(benchmark_result: BenchmarkResult, result: BenchmarkResul
     
     if not response.ok:
         raise RuntimeError(f"Failed to complete benchmark result with status code: {response.status_code} and message: {response.reason}")
+
+def upload_benchmark_results(benchmark_result: BenchmarkResult, config: Config, report_file_path: Optional[str] = None):
+    url = urljoin(config.test_farm_api.base_url, "upload-benchmark-results")
+    
+    form_data = {
+        'BenchmarkResultId': str(benchmark_result.id)
+    }
+    
+    files = {}
+    
+    if report_file_path and os.path.exists(report_file_path):
+        files = {
+            'report': (os.path.basename(report_file_path), 
+                      open(report_file_path, 'rb'), 
+                      'application/octet-stream')
+        }
+    
+    response = requests.post(
+        url=url,
+        data=form_data,
+        files=files,
+        timeout=config.test_farm_api.timeout
+    )
+    
+    if files and 'report' in files:
+        files['report'][1].close()
+    
+    if not response.ok:
+        raise RuntimeError(f"Failed to upload benchmark results with status code: {response.status_code} and message: {response.reason}")
 
 def upload_diff(test_result: TestResult, name: str, status: str, config: Config, report_file_path: Optional[str] = None):
     url = urljoin(config.test_farm_api.base_url, "upload-diff")

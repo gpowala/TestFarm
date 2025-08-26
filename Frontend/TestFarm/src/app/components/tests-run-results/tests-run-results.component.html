@@ -196,7 +196,7 @@
                   </thead>
                   <tbody>
                     <ng-container *ngFor="let row of filteredTestsRunResultsRows">
-                      <tr style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease; cursor: pointer;"
+                      <tr id="result" style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease; cursor: pointer;"
                         (mouseover)="onRowMouseOver(row, $event)"
                         (mouseout)="onRowMouseOut(row, $event)"
                         (click)="markRowReviewed(row, $event)"

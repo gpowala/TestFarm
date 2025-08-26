@@ -21,7 +21,7 @@ from testfarm_agents_utils import *
 from testfarm_benchmarks_utils import *
 
 from test_farm_tests import DiffPair, TestCase, BenchmarkCase
-from test_farm_api import get_artifact, get_next_job, get_scheduled_test, get_scheduled_benchmark, register_host, unregister_host, update_host_status, complete_test, complete_benchmark, upload_diff, upload_temp_dir_archive, Repository, MicroJob
+from test_farm_api import get_artifact, get_next_job, get_scheduled_test, get_scheduled_benchmark, register_host, unregister_host, update_host_status, complete_test, complete_benchmark, upload_diff, upload_benchmark_results, upload_temp_dir_archive, Repository, MicroJob
 from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
 from logging.handlers import RotatingFileHandler
 
@@ -411,6 +411,13 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
                         self.execute_command(expanded_post_step, env, new_working_dir)
 
+                    logging.info("Benchmark finished! Publishing results...")
+
+                    complete_benchmark(benchmark_case, self._config)
+
+                    expanded_results = expand_magic_variables(benchmark_case.results)
+                    upload_benchmark_results(benchmark_case.benchmark_run, self._config, expanded_results)
+
                     # test_passed = True
 
                     # for diff in test_case.diffs:
@@ -463,7 +470,6 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                     # except Exception as e:
                     #     logging.error(f"Failed to create or upload archive: {e}")
 
-                    logging.info("Benchmark finished! Publishing results...")
                     # complete_test(test, "passed", self.read_execution_output(test_case), self._config)
                     # if test_passed:
                     #     logging.info("Test PASSED! Publishing results...")
@@ -472,7 +478,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                     #     logging.info("Test FAILED! Publishing results...")
                     #     complete_test(test, "failed", self.read_execution_output(test_case), self._config)
 
-                    logging.info("Test completed.")
+                    logging.info("Benchmark completed.")
                 else:
                     time.sleep(60)
             except Exception as e:
