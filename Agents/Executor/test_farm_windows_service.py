@@ -413,10 +413,10 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
                     logging.info("Benchmark finished! Publishing results...")
 
-                    complete_benchmark(benchmark_case, self._config)
+                    complete_benchmark(benchmark, self._config)
 
                     expanded_results = expand_magic_variables(benchmark_case.results)
-                    upload_benchmark_results(benchmark_case.benchmark_run, self._config, expanded_results)
+                    upload_benchmark_results(benchmark, self._config, expanded_results)
 
                     # test_passed = True
 
