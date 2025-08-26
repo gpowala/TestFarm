@@ -29,20 +29,24 @@
           </h3>
       </div>
       <div class="test-item">
-          <span class="test-name">Name</span>
-          <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.Name }}</span>
+        <span class="test-name">Name</span>
+        <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.Name }}</span>
       </div>
       <div class="test-item">
-          <span class="test-name">Repository</span>
-          <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.RepositoryName }}</span>
+        <span class="test-name">Repository</span>
+        <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.RepositoryName }}</span>
       </div>
       <div class="test-item">
-          <span class="test-name">Suite</span>
-          <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.SuiteName }}</span>
+        <span class="test-name">Suite</span>
+        <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.SuiteName }}</span>
       </div>
       <div class="test-item">
-          <span class="test-name">Grid</span>
-          <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.GridName }}</span>
+        <span class="test-name">Grid</span>
+        <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.GridName }}</span>
+      </div>
+      <div class="test-item">
+        <span class="test-name">Scheduled</span>
+        <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.TotalTests }}</span>
       </div>
     </div>
 
@@ -74,6 +78,20 @@
                 ? (((testsRunDetails?.TotalDurationMs ?? 0) / 60000) | number:'1.0-0') + 'm ' +
                   ((((testsRunDetails?.TotalDurationMs ?? 0) / 1000) % 60) | number:'1.0-0') + 's'
                 : 'N/A' }}
+          </span>
+      </div>
+      <div class="test-item">
+          <span class="test-name">Status</span>
+          <span style="color: #6c757d; font-size: 0.875rem;">
+            <span class="test-status"
+                    [ngClass]="{
+                      'status-passed': testsRunDetails?.OverallStatus === 'passed',
+                      'status-failed': testsRunDetails?.OverallStatus === 'failed',
+                      'status-running': testsRunDetails?.OverallStatus === 'running',
+                      'status-queued': testsRunDetails?.OverallStatus === 'queued'
+                    }">
+                {{ testsRunDetails?.OverallStatus }}
+              </span>
           </span>
       </div>
     </div>
@@ -111,109 +129,7 @@
       <canvas #resultsChart data-chart="results"></canvas>
     </div>
   </div>
-  <div id="testsRunDetails" class="islands-grid">
-
-    <div class="island island-large" *ngIf="testsRunDetails">
-      <div class="island-header">
-        <h3 class="island-title">
-          <svg xmlns="http://www.w3.org/2000/svg" class="island-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-          </svg>
-          Test Run Details
-        </h3>
-      </div>
-
-      <!-- Main Test Run Info -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
-        <div>
-          <h4 style="color: #2c3e50; margin-bottom: 1rem; font-size: 1.1rem;">Run Information</h4>
-          <div style="display: grid; gap: 0.75rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
-              <span style="font-weight: 500; color: #6c757d;">ID:</span>
-              <span style="color: #2c3e50;">#{{ testsRunDetails.Id }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
-              <span style="font-weight: 500; color: #6c757d;">Name:</span>
-              <span style="color: #2c3e50; text-align: right;">{{ testsRunDetails.Name }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
-              <span style="font-weight: 500; color: #6c757d;">Repository:</span>
-              <span style="color: #2c3e50;">{{ testsRunDetails.RepositoryName }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
-              <span style="font-weight: 500; color: #6c757d;">Suite:</span>
-              <span style="color: #2c3e50;">{{ testsRunDetails.SuiteName }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
-              <span style="font-weight: 500; color: #6c757d;">Grid:</span>
-              <span style="color: #2c3e50;">{{ testsRunDetails.GridName }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h4 style="color: #2c3e50; margin-bottom: 1rem; font-size: 1.1rem;">Execution Timeline</h4>
-          <div style="display: grid; gap: 0.75rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
-              <span style="font-weight: 500; color: #6c757d;">Created:</span>
-              <span style="color: #2c3e50;">{{ testsRunDetails.OverallCreationTimestamp | date:'dd/MM/yyyy HH:mm:ss' }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
-              <span style="font-weight: 500; color: #6c757d;">Started:</span>
-              <span style="color: #2c3e50;">{{ testsRunDetails.OverallExecutionStartTimestamp | date:'dd/MM/yyyy HH:mm:ss' }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
-              <span style="font-weight: 500; color: #6c757d;">Ended:</span>
-              <span style="color: #2c3e50;">{{ testsRunDetails.OverallExecutionEndTimestamp ? (testsRunDetails.OverallExecutionEndTimestamp | date:'dd/MM/yyyy HH:mm:ss') : 'In Progress' }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
-              <span style="font-weight: 500; color: #6c757d;">Duration:</span>
-              <span style="color: #2c3e50;">{{ testsRunDetails.TotalDurationMs ? (testsRunDetails.TotalDurationMs / 1000 | number:'1.1-1') + 's' : 'N/A' }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
-              <span style="font-weight: 500; color: #6c757d;">Status:</span>
-              <span class="test-status"
-                    [ngClass]="{
-                      'status-passed': testsRunDetails.OverallStatus === 'passed',
-                      'status-failed': testsRunDetails.OverallStatus === 'failed',
-                      'status-running': testsRunDetails.OverallStatus === 'running',
-                      'status-queued': testsRunDetails.OverallStatus === 'queued'
-                    }">
-                {{ testsRunDetails.OverallStatus }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Test Statistics -->
-      <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem; align-items: start;">
-
-
-        <!-- Status Chart -->
-        <div style="display: flex; flex-direction: column; align-items: center;">
-          <h4 style="color: #2c3e50; margin-bottom: 1rem; font-size: 1.1rem; text-align: center;">Status Distribution</h4>
-          <div style="width: 330px; height: 220px; position: relative; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
-            <!-- <canvas #resultsChart data-chart="results"></canvas> -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Progress Bar -->
-      <div style="margin-top: 1.5rem;" *ngIf="testsRunDetails.TotalTests > 0">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-          <span style="font-size: 0.875rem; color: #6c757d;">Test Progress</span>
-          <span style="font-size: 0.875rem; color: #6c757d;">{{ testsRunDetails.PassedTests + testsRunDetails.FailedTests }} / {{ testsRunDetails.TotalTests }} completed</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress-fill"
-               [style.width.%]="((testsRunDetails.PassedTests + testsRunDetails.FailedTests) / testsRunDetails.TotalTests) * 100">
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="stats-row" *ngIf="testsRunDetails">
+  <!-- <div class="stats-row" *ngIf="testsRunDetails">
     <div class="stat-card">
         <div class="stat-number">{{ testsRunDetails.TotalTests }}</div>
         <div class="stat-label">Total Tests</div>
@@ -234,9 +150,9 @@
         <div class="stat-number">{{ testsRunDetails.TotalDurationMs ? (testsRunDetails.TotalDurationMs / 1000 | number:'1.1-1') + 's' : 'N/A' }}</div>
         <div class="stat-label">Total Duration</div>
     </div>
-</div>
+</div> -->
   <div class="islands-grid">
-      <!-- <div class="island island-large">
+      <div class="island island-large">
           <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
               <div style="flex: 1; min-width: 200px;">
                   <input type="text" id="dataSearch" placeholder="Search..."
@@ -245,129 +161,146 @@
                       style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; transition: all 0.2s ease;">
 
               </div>
-                  <select id="statusFilter" style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;"
-                    [(ngModel)]="selectedTimespan" (change)="fetchTestsRuns()">
-                      <option *ngFor="let timespan of timespanPresets | keyvalue" [value]="timespan.key">
-                        {{timespan.value}}
-                      </option>
-                  </select>
-                  <select id="statusFilter" style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;"
-                    [(ngModel)]="selectedResult" (change)="fetchTestsRuns()">
-                      <option *ngFor="let result of resultPresets | keyvalue" [value]="result.key">
-                        {{result.value}}
-                      </option>
-                  </select>
           </div>
+
           <div style="overflow-x: auto; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); border-radius: 8px; border: 1px solid #e9ecef;">
               <table id="testsRunsTable" style="width: 100%; border-collapse: collapse;">
                   <thead>
                       <tr style="background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%); border-bottom: 2px solid #e9ecef;">
-                            <th class="column-sortable fit-content" data-sort="id"
-                            (click)="sortTable('id')">
-                              Id
+                          <th class="column-sortable fit-content" data-sort="path" style="text-align: left;"
+                          (click)="sortTable('path')">
+                              Path
                               <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
                               </svg>
-                            </th>
-                          <th class="column-sortable" data-sort="name" style="text-align: center;"
+                          </th>
+                          <th class="column-sortable fit-content" data-sort="name" style="text-align: left;"
                           (click)="sortTable('name')">
                               Name
                               <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
                               </svg>
                           </th>
-                          <th class="column" style="text-align: center;">
+                          <th class="column-sortable fit-content" data-sort="status" style="text-align: center;"
+                          (click)="sortTable('status')">
                               Status
-                          </th>
-                          <th class="column-sortable" data-sort="repository" style="text-align: center;"
-                          (click)="sortTable('repository')">
-                              Repository
                               <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
                               </svg>
                           </th>
-                          <th class="column-sortable" data-sort="suite" style="text-align: center;"
-                          (click)="sortTable('suite')">
-                              Suite
-                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
-                              </svg>
+                          <th class="column fit-content" style="text-align: center;">
+                              Duration
                           </th>
-                          <th class="column-sortable" data-sort="grid" style="text-align: center;"
-                          (click)="sortTable('grid')">
-                              Grid
-                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
-                              </svg>
-                          </th>
-                          <th class="column" style="text-align: center;">
-                              Created
-                          </th>
+                          <th class="column fit-content" style="text-align: center;"></th>
+                          <th class="column fit-content" style="text-align: center;"></th>
                   </thead>
                   <tbody>
-                      <tr *ngFor="let row of filteredTestsRunsRows" style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease; cursor: pointer;"
+                    <ng-container *ngFor="let row of filteredTestsRunResultsRows">
+                      <tr style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease; cursor: pointer;"
                         (mouseover)="onRowMouseOver(row, $event)"
                         (mouseout)="onRowMouseOut(row, $event)"
                         (click)="markRowReviewed(row, $event)"
                         (dblclick)="removeRowFromReviewed(row, $event)">
                         <td class="cell">
-                           {{row.testsRun.Id}}
+                          <div style="display: flex; padding: 0.5rem; justify-content: flex-start; align-items: center;">
+                           {{row.result.TestPath}}
+                          </div>
+                        </td>
+                        <td class="cell">
+                          <div style="display: flex; padding: 0.5rem; justify-content: flex-start; align-items: center;">
+                           {{row.result.TestName}}
+                          </div>
                         </td>
                         <td class="cell">
                           <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
-                            <a [routerLink]="['/tests-run-results', row.testsRun.Id]" class="row-link">
-                            {{row.testsRun.Name}}
+
+                            <span class="test-status status-{{ row.result.Status }}">{{ row.result.Status }}</span>
+
+                          </div>
+                        </td>
+                        <td class="cell">
+                          <div style="padding: 1rem; color: #6c757d; font-family: monospace; font-size: medium;">
+
+                            {{calculateExecutionTime(row.result)}}
+
+                          </div>
+                        </td>
+
+                        <td class="cell">
+                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center; width: 1%; min-width: fit-content; white-space: nowrap; font-family: monospace;">
+                            <button mat-button color="primary" (click)="row.showDetails = !row.showDetails">
+                                {{ row.showDetails ? 'details ▲' : 'details ▼' }}
+                            </button>
+                            <button mat-button color="primary" (click)="row.showDiffs = !row.showDiffs">
+                                {{ row.showDiffs ? 'diffs ▲' : 'diffs ▼' }}
+                            </button>
+                            <button mat-button color="primary" (click)="row.showHistory = !row.showHistory">
+                                {{ row.showHistory ? 'history ▲' : 'history ▼' }}
+                            </button>
+                          </div>
+                        </td>
+
+                        <td class="cell">
+                          <div style="display: flex; gap: 10px; justify-content: center; align-items: center; width: 1%; min-width: fit-content; white-space: nowrap;">
+                            <a class="row-action-link" data-tooltip="Hide" (click)="downloadTempDirArchive(row.result.Id)">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="" fill="currentColor" stroke="none" x="0px" y="0px" width="22" height="22" viewBox="0 0 24 24">
+                                <path d="M 4 3 C 2.9042029 3 2 3.9042029 2 5 L 2 18 C 2 19.095797 2.9042029 20 4 20 L 13 20 L 15 20 L 20 20 C 21.095797 20 22 19.095797 22 18 L 22 7 C 22 5.9042029 21.095797 5 20 5 L 10.552734 5 C 10.487304 5 10.425327 4.9753364 10.376953 4.9277344 L 9.0800781 3.6484375 L 9.078125 3.6484375 C 8.6571514 3.2326718 8.088123 3 7.4980469 3 L 4 3 z M 4 4.5 L 7.4980469 4.5 C 7.6953464 4.5 7.8864979 4.577439 8.0253906 4.7148438 A 0.750075 0.750075 0 0 0 8.0253906 4.7167969 L 9.3242188 5.9960938 C 9.6518447 6.3184917 10.094169 6.5 10.552734 6.5 L 13 6.5 L 13 8 L 15 8 L 15 6.5 L 20 6.5 C 20.284203 6.5 20.5 6.7157971 20.5 7 L 20.5 18 C 20.5 18.284203 20.284203 18.5 20 18.5 L 15 18.5 L 15 18 L 13 18 L 13 18.5 L 4 18.5 C 3.7157971 18.5 3.5 18.284203 3.5 18 L 3.5 5 C 3.5 4.7157971 3.7157971 4.5 4 4.5 z M 15 18 L 17 18 L 17 16 L 15 16 L 15 18 z M 15 16 L 15 14 L 13 14 L 13 16 L 15 16 z M 15 14 L 17 14 L 17 12 L 15 12 L 15 14 z M 15 12 L 15 10 L 13 10 L 13 12 L 15 12 z M 15 10 L 17 10 L 17 8 L 15 8 L 15 10 z"></path>
+                              </svg>
                             </a>
                           </div>
                         </td>
-                        <td class="cell">
-                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
-
-                            <span class="test-status status-{{ row.testsRun.OverallStatus }}">{{ row.testsRun.OverallStatus }}</span>
-
-                          </div>
-                        </td>
-                        <td class="cell">
-                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
-
-                            {{row.testsRun.RepositoryName}}
-
-                          </div>
-                        </td>
-                        <td class="cell">
-                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
-
-                            {{row.testsRun.SuiteName}}
-
-                          </div>
-                        </td>
-                        <td class="cell">
-                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
-
-                            {{row.testsRun.GridName}}
-
-                          </div>
-                        </td>
-                        <td class="cell">
-                          <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
-
-                            {{ row.testsRun.OverallCreationTimestamp | date:'dd/MM/yyyy HH:mm' }}
-
-                          </div>
-                        </td>
-
-
                     </tr>
+                    <tr *ngIf="row.showDetails" class="expanded-details">
+                        <td colspan="8" class="execution-output" style="padding: 5px; text-align: left; font-family: monospace; background-color: #f0f0f0;">
+                            <div [innerHTML]="row.result.ExecutionOutput | consoleOutputToHtml"></div>
+                        </td>
+                    </tr>
+                    <tr *ngIf="row.showDiffs" class="expanded-details">
+                      <td colspan="8" class="execution-output" style="padding: 5px; text-align: left; background-color: #f0f0f0;">
+                        <table class="runs-table" style="width: 100%;">
+                          <thead>
+                              <tr>
+                                  <th class="column fit-content" style="text-align: left; font-size: small;">Diff Name</th>
+                                  <th class="column fit-content" style="font-size: small;">Status</th>
+                                  <th class="column fit-content" style="font-size: small;"></th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              <ng-container *ngFor="let diff of row.result.Diffs">
+                                  <tr class="run-item" style="transition: background-color 0.3s;">
+                                      <td class="cell fit-content" style="text-align: left; font-size: small; padding: 1rem;">{{ diff.Name }}</td>
+                                      <td class="cell fit-content">
+                                        <span class="test-status status-{{ diff.Status }}">{{ diff.Status }}</span>
+                                      </td>
+                                      <td class="cell fit-content">
+                                        <a class="row-action-link" data-tooltip="Hide" (click)="showReport(diff.Id)" style="cursor: pointer;">
+                                          <svg xmlns="http://www.w3.org/2000/svg" class="" fill="currentColor" stroke="none" x="0px" y="0px" width="22" height="22" viewBox="0 0 24 24">
+                                            <path d="M 1.75 2 A 0.750075 0.750075 0 1 0 1.75 3.5 L 13.5 3.5 L 13.5 6 L 11.75 6 A 0.750075 0.750075 0 0 0 11 6.75 L 11 16.5 L 1.75 16.5 A 0.750075 0.750075 0 1 0 1.75 18 L 11 18 L 11 21.25 A 0.750075 0.750075 0 0 0 11.75 22 L 22.25 22 A 0.750075 0.750075 0 1 0 22.25 20.5 L 12.5 20.5 L 12.5 7.5 L 22.25 7.5 A 0.750075 0.750075 0 1 0 22.25 6 L 15 6 L 15 2.75 A 0.750075 0.750075 0 0 0 14.25 2 L 1.75 2 z M 4.7382812 6 A 0.750075 0.750075 0 0 0 4 6.75 L 4 9.25 L 1.75 9.25 A 0.750075 0.750075 0 1 0 1.75 10.75 L 4 10.75 L 4 13.25 A 0.750075 0.750075 0 0 0 5.28125 13.78125 L 8.53125 10.53125 A 0.750075 0.750075 0 0 0 8.53125 9.46875 L 5.28125 6.21875 A 0.750075 0.750075 0 0 0 4.7382812 6 z M 5.5 8.5625 L 6.1875 9.25 L 5.5 9.25 L 5.5 8.5625 z M 19.228516 10 A 0.750075 0.750075 0 0 0 18.71875 10.21875 L 15.46875 13.46875 A 0.750075 0.750075 0 0 0 15.46875 14.53125 L 18.71875 17.78125 A 0.750075 0.750075 0 0 0 20 17.25 L 20 14.75 L 22.25 14.75 A 0.750075 0.750075 0 1 0 22.25 13.25 L 20 13.25 L 20 10.75 A 0.750075 0.750075 0 0 0 19.228516 10 z M 5.5 10.75 L 6.1875 10.75 L 5.5 11.4375 L 5.5 10.75 z M 18.5 12.5625 L 18.5 13.25 L 17.8125 13.25 L 18.5 12.5625 z M 17.8125 14.75 L 18.5 14.75 L 18.5 15.4375 L 17.8125 14.75 z"></path>
+                                          </svg>
+                                        </a>
+                                      </td>
+                                  </tr>
+                              </ng-container>
+                          </tbody>
+                      </table>
+                      </td>
+                  </tr>
+                  <tr *ngIf="row.showHistory" class="expanded-history">
+                        <td colspan="8" class="test-history" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
+                            <app-test-history [testId]="row.result.TestId"></app-test-history>
+                        </td>
+                    </tr>
+                    </ng-container>
                   </tbody>
               </table>
           </div>
-          <div id="noResults" *ngIf="filteredTestsRunsRows.length === 0" style="text-align: center; padding: 2rem; color: #6c757d;">
+          <!-- <div id="noResults" *ngIf="filteredTestsRunsRows.length === 0" style="text-align: center; padding: 2rem; color: #6c757d;">
               <svg style="width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.467.881-6.077 2.33l-.853-.894A9.96 9.96 0 0112 13.5a9.96 9.96 0 016.93 2.936l-.853.894z"></path>
               </svg>
               <div>{{ searchTerm ? 'No tests runs match your search criteria' : 'No tests runs found' }}</div>
-          </div>
-      </div> -->
+          </div> -->
+      </div>
   </div>
 </div>
 
