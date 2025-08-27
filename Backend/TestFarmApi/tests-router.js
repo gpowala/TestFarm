@@ -509,7 +509,7 @@ router.post('/upload-benchmark-results', uploadDiff.single('report'), async (req
     benchmarkResult.Results = reportContent;
     await benchmarkResult.save();
 
-    res.status(201);
+    res.status(201).json({ message: 'Benchmark results uploaded successfully' });
   } catch (error) {
     console.error('Error uploading report:', error);
     res.status(500).json({ error: 'Internal Server Error', details: error.message });
