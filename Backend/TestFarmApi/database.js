@@ -573,60 +573,6 @@ const Benchmark = sequelize.define('Benchmark', {
   timestamps: false
 });
 
-class BenchmarkResultJson {
-  constructor(data) {
-    this.events = data.events || [];
-    this.metrics = data.metrics || [];
-
-    // Ensure events have required properties
-    this.events = this.events.map(event => ({
-      name: event.name || '',
-      timestamp: event.timestamp || ''
-    }));
-
-    // Ensure metrics have required properties
-    this.metrics = this.metrics.map(metric => ({
-      timestamp: metric.timestamp || '',
-      elapsed_time: metric.elapsed_time || 0,
-      process: {
-        cpu_percent: metric.process?.cpu_percent || 0,
-        cpu_times_user: metric.process?.cpu_times_user || 0,
-        cpu_times_system: metric.process?.cpu_times_system || 0,
-        cpu_times_total: metric.process?.cpu_times_total || 0,
-        memory_rss: metric.process?.memory_rss || 0,
-        memory_vms: metric.process?.memory_vms || 0,
-        memory_percent: metric.process?.memory_percent || 0,
-        num_threads: metric.process?.num_threads || 0,
-        fd_handle_count: metric.process?.fd_handle_count || 0,
-        io_read_count: metric.process?.io_read_count || 0,
-        io_write_count: metric.process?.io_write_count || 0,
-        io_read_bytes: metric.process?.io_read_bytes || 0,
-        io_write_bytes: metric.process?.io_write_bytes || 0,
-        network_bytes_sent: metric.process?.network_bytes_sent || 0,
-        network_bytes_recv: metric.process?.network_bytes_recv || 0,
-        network_packets_sent: metric.process?.network_packets_sent || 0,
-        network_packets_recv: metric.process?.network_packets_recv || 0,
-        network_connections: metric.process?.network_connections || 0,
-        context_switches: metric.process?.context_switches || 0,
-      },
-      system: {
-        cpu_percent: metric.system?.cpu_percent || 0,
-        memory_total: metric.system?.memory_total || 0,
-        memory_available: metric.system?.memory_available || 0,
-        memory_used: metric.system?.memory_used || 0,
-        memory_percent: metric.system?.memory_percent || 0,
-      }
-    }));
-  }
-
-  toJSON() {
-    return {
-      events: this.events,
-      metrics: this.metrics
-    };
-  }
-}
-
 const BenchmarkResult = sequelize.define('BenchmarkResult', {
   Id: {
     type: DataTypes.INTEGER,
@@ -666,14 +612,7 @@ const BenchmarkResult = sequelize.define('BenchmarkResult', {
   },
   Results: {
     type: DataTypes.TEXT('long'),
-    allowNull: true,
-    get() {
-      const rawValue = this.getDataValue('Results');
-      return rawValue ? new BenchmarkResultJson(JSON.parse(rawValue)) : null;
-    },
-    set(value) {
-      this.setDataValue('Results', value ? JSON.stringify(value) : null);
-    }
+    allowNull: true
   }
 }, {
   tableName: 'BenchmarksResults',

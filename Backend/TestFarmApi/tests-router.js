@@ -482,12 +482,12 @@ const multer = require('multer');
 const zlib = require('zlib');
 const { Result } = require('pg');
 
-const uploadDiff = multer({ 
+const uploadBenchmarkResults = multer({ 
   dest: 'uploads/',
   limits: { fileSize: 100 * 1024 * 1024 } // 100MB size limit
 });
 
-router.post('/upload-benchmark-results', uploadDiff.single('report'), async (req, res) => {
+router.post('/upload-benchmark-results', uploadBenchmarkResults.single('report'), async (req, res) => {
   const { BenchmarkResultId } = req.body;
   const reportFile = req.file;
 
@@ -498,13 +498,14 @@ router.post('/upload-benchmark-results', uploadDiff.single('report'), async (req
       return res.status(404).json({ message: 'Benchmark result not found' });
     }
 
-    let reportContent = null;
-    if (reportFile) {
-      const filePath = reportFile.path;
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      reportContent = zlib.gzipSync(fileContent).toString('base64');
-      fs.unlinkSync(filePath); // Clean up the uploaded file
+    if (!reportFile) {
+      return res.status(400).json({ message: 'Report file is required' });
     }
+
+    const filePath = reportFile.path;
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    const reportContent = zlib.gzipSync(fileContent).toString('base64');
+    fs.unlinkSync(filePath);
 
     benchmarkResult.Results = reportContent;
     await benchmarkResult.save();
@@ -514,6 +515,11 @@ router.post('/upload-benchmark-results', uploadDiff.single('report'), async (req
     console.error('Error uploading report:', error);
     res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
+});
+
+const uploadDiff = multer({ 
+  dest: 'uploads/',
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB size limit
 });
 
 router.post('/upload-diff', uploadDiff.single('report'), async (req, res) => {
