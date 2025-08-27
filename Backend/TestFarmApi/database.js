@@ -640,6 +640,5 @@ module.exports = {
   BenchmarksRun,
   Benchmark,
   BenchmarkResult,
-  BenchmarkResultJson,
   sequelize
 };
