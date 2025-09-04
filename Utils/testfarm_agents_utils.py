@@ -14,9 +14,7 @@ default_magic_variables = {
     '$__TF_TESTS_REPOS_DIR__': 'TF_TESTS_REPOS_DIR',
     '$__TF_TOOLS_DIR__': 'TF_TOOLS_DIR',
     '$__TF_WORK_DIR__': 'TF_WORK_DIR',
-    '$__TF_TEMP_DIR__': 'TF_TEMP_DIR',
-
-    '$__TF_BENCH_ITER__': 'TF_BENCH_ITER'
+    '$__TF_TEMP_DIR__': 'TF_TEMP_DIR'
 }
 
 
