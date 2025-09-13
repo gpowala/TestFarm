@@ -1,0 +1,173 @@
+{
+    "iterations": [
+        {
+            "id": 0,
+            "events": [
+                {
+                    "timestamp": "2025-08-06 11:10:01.884",
+                    "subject": "Automatic",
+                    "name": "Initialization"
+                },
+                {
+                    "timestamp": "2025-08-06 11:10:03.691",
+                    "subject": "PayrollClosure",
+                    "name": "Start control"
+                },
+                {
+                    "timestamp": "2025-08-06 11:13:31.569",
+                    "subject": "PayrollClosure",
+                    "name": "control_amount=4230"
+                },
+                {
+                    "timestamp": "2025-08-06 11:13:31.572",
+                    "subject": "PayrollClosure",
+                    "name": "Stop control"
+                },
+                {
+                    "timestamp": "2025-08-06 11:13:31.858",
+                    "subject": "Automatic",
+                    "name": "Finalization"
+                }
+            ],
+            "metrics_summary": {
+                "summary": {
+                    "command": "\"d:\\Blox/Blox.exe\" /C07045 /L\\\\btrvsrv5.accsd.be\\dbsets5$\\Databasesets\\BloxTestTemp\\07045 /UROOT /Ed:\\TF_WORK /Kdatum=060825 /Ktijd=120000 /J{\"Name\":\"controlstep\", \"ClosureClass\":\"30\", \"CurrentPayPeriod\": true}",
+                    "start_time": "2025-08-06T11:10:01.825307",
+                    "end_time": "2025-08-06T11:13:31.871559",
+                    "stdout": "b''",
+                    "stderr": "b''",
+                    "exit_code": 15097,
+                    "duration_seconds": 210.046252,
+                    "samples_collected": 208,
+                    "monitoring_interval": 1,
+                    "operating_system": {
+                        "system": "Windows",
+                        "release": "2022Server",
+                        "version": "10.0.20348",
+                        "machine": "AMD64",
+                        "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+                        "cpu_count_logical": 4,
+                        "cpu_count_physical": 4
+                    }
+                },
+                "cpu": {
+                    "max_percent": 31.05,
+                    "avg_percent": 7.6548309178743965,
+                    "min_percent": 0.375,
+                    "total_user_time": 41.765625,
+                    "total_system_time": 21.25,
+                    "total_cpu_time": 63.015625,
+                    "cpu_efficiency": 30.00083286418269
+                },
+                "memory": {
+                    "max_rss_bytes": 76754944,
+                    "max_rss_mb": 73.19921875,
+                    "avg_rss_bytes": 72021838.76923077,
+                    "avg_rss_mb": 68.6853778545673,
+                    "max_percent": 0.8936529608722213,
+                    "avg_percent": 0.8385457158770752
+                },
+                "io": {
+                    "total_read_bytes": 312920706,
+                    "total_write_bytes": 628621,
+                    "total_read_mb": 298.42444038391113,
+                    "total_write_mb": 0.5994997024536133
+                },
+                "network": {
+                    "total_bytes_sent": 118162798,
+                    "total_bytes_recv": 495316680,
+                    "total_sent_mb": 112.6888256072998,
+                    "total_recv_mb": 472.3707962036133,
+                    "max_connections": 1,
+                    "avg_connections": 1
+                },
+                "process_info": {
+                    "max_threads": 6,
+                    "avg_threads": 4.8798076923076925,
+                    "max_fd_handles": 295,
+                    "avg_fd_handles": 294.4423076923077,
+                    "fd_handle_type": "handles",
+                    "max_connections": 1,
+                    "avg_connections": 1,
+                    "total_context_switches": 67185164
+                }
+            },
+            "metrics_detailed": [
+                {
+                    "timestamp": 1754471401.9265664,
+                    "elapsed_time": 0.9265663623809814,
+                    "process": {
+                        "cpu_percent": 31.05,
+                        "cpu_percent_raw": 124.2,
+                        "cpu_times_user": 0.015625,
+                        "cpu_times_system": 0.109375,
+                        "cpu_times_total": 0.125,
+                        "memory_rss": 33460224,
+                        "memory_vms": 22331392,
+                        "memory_percent": 0.38957527281953014,
+                        "num_threads": 4,
+                        "fd_handle_count": 284,
+                        "fd_handle_type": "handles",
+                        "io_read_count": 347,
+                        "io_write_count": 0,
+                        "io_read_bytes": 1052169,
+                        "io_write_bytes": 0,
+                        "network_bytes_sent": 0,
+                        "network_bytes_recv": 0,
+                        "network_packets_sent": 0,
+                        "network_packets_recv": 0,
+                        "network_connections": 1,
+                        "context_switches": {
+                            "voluntary": 149,
+                            "involuntary": 0
+                        }
+                    },
+                    "system": {
+                        "cpu_percent": 0.0,
+                        "memory_total": 8588898304,
+                        "memory_available": 5037289472,
+                        "memory_used": 3551608832,
+                        "memory_percent": 41.4
+                    }
+                },
+                {
+                    "timestamp": 1754471402.9446924,
+                    "elapsed_time": 1.9446923732757568,
+                    "process": {
+                        "cpu_percent": 3.45,
+                        "cpu_percent_raw": 13.8,
+                        "cpu_times_user": 0.078125,
+                        "cpu_times_system": 0.1875,
+                        "cpu_times_total": 0.265625,
+                        "memory_rss": 37195776,
+                        "memory_vms": 22597632,
+                        "memory_percent": 0.4330680686098854,
+                        "num_threads": 4,
+                        "fd_handle_count": 294,
+                        "fd_handle_type": "handles",
+                        "io_read_count": 348,
+                        "io_write_count": 1,
+                        "io_read_bytes": 1052229,
+                        "io_write_bytes": 4125,
+                        "network_bytes_sent": 30821,
+                        "network_bytes_recv": 22386,
+                        "network_packets_sent": 114,
+                        "network_packets_recv": 124,
+                        "network_connections": 1,
+                        "context_switches": {
+                            "voluntary": 1079,
+                            "involuntary": 0
+                        }
+                    },
+                    "system": {
+                        "cpu_percent": 9.2,
+                        "memory_total": 8588898304,
+                        "memory_available": 5026054144,
+                        "memory_used": 3562844160,
+                        "memory_percent": 41.5
+                    }
+                }
+            ]
+        }
+    ]
+}

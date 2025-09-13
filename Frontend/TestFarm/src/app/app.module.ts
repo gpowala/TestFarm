@@ -20,6 +20,7 @@ import { GroupsComponent } from './components/groups/groups.component';
 import { RunsComponent } from './components/runs/runs.component';
 import { GridsApiHttpClientService } from './services/grids-api-http-cient-service';
 import { TestsRunResultsComponent } from './components/tests-run-results/tests-run-results.component';
+import { BenchmarksRunResultsComponent } from './components/benchmarks-run-results/benchmarks-run-results.component';
 import { TestHistoryComponent } from './components/test-history/test-history.component';
 import { ConsoleOutputToHtmlPipe } from './pipes/console-output-to-html-pipe';
 import { RepositoriesComponent } from './components/repositories/repositories.component';
@@ -42,6 +43,7 @@ import { AddArtifactDialogComponent } from './components/builds/add-artifact-dia
     GroupsComponent,
     RunsComponent,
     TestsRunResultsComponent,
+    BenchmarksRunResultsComponent,
     TestHistoryComponent,
     ConsoleOutputToHtmlPipe,
     RepositoriesComponent,

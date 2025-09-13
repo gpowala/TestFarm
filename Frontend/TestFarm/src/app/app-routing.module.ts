@@ -10,6 +10,7 @@ import { RunsComponent } from './components/runs/runs.component';
 import { TestsRunResultsComponent } from './components/tests-run-results/tests-run-results.component';
 import { RepositoriesComponent } from './components/repositories/repositories.component';
 import { ArtifactsComponent } from './components/artifacts/artifacts.component';
+import { BenchmarksRunResultsComponent } from './components/benchmarks-run-results/benchmarks-run-results.component';
 
 const routes: Routes = [
   {path: '', redirectTo: '/artifacts', pathMatch: 'full'},
@@ -21,6 +22,7 @@ const routes: Routes = [
   {path: 'grids', component: GridsComponent},
   {path: 'runs', component: RunsComponent},
   {path: 'tests-run-results/:testsRunId', component: TestsRunResultsComponent},
+  {path: 'benchmarks-run-results/:benchmarksRunId', component: BenchmarksRunResultsComponent},
   {path: 'artifacts/:artifactDefinitionId', component: ArtifactsComponent}
 ];
 

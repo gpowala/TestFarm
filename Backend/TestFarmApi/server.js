@@ -2,7 +2,7 @@ const { appSettings } = require('./appsettings');
 
 const express = require('express');
 const { Sequelize } = require('sequelize');
-const { sequelize, Grid, Host, TestRun, Test, TestResult, TestResultDiff, Repository } = require('./database');
+const { sequelize, Grid, Host, TestRun, Test, TestResult, TestResultDiff, Repository, BenchmarksRun, BenchmarkResult, Benchmark } = require('./database');
 const gridsRouter = require('./grids-router');
 const repositoriesRouter = require('./reporitories-router');
 const testsRunsRouter = require('./tests-router');
@@ -339,6 +339,147 @@ app.get('/tests-runs', async (req, res) => {
   } catch (error) {
     console.error('Error fetching test runs:', error);
     res.status(500).send('Error fetching test runs');
+  }
+});
+
+app.get('/benchmarks-run-details/:benchmarksRunId', async (req, res) => {
+  try {
+    const benchmarksRunId = parseInt(req.params.benchmarksRunId);
+
+    const benchmarksRun = await BenchmarksRun.findByPk(benchmarksRunId);
+    if (!benchmarksRun) {
+      return res.status(404).json({ message: 'Benchmarks run not found' });
+    }
+
+    const benchmarksResults = await BenchmarkResult.findAll({
+      where: { BenchmarksRunId: benchmarksRunId },
+      attributes: ['Id', 'Status', 'ExecutionStartTimestamp', 'ExecutionEndTimestamp']
+    });
+
+    const totalBenchmarks = benchmarksResults.length;
+    const completedBenchmarks = benchmarksResults.filter(r => r.Status.toLowerCase() === 'completed').length;
+    const queuedBenchmarks = benchmarksResults.filter(r => r.Status.toLowerCase() === 'queued').length;
+    const runningBenchmarks = benchmarksResults.filter(r => r.Status.toLowerCase() === 'running').length;
+
+    // calculate overall start, end and total duration of the tests run
+    const startTimes = benchmarksResults
+      .filter(r => r.ExecutionStartTimestamp)
+      .map(r => new Date(r.ExecutionStartTimestamp).getTime());
+
+    let overallStart, overallEnd, totalDurationMs;
+
+    if (queuedBenchmarks > 0 || runningBenchmarks > 0) {
+      const minStartMs = Math.min(...startTimes);
+      overallStart = new Date(minStartMs);
+      
+      // Skip calculating overall end and duration when there are queued or running tests
+      overallEnd = null;
+      totalDurationMs = null;
+    } else {
+      const endTimes = benchmarksResults
+        .filter(r => r.ExecutionEndTimestamp)
+        .map(r => new Date(r.ExecutionEndTimestamp).getTime());
+
+      const minStartMs = Math.min(...startTimes);
+      const maxEndMs = Math.max(...endTimes);
+
+      overallStart = new Date(minStartMs);
+      overallEnd = new Date(maxEndMs);
+      totalDurationMs = maxEndMs - minStartMs;
+    }
+
+    const formattedDetails = {
+      Id: benchmarksRun.Id,
+      Name: benchmarksRun.Name,
+      RepositoryName: benchmarksRun.RepositoryName,
+      SuiteName: benchmarksRun.SuiteName,
+      GridName: benchmarksRun.GridName,
+      OverallCreationTimestamp: benchmarksRun.OverallCreationTimestamp,
+      OverallStatus: benchmarksRun.OverallStatus,
+
+      OverallExecutionStartTimestamp: overallStart,
+      OverallExecutionEndTimestamp: overallEnd,
+      TotalDurationMs: totalDurationMs,
+
+      TotalBenchmarks: totalBenchmarks,
+      CompletedBenchmarks: completedBenchmarks,
+      QueuedBenchmarks: queuedBenchmarks,
+      RunningBenchmarks: runningBenchmarks
+    };
+
+    res.status(200).json(formattedDetails);
+  } catch (error) {
+    console.error('Error fetching benchmarks run details:', error);
+    res.status(500).send('Error fetching benchmarks run details');
+  }
+});
+
+app.get('/benchmarks-run-results/:benchmarksRunId', async (req, res) => {
+  try {
+    const benchmarksRunId = parseInt(req.params.benchmarksRunId);
+
+    const benchmarksRun = await BenchmarksRun.findByPk(benchmarksRunId);
+    if (!benchmarksRun) {
+      return res.status(404).json({ message: 'Benchmarks run not found' });
+    }
+
+    const benchmarksResults = await BenchmarkResult.findAll({
+      where: { BenchmarksRunId: benchmarksRunId },
+      attributes: ['Id', 'BenchmarkId', 'Status', 'ExecutionStartTimestamp', 'ExecutionEndTimestamp'],
+      include: [
+        {
+          model: Benchmark,
+          as: 'Benchmark',
+          attributes: ['Name', 'RepositoryName', 'SuiteName', 'Path', 'Owner']
+        }
+      ],
+      order: [['ExecutionStartTimestamp', 'ASC']]
+    });
+
+    const formattedResults = benchmarksResults.map(result => ({
+      Id: result.Id,
+      BenchmarkId: result.BenchmarkId,
+      BenchmarkName: result.Benchmark.Name,
+      BenchmarkRepositoryName: result.Benchmark.RepositoryName,
+      BenchmarkSuiteName: result.Benchmark.SuiteName,
+      BenchmarkPath: result.Benchmark.Path,
+      BenchmarkOwner: result.Benchmark.Owner,
+      Status: result.Status,
+      ExecutionStartTimestamp: result.ExecutionStartTimestamp,
+      ExecutionEndTimestamp: result.ExecutionEndTimestamp,
+      ExecutionOutput: result.ExecutionOutput
+    }));
+
+    res.status(200).json(formattedResults);
+  } catch (error) {
+    console.error('Error fetching benchmarks results:', error);
+    res.status(500).send('Error fetching benchmarks results');
+  }
+});
+
+app.get('/benchmark-result-details/:benchmarkResultId', async (req, res) => {
+  try {
+    const benchmarkResultId = parseInt(req.params.benchmarkResultId);
+
+    const benchmarkResult = await BenchmarkResult.findByPk(benchmarkResultId);
+    if (!benchmarkResult) {
+      return res.status(404).json({ message: 'Benchmark result not found' });
+    }
+
+    const formattedResult = {
+      Id: benchmarkResult.Id,
+      BenchmarkId: benchmarkResult.BenchmarkId,
+      Status: benchmarkResult.Status,
+      ExecutionStartTimestamp: benchmarkResult.ExecutionStartTimestamp,
+      ExecutionEndTimestamp: benchmarkResult.ExecutionEndTimestamp,
+      ExecutionOutput: benchmarkResult.ExecutionOutput,
+      Results: benchmarkResult.Results
+    };
+
+    res.status(200).json(formattedResult);
+  } catch (error) {
+    console.error('Error fetching benchmark result details:', error);
+    res.status(500).send('Error fetching benchmark result details');
   }
 });
 
