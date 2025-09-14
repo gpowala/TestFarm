@@ -98,6 +98,79 @@ export function calculateCombinedStepsMetrics(data: BenchmarkResultMeasurements)
     const endTime = ends.length ? new Date(Math.max(...ends) * 1000).toISOString() : '';
     const duration_seconds = durations.length ? numAvg(durations) : 0;
 
+    // If no measurable duration, zero out all numeric results for this step as requested
+    if (duration_seconds === 0) {
+      const zeroCpu: CpuSummary = {
+        max_percent: 0,
+        avg_percent: 0,
+        min_percent: 0,
+        total_user_time: 0,
+        total_system_time: 0,
+        total_cpu_time: 0,
+        cpu_efficiency: 0
+      };
+      const zeroMem: MemorySummary = {
+        max_rss_bytes: 0,
+        max_rss_mb: 0,
+        avg_rss_bytes: 0,
+        avg_rss_mb: 0,
+        max_percent: 0,
+        avg_percent: 0
+      };
+      const zeroIO: IOSummary = {
+        total_read_bytes: 0,
+        total_write_bytes: 0,
+        total_read_mb: 0,
+        total_write_mb: 0
+      };
+      const zeroNet: NetworkSummary = {
+        total_bytes_sent: 0,
+        total_bytes_recv: 0,
+        total_sent_mb: 0,
+        total_recv_mb: 0,
+        max_connections: 0,
+        avg_connections: 0
+      };
+      const zeroProc: ProcessInfoSummary = {
+        max_threads: 0,
+        avg_threads: 0,
+        max_fd_handles: 0,
+        avg_fd_handles: 0,
+        fd_handle_type: '',
+        max_connections: 0,
+        avg_connections: 0,
+        total_context_switches: 0
+      };
+      const zeroSummary: BenchmarkSummaryCore = {
+        command: stepName || `step-${stepIndex ?? 0}`,
+        start_time: '',
+        end_time: '',
+        stdout: '',
+        stderr: '',
+        exit_code: 0,
+        duration_seconds: 0,
+        samples_collected: 0,
+        monitoring_interval: 0,
+        operating_system: {
+          system: '',
+          release: '',
+          version: '',
+          machine: '',
+          processor: '',
+          cpu_count_logical: 0,
+          cpu_count_physical: 0
+        }
+      };
+      return {
+        summary: zeroSummary,
+        cpu: zeroCpu,
+        memory: zeroMem,
+        io: zeroIO,
+        network: zeroNet,
+        process_info: zeroProc
+      };
+    }
+
     const cpuSummary: CpuSummary = {
       max_percent: numMax(procCpu),
       avg_percent: numAvg(procCpu),
