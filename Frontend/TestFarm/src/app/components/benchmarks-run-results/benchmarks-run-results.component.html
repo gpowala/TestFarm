@@ -260,7 +260,7 @@
                         </td>
                         <td class="cell-step">
                           <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
-                            {{stepRow.metrics.cpu.total_cpu_time | number:'1.2-2'}}s
+                            {{formatExecutionTime(stepRow.metrics.summary.duration_seconds)}}
                           </div>
                         </td>
                         <td class="cell-step">

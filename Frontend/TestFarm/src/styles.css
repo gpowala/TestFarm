@@ -629,6 +629,12 @@ body::after {
   border-color: #4caf50;
 }
 
+.status-completed {
+  background: linear-gradient(315deg, #d1e7dd 0%, #e8f5e8 100%);
+  color: #2e7d32;
+  border-color: #4caf50;
+}
+
 .status-failed {
   background: linear-gradient(315deg, #f5c2c7 0%, #ffebee 100%);
   color: #c62828;

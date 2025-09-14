@@ -31,57 +31,80 @@ export function calculateCombinedStepsMetrics(data: BenchmarkResultMeasurements)
   const numMax = (arr: number[]) => (arr.length === 0 ? 0 : Math.max(...arr));
   const numMin = (arr: number[]) => (arr.length === 0 ? 0 : Math.min(...arr));
 
-  // Collect samples per step index across all iterations
-  const perStepSamples: BenchmarkDetailedMetric[][] = [];
+  // Collect samples per step index per iteration: perStepSamples[stepIndex][iterationIndex] = BenchmarkDetailedMetric[]
+  const perStepSamples: BenchmarkDetailedMetric[][][] = [];
 
-  for (const iter of data.iterations || []) {
-    if (!iter.events || iter.events.length < 2) {
-      continue;
-    }
+  data.iterations?.forEach((iter, iterIndex) => {
+    if (!iter.events || iter.events.length < 2) return;
     const evEpochs = iter.events.map(e => toEpoch(e.timestamp));
     for (let si = 0; si < iter.events.length - 1; si++) {
       const start = evEpochs[si];
       const end = evEpochs[si + 1];
       const samplesForStep = (iter.metrics_detailed || []).filter(s => s.timestamp >= start && s.timestamp < end);
       if (!perStepSamples[si]) perStepSamples[si] = [];
-      perStepSamples[si].push(...samplesForStep);
+      perStepSamples[si][iterIndex] = samplesForStep;
     }
-  }
+  });
 
-  const buildSummaryFromSamples = (samples: BenchmarkDetailedMetric[], stepIndex?: number, stepName?: string): BenchmarkMetricsSummary => {
-    const procCpu = samples.map(s => s.process.cpu_percent);
-    const cpuUser = samples.map(s => s.process.cpu_times_user);
-    const cpuSys = samples.map(s => s.process.cpu_times_system);
-    const cpuTotal = samples.map(s => s.process.cpu_times_total);
+  /**
+   * Build a summary aggregating per-iteration statistics. Totals (cpu times, IO, network, context switches)
+   * are computed as the average of per-iteration deltas (last - first sample counters) instead of summing
+   * across all samples (which would grossly overcount). Duration is the average per-iteration duration.
+   * Start/end are represented as the earliest start and latest end across iterations (cannot be
+   * meaningfully "averaged").
+   */
+  const buildSummaryFromSamples = (samplesByIteration: BenchmarkDetailedMetric[][], stepIndex?: number, stepName?: string): BenchmarkMetricsSummary => {
+    const flat: BenchmarkDetailedMetric[] = samplesByIteration ? samplesByIteration.flat() : [];
 
-    const memRss = samples.map(s => s.process.memory_rss);
-    const memPct = samples.map(s => s.process.memory_percent);
+    const procCpu = flat.map(s => s.process.cpu_percent);
+    const memRss = flat.map(s => s.process.memory_rss);
+    const memPct = flat.map(s => s.process.memory_percent);
+    const threads = flat.map(s => s.process.num_threads);
+    const fdHandles = flat.map(s => s.process.fd_handle_count);
+    const connections = flat.map(s => s.process.network_connections);
 
-    const ioRead = samples.map(s => s.process.io_read_bytes);
-    const ioWrite = samples.map(s => s.process.io_write_bytes);
+    // Helper to compute average per-iteration delta of a monotonically increasing counter
+    const avgDelta = (selector: (p: ProcessDetailedMetrics) => number): number => {
+      const deltas: number[] = [];
+      samplesByIteration.forEach(iterSamples => {
+        if (!iterSamples || iterSamples.length < 2) return; // need at least 2 to form a delta
+        const first = iterSamples[0].process;
+        const last = iterSamples[iterSamples.length - 1].process;
+        deltas.push(selector(last) - selector(first));
+      });
+      return numAvg(deltas);
+    };
 
-    const netSent = samples.map(s => s.process.network_bytes_sent);
-    const netRecv = samples.map(s => s.process.network_bytes_recv);
+    // Context switches (voluntary + involuntary) delta per iteration
+    const avgCtxSwitchesDelta = (() => {
+      const deltas: number[] = [];
+      samplesByIteration.forEach(iterSamples => {
+        if (!iterSamples || iterSamples.length < 2) return;
+        const first = iterSamples[0].process.context_switches;
+        const last = iterSamples[iterSamples.length - 1].process.context_switches;
+        const firstTotal = (first?.voluntary || 0) + (first?.involuntary || 0);
+        const lastTotal = (last?.voluntary || 0) + (last?.involuntary || 0);
+        deltas.push(lastTotal - firstTotal);
+      });
+      return numAvg(deltas);
+    })();
 
-    const threads = samples.map(s => s.process.num_threads);
-    const fdHandles = samples.map(s => s.process.fd_handle_count);
-    const connections = samples.map(s => s.process.network_connections);
+    const timestampsPerIteration = samplesByIteration.map(iterSamples => iterSamples.map(s => s.timestamp).sort((a, b) => a - b));
+    const starts = timestampsPerIteration.filter(t => t.length).map(t => t[0]);
+    const ends = timestampsPerIteration.filter(t => t.length).map(t => t[t.length - 1]);
+    const durations = timestampsPerIteration.filter(t => t.length > 1).map(t => t[t.length - 1] - t[0]);
 
-    const ctxSwitches = samples.map(s => (s.process.context_switches ? (s.process.context_switches.voluntary + s.process.context_switches.involuntary) : 0));
-
-    const timestamps = samples.map(s => s.timestamp).sort((a, b) => a - b);
-
-    const startTime = timestamps.length ? new Date(timestamps[0] * 1000).toISOString() : '';
-    const endTime = timestamps.length ? new Date(timestamps[timestamps.length - 1] * 1000).toISOString() : '';
-    const duration_seconds = timestamps.length ? (timestamps[timestamps.length - 1] - timestamps[0]) : 0;
+    const startTime = starts.length ? new Date(Math.min(...starts) * 1000).toISOString() : '';
+    const endTime = ends.length ? new Date(Math.max(...ends) * 1000).toISOString() : '';
+    const duration_seconds = durations.length ? numAvg(durations) : 0;
 
     const cpuSummary: CpuSummary = {
       max_percent: numMax(procCpu),
       avg_percent: numAvg(procCpu),
       min_percent: numMin(procCpu),
-      total_user_time: cpuUser.reduce((a, b) => a + b, 0),
-      total_system_time: cpuSys.reduce((a, b) => a + b, 0),
-      total_cpu_time: cpuTotal.reduce((a, b) => a + b, 0),
+      total_user_time: avgDelta(p => p.cpu_times_user),
+      total_system_time: avgDelta(p => p.cpu_times_system),
+      total_cpu_time: avgDelta(p => p.cpu_times_total),
       cpu_efficiency: numAvg(procCpu)
     };
 
@@ -95,17 +118,17 @@ export function calculateCombinedStepsMetrics(data: BenchmarkResultMeasurements)
     };
 
     const ioSummary: IOSummary = {
-      total_read_bytes: ioRead.reduce((a, b) => a + b, 0),
-      total_write_bytes: ioWrite.reduce((a, b) => a + b, 0),
-      total_read_mb: Math.round(ioRead.reduce((a, b) => a + b, 0) / MB),
-      total_write_mb: Math.round(ioWrite.reduce((a, b) => a + b, 0) / MB)
+      total_read_bytes: avgDelta(p => p.io_read_bytes),
+      total_write_bytes: avgDelta(p => p.io_write_bytes),
+      total_read_mb: Math.round(avgDelta(p => p.io_read_bytes) / MB),
+      total_write_mb: Math.round(avgDelta(p => p.io_write_bytes) / MB)
     };
 
     const networkSummary: NetworkSummary = {
-      total_bytes_sent: netSent.reduce((a, b) => a + b, 0),
-      total_bytes_recv: netRecv.reduce((a, b) => a + b, 0),
-      total_sent_mb: Math.round(netSent.reduce((a, b) => a + b, 0) / MB),
-      total_recv_mb: Math.round(netRecv.reduce((a, b) => a + b, 0) / MB),
+      total_bytes_sent: avgDelta(p => p.network_bytes_sent),
+      total_bytes_recv: avgDelta(p => p.network_bytes_recv),
+      total_sent_mb: Math.round(avgDelta(p => p.network_bytes_sent) / MB),
+      total_recv_mb: Math.round(avgDelta(p => p.network_bytes_recv) / MB),
       max_connections: numMax(connections),
       avg_connections: numAvg(connections)
     };
@@ -115,10 +138,10 @@ export function calculateCombinedStepsMetrics(data: BenchmarkResultMeasurements)
       avg_threads: numAvg(threads),
       max_fd_handles: numMax(fdHandles),
       avg_fd_handles: numAvg(fdHandles),
-      fd_handle_type: samples.length ? (samples[0].process.fd_handle_type || '') : '',
+      fd_handle_type: flat.length ? (flat[0].process.fd_handle_type || '') : '',
       max_connections: numMax(connections),
       avg_connections: numAvg(connections),
-      total_context_switches: ctxSwitches.reduce((a, b) => a + b, 0)
+      total_context_switches: avgCtxSwitchesDelta
     };
 
     const summaryCore: BenchmarkSummaryCore = {
@@ -129,7 +152,7 @@ export function calculateCombinedStepsMetrics(data: BenchmarkResultMeasurements)
       stderr: '',
       exit_code: 0,
       duration_seconds,
-      samples_collected: samples.length,
+      samples_collected: flat.length,
       monitoring_interval: 0,
       operating_system: {
         system: '',
@@ -152,14 +175,15 @@ export function calculateCombinedStepsMetrics(data: BenchmarkResultMeasurements)
     };
   };
 
-  const combined: ProcessedCombinedMetrics[] = perStepSamples.map((samples, idx) => ({
+  const combined: ProcessedCombinedMetrics[] = perStepSamples.map((samplesByIter, idx) => ({
     step_index: idx,
-    step_name: data.iterations[0].events[idx]?.name || `unknown-step-${idx}`,
-    metrics: buildSummaryFromSamples(samples || [], idx, `unknown-step-${idx}`)
+    step_name: data.iterations[0]?.events[idx]?.name || `unknown-step-${idx}`,
+    metrics: buildSummaryFromSamples(samplesByIter || [], idx, data.iterations[0]?.events[idx]?.name || `unknown-step-${idx}`)
   }));
 
-  const allSamples = ([] as BenchmarkDetailedMetric[]).concat(...perStepSamples);
-  const overall = buildSummaryFromSamples(allSamples, -1, 'overall');
+  // Overall: average metrics across iterations using full metrics_detailed of each iteration
+  const overallSamplesByIteration: BenchmarkDetailedMetric[][] = (data.iterations || []).map(it => it.metrics_detailed || []);
+  const overall = buildSummaryFromSamples(overallSamplesByIteration, -1, 'overall');
   combined.push({ step_index: -1, step_name: 'overall', metrics: overall });
 
   return combined;

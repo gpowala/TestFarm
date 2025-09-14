@@ -446,8 +446,8 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
     if (duration === null) {
       return 'N/A';
     }
-    const seconds = Math.floor((duration / 1000) % 60);
-    const minutes = Math.floor((duration / (1000 * 60)) % 60);
+    const seconds = Math.floor(duration % 60);
+    const minutes = Math.floor((duration / 60) % 60);
 
     return `${minutes}m ${seconds}s`;
   }
