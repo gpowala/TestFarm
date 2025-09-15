@@ -127,19 +127,26 @@
               <div style="flex: 1; min-width: 200px;">
                   <input type="text" id="dataSearch" placeholder="Search..."
                       [(ngModel)]="searchTerm"
-
                       style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; transition: all 0.2s ease;">
-
               </div>
           </div>
-<div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-          <select id="statusFilter" style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;"
-                    [(ngModel)]="selectedIterationsView">
-                    <option *ngFor="let view of iterationsViewPresets | keyvalue" [value]="view.key">
-                      {{view.value}}
-                    </option>
-                  </select>
-</div>
+          <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            <select id="results-presentation-selector"
+              [(ngModel)]="selectedIterationsView"
+              style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;">
+              <option *ngFor="let view of iterationsViewPresets | keyvalue" [value]="view.key">
+                {{view.value}}
+              </option>
+            </select>
+            <select id="results-profile-selector"
+              [(ngModel)]="selectedProfileView"
+              (selectionchange)="changeProfileView()"
+              style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;">
+              <option *ngFor="let view of profileViewPresets | keyvalue" [value]="view.key">
+                {{view.value}}
+              </option>
+            </select>
+          </div>
           <div style="overflow-x: auto; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); border-radius: 8px; border: 1px solid #e9ecef;">
               <table id="testsRunsTable" style="width: 100%; border-collapse: collapse;">
                   <thead>
@@ -168,16 +175,101 @@
                           </th>
 
                           <th class="column fit-content" style="text-align: center;">Duration</th>
-                          <th class="column fit-content" style="text-align: center;">cpu-min</th>
-                          <th class="column fit-content" style="text-align: center;">cpu-max</th>
-                          <th class="column fit-content" style="text-align: center;">cpu-avg</th>
-                          <th class="column fit-content" style="text-align: center;">cpu-total</th>
-                          <th class="column fit-content" style="text-align: center;">cpu-total-user</th>
-                          <th class="column fit-content" style="text-align: center;">cpu-total-system</th>
-                          <th class="column fit-content" style="text-align: center;">cpu-efficiency</th>
+
+                          <th *ngIf="metricsColumnsVisibility['cpu_min_percent']" class="column fit-content" style="text-align: center;">cpu-min [%]</th>
+                          <th *ngIf="metricsColumnsVisibility['cpu_max_percent']" class="column fit-content" style="text-align: center;">cpu-max [%]</th>
+                          <th *ngIf="metricsColumnsVisibility['cpu_avg_percent']" class="column fit-content" style="text-align: center;">cpu-avg [%]</th>
+                          <th *ngIf="metricsColumnsVisibility['cpu_total_time']" class="column fit-content" style="text-align: center;">cpu-total [s]</th>
+                          <th *ngIf="metricsColumnsVisibility['cpu_total_user_time']" class="column fit-content" style="text-align: center;">cpu-total-user [s]</th>
+                          <th *ngIf="metricsColumnsVisibility['cpu_total_system_time']" class="column fit-content" style="text-align: center;">cpu-total-system [s]</th>
+                          <th *ngIf="metricsColumnsVisibility['cpu_efficiency']" class="column fit-content" style="text-align: center;">cpu-efficiency [%]</th>
+
+                          <th *ngIf="metricsColumnsVisibility['mem_avg_rss_mb']" class="column fit-content" style="text-align: center;">ram-avg [MB]</th>
+                          <th *ngIf="metricsColumnsVisibility['mem_max_rss_mb']" class="column fit-content" style="text-align: center;">ram-max [MB]</th>
+                          <th *ngIf="metricsColumnsVisibility['io_total_read_mb']" class="column fit-content" style="text-align: center;">io-total-read [MB]</th>
+                          <th *ngIf="metricsColumnsVisibility['io_total_write_mb']" class="column fit-content" style="text-align: center;">io-total-write [MB]</th>
+                          <th *ngIf="metricsColumnsVisibility['net_avg_connections']" class="column fit-content" style="text-align: center;">net-avg-conn</th>
+                          <th *ngIf="metricsColumnsVisibility['net_max_connections']" class="column fit-content" style="text-align: center;">net-max-conn</th>
+                          <th *ngIf="metricsColumnsVisibility['net_total_recv_mb']" class="column fit-content" style="text-align: center;">net-total-recv [MB]</th>
+                          <th *ngIf="metricsColumnsVisibility['net_total_sent_mb']" class="column fit-content" style="text-align: center;">net-total-sent [MB]</th>
+
+                          <th *ngIf="metricsColumnsVisibility['proc_avg_connections']" class="column fit-content" style="text-align: center;">net-avg-conn</th>
+                          <th *ngIf="metricsColumnsVisibility['proc_max_connections']" class="column fit-content" style="text-align: center;">net-max-conn</th>
+                          <th *ngIf="metricsColumnsVisibility['proc_avg_fd_handles']" class="column fit-content" style="text-align: center;">fd-handles-avg</th>
+                          <th *ngIf="metricsColumnsVisibility['proc_max_fd_handles']" class="column fit-content" style="text-align: center;">fd-handles-max</th>
+                          <th *ngIf="metricsColumnsVisibility['proc_avg_threads']" class="column fit-content" style="text-align: center;">threads-avg</th>
+                          <th *ngIf="metricsColumnsVisibility['proc_max_threads']" class="column fit-content" style="text-align: center;">threads-max</th>
+                          <th *ngIf="metricsColumnsVisibility['proc_total_context_switches']" class="column fit-content" style="text-align: center;">context-switch-total</th>
                   </thead>
                   <tbody>
                     <ng-container *ngFor="let row of filteredBenchmarksResultsRows">
+                      <ng-container *ngIf="selectedIterationsView === 'combined'">
+                        <tr id="result" style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease; cursor: pointer;">
+                          <!-- <td class="cell">
+                            <div style="display: flex; padding: 0.5rem; justify-content: flex-start; align-items: center;">
+                            {{row.result.BenchmarkPath}}
+                            </div>
+                          </td> -->
+                          <td class="cell">
+                            <div style="display: flex; padding: 0.5rem; justify-content: flex-start; align-items: center;">
+                            {{row.result.BenchmarkName}}
+                            </div>
+                          </td>
+                          <td class="cell">
+                            <div style="display: flex; padding: 0.5rem; justify-content: center; align-items: center; font-weight: normal;">
+                              {{row.baseMeasurements?.iterations?.length}}
+                            </div>
+                          </td>
+                          <td class="cell">
+                            <div style="display: flex; gap: 5px; justify-content: center; align-items: center; font-weight: normal;">
+
+                              <span class="test-status status-{{ row.result.Status }}">{{ row.result.Status }}</span>
+
+                            </div>
+                          </td>
+                          <td class="cell">
+                            <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
+                              {{formatExecutionTime(row.processedOverallCombinedMetrics?.metrics?.summary?.duration_seconds ?? null)}}
+                            </div>
+                          </td>
+                          <td class="cell">
+                            <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
+                              {{row.processedOverallCombinedMetrics?.metrics?.cpu?.min_percent| number:'1.2-2'}}%
+                            </div>
+                          </td>
+                          <td class="cell">
+                            <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
+                              {{row.processedOverallCombinedMetrics?.metrics?.cpu?.max_percent | number:'1.2-2'}}%
+                            </div>
+                          </td>
+                          <td class="cell">
+                            <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
+                              {{row.processedOverallCombinedMetrics?.metrics?.cpu?.avg_percent | number:'1.2-2'}}%
+                            </div>
+                          </td>
+                          <td class="cell">
+                            <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
+                              {{row.processedOverallCombinedMetrics?.metrics?.cpu?.total_cpu_time | number:'1.2-2'}}s
+                            </div>
+                          </td>
+                          <td class="cell">
+                            <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
+                              {{row.processedOverallCombinedMetrics?.metrics?.cpu?.total_user_time | number:'1.2-2'}}s
+                            </div>
+                          </td>
+                          <td class="cell">
+                            <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
+                              {{row.processedOverallCombinedMetrics?.metrics?.cpu?.total_system_time | number:'1.2-2'}}s
+                            </div>
+                          </td>
+                          <td class="cell">
+                            <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
+                              {{row.processedOverallCombinedMetrics?.metrics?.cpu?.cpu_efficiency | number:'1.2-2'}}%
+                            </div>
+                          </td>
+                      </tr>
+                    </ng-container>
+                    <ng-container *ngIf="selectedIterationsView === 'individual'">
                       <tr id="result" style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease; cursor: pointer;">
                         <!-- <td class="cell">
                           <div style="display: flex; padding: 0.5rem; justify-content: flex-start; align-items: center;">
@@ -189,12 +281,7 @@
                            {{row.result.BenchmarkName}}
                           </div>
                         </td>
-                        <td class="cell" *ngIf="selectedIterationsView === 'combined'">
-                          <div style="display: flex; padding: 0.5rem; justify-content: center; align-items: center; font-weight: normal;">
-                            {{row.baseMeasurements?.iterations?.length}}
-                          </div>
-                        </td>
-                        <td class="cell" *ngIf="selectedIterationsView === 'individual'">
+                        <td class="cell">
                           <div style="display: flex; padding: 0.5rem; justify-content: center; align-items: center; font-weight: normal;">
 
                            <select [(ngModel)]="row.selectedIteration" style="margin-top: 0.225rem; border: 1px solid #ccc; border-radius: 4px; background: #fff;">
@@ -211,94 +298,149 @@
                         </td>
                         <td class="cell">
                           <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
-                            {{formatExecutionTime(row.processedOverallCombinedMetrics?.metrics?.summary?.duration_seconds ?? null)}}
+                            {{formatExecutionTime(row.processedOverallIterationMetrics[row.selectedIteration].combined_iteration_metrics.metrics.summary.duration_seconds)}}
                           </div>
                         </td>
                         <td class="cell">
                           <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
-                            {{row.processedOverallCombinedMetrics?.metrics?.cpu?.min_percent| number:'1.2-2'}}%
+                            {{row.processedOverallIterationMetrics[row.selectedIteration].combined_iteration_metrics.metrics.cpu.min_percent | number:'1.2-2'}}%
                           </div>
                         </td>
                         <td class="cell">
                           <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
-                            {{row.processedOverallCombinedMetrics?.metrics?.cpu?.max_percent | number:'1.2-2'}}%
+                            {{row.processedOverallIterationMetrics[row.selectedIteration].combined_iteration_metrics.metrics.cpu.max_percent | number:'1.2-2'}}%
                           </div>
                         </td>
                         <td class="cell">
                           <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
-                            {{row.processedOverallCombinedMetrics?.metrics?.cpu?.avg_percent | number:'1.2-2'}}%
+                            {{row.processedOverallIterationMetrics[row.selectedIteration].combined_iteration_metrics.metrics.cpu.avg_percent | number:'1.2-2'}}%
                           </div>
                         </td>
                         <td class="cell">
                           <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
-                            {{row.processedOverallCombinedMetrics?.metrics?.cpu?.total_cpu_time | number:'1.2-2'}}s
+                            {{row.processedOverallIterationMetrics[row.selectedIteration].combined_iteration_metrics.metrics.cpu.total_cpu_time | number:'1.2-2'}}s
                           </div>
                         </td>
                         <td class="cell">
                           <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
-                            {{row.processedOverallCombinedMetrics?.metrics?.cpu?.total_user_time | number:'1.2-2'}}s
+                            {{row.processedOverallIterationMetrics[row.selectedIteration].combined_iteration_metrics.metrics.cpu.total_user_time | number:'1.2-2'}}s
                           </div>
                         </td>
                         <td class="cell">
                           <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
-                            {{row.processedOverallCombinedMetrics?.metrics?.cpu?.total_system_time | number:'1.2-2'}}s
+                            {{row.processedOverallIterationMetrics[row.selectedIteration].combined_iteration_metrics.metrics.cpu.total_system_time | number:'1.2-2'}}s
                           </div>
                         </td>
                         <td class="cell">
                           <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
-                            {{row.processedOverallCombinedMetrics?.metrics?.cpu?.cpu_efficiency | number:'1.2-2'}}%
+                            {{row.processedOverallIterationMetrics[row.selectedIteration].combined_iteration_metrics.metrics.cpu.cpu_efficiency | number:'1.2-2'}}%
                           </div>
                         </td>
                     </tr>
-                    <ng-container *ngFor="let stepRow of row.processedStepsCombinedMetrics">
-                    <tr class="row-step">
-                        <td class="cell-step" colspan="3" style="padding: 0rem; color: #6c757d; font-weight: normal; text-align: center;">
-                          {{ stepRow.step_name | lowercase }}
-                          <!-- <svg width="16" height="16" fill="currentColor" stroke="none" viewBox="0 0 24 24" style="margin-left: 0.5rem; vertical-align: text-bottom; margin-bottom: 0.125rem;">
-                            <path d="M 6.25 2 C 5.0162029 2 4 3.0162029 4 4.25 L 4 19.75 C 4 20.983797 5.0162029 22 6.25 22 L 17.75 22 C 18.983797 22 20 20.983797 20 19.75 L 20 18.75 A 0.750075 0.750075 0 1 0 18.5 18.75 L 18.5 19.75 C 18.5 20.172203 18.172203 20.5 17.75 20.5 L 6.25 20.5 C 5.8277971 20.5 5.5 20.172203 5.5 19.75 L 5.5 4.25 C 5.5 3.8277971 5.8277971 3.5 6.25 3.5 L 17.75 3.5 C 18.172203 3.5 18.5 3.8277971 18.5 4.25 L 18.5 5.25 A 0.750075 0.750075 0 1 0 20 5.25 L 20 4.25 C 20 3.0162029 18.983797 2 17.75 2 L 6.25 2 z M 16.992188 8.2421875 A 0.750075 0.750075 0 0 0 16.46875 9.53125 L 18.1875 11.25 L 8.5 11.25 A 0.750075 0.750075 0 1 0 8.5 12.75 L 18.1875 12.75 L 16.46875 14.46875 A 0.75130096 0.75130096 0 1 0 17.53125 15.53125 L 20.53125 12.53125 A 0.750075 0.750075 0 0 0 20.53125 11.46875 L 17.53125 8.46875 A 0.750075 0.750075 0 0 0 16.992188 8.2421875 z"></path>
-                          </svg> -->
-                        </td>
-                        <td class="cell-step">
-                          <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
-                            {{formatExecutionTime(stepRow.metrics.summary.duration_seconds)}}
-                          </div>
-                        </td>
-                        <td class="cell-step">
-                          <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
-                            {{stepRow.metrics.cpu.min_percent | number:'1.2-2'}}%
-                          </div>
-                        </td>
-                        <td class="cell-step">
-                          <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
-                            {{stepRow.metrics.cpu.max_percent | number:'1.2-2'}}%
-                          </div>
-                        </td>
-                        <td class="cell-step">
-                          <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
-                            {{stepRow.metrics.cpu.avg_percent | number:'1.2-2'}}%
-                          </div>
-                        </td>
-                        <td class="cell-step">
-                          <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
-                            {{stepRow.metrics.cpu.total_cpu_time | number:'1.2-2'}}s
-                          </div>
-                        </td>
-                        <td class="cell-step">
-                          <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
-                            {{stepRow.metrics.cpu.total_user_time | number:'1.2-2'}}s
-                          </div>
-                        </td>
-                        <td class="cell-step">
-                          <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
-                            {{stepRow.metrics.cpu.total_system_time | number:'1.2-2'}}s
-                          </div>
-                        </td>
-                        <td class="cell-step">
-                          <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
-                            {{stepRow.metrics.cpu.cpu_efficiency | number:'1.2-2'}}%
-                          </div>
-                        </td>
-                    </tr>
+                    </ng-container>
+                    <ng-container *ngIf="selectedIterationsView === 'combined'">
+                      <ng-container *ngFor="let stepRow of row.processedStepsCombinedMetrics">
+                      <tr class="row-step">
+                          <td class="cell-step" colspan="3" style="padding: 0rem; color: #6c757d; font-weight: normal; text-align: center;">
+                            {{ stepRow.step_name | lowercase }}
+                            <!-- <svg width="16" height="16" fill="currentColor" stroke="none" viewBox="0 0 24 24" style="margin-left: 0.5rem; vertical-align: text-bottom; margin-bottom: 0.125rem;">
+                              <path d="M 6.25 2 C 5.0162029 2 4 3.0162029 4 4.25 L 4 19.75 C 4 20.983797 5.0162029 22 6.25 22 L 17.75 22 C 18.983797 22 20 20.983797 20 19.75 L 20 18.75 A 0.750075 0.750075 0 1 0 18.5 18.75 L 18.5 19.75 C 18.5 20.172203 18.172203 20.5 17.75 20.5 L 6.25 20.5 C 5.8277971 20.5 5.5 20.172203 5.5 19.75 L 5.5 4.25 C 5.5 3.8277971 5.8277971 3.5 6.25 3.5 L 17.75 3.5 C 18.172203 3.5 18.5 3.8277971 18.5 4.25 L 18.5 5.25 A 0.750075 0.750075 0 1 0 20 5.25 L 20 4.25 C 20 3.0162029 18.983797 2 17.75 2 L 6.25 2 z M 16.992188 8.2421875 A 0.750075 0.750075 0 0 0 16.46875 9.53125 L 18.1875 11.25 L 8.5 11.25 A 0.750075 0.750075 0 1 0 8.5 12.75 L 18.1875 12.75 L 16.46875 14.46875 A 0.75130096 0.75130096 0 1 0 17.53125 15.53125 L 20.53125 12.53125 A 0.750075 0.750075 0 0 0 20.53125 11.46875 L 17.53125 8.46875 A 0.750075 0.750075 0 0 0 16.992188 8.2421875 z"></path>
+                            </svg> -->
+                          </td>
+                          <td class="cell-step">
+                            <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
+                              {{formatExecutionTime(stepRow.metrics.summary.duration_seconds)}}
+                            </div>
+                          </td>
+                          <td class="cell-step">
+                            <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
+                              {{stepRow.metrics.cpu.min_percent | number:'1.2-2'}}%
+                            </div>
+                          </td>
+                          <td class="cell-step">
+                            <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
+                              {{stepRow.metrics.cpu.max_percent | number:'1.2-2'}}%
+                            </div>
+                          </td>
+                          <td class="cell-step">
+                            <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
+                              {{stepRow.metrics.cpu.avg_percent | number:'1.2-2'}}%
+                            </div>
+                          </td>
+                          <td class="cell-step">
+                            <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
+                              {{stepRow.metrics.cpu.total_cpu_time | number:'1.2-2'}}s
+                            </div>
+                          </td>
+                          <td class="cell-step">
+                            <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
+                              {{stepRow.metrics.cpu.total_user_time | number:'1.2-2'}}s
+                            </div>
+                          </td>
+                          <td class="cell-step">
+                            <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
+                              {{stepRow.metrics.cpu.total_system_time | number:'1.2-2'}}s
+                            </div>
+                          </td>
+                          <td class="cell-step">
+                            <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
+                              {{stepRow.metrics.cpu.cpu_efficiency | number:'1.2-2'}}%
+                            </div>
+                          </td>
+                      </tr>
+                      </ng-container>
+                      </ng-container>
+                      <ng-container *ngIf="selectedIterationsView === 'individual'">
+                        <ng-container *ngFor="let stepRow of row.processedStepsIterationMetrics[row.selectedIteration]">
+                          <tr class="row-step">
+                            <td class="cell-step" colspan="3" style="padding: 0rem; color: #6c757d; font-weight: normal; text-align: center;">
+                              {{ stepRow.combined_iteration_metrics.step_name| lowercase }}
+                              <!-- <svg width="16" height="16" fill="currentColor" stroke="none" viewBox="0 0 24 24" style="margin-left: 0.5rem; vertical-align: text-bottom; margin-bottom: 0.125rem;">
+                                <path d="M 6.25 2 C 5.0162029 2 4 3.0162029 4 4.25 L 4 19.75 C 4 20.983797 5.0162029 22 6.25 22 L 17.75 22 C 18.983797 22 20 20.983797 20 19.75 L 20 18.75 A 0.750075 0.750075 0 1 0 18.5 18.75 L 18.5 19.75 C 18.5 20.172203 18.172203 20.5 17.75 20.5 L 6.25 20.5 C 5.8277971 20.5 5.5 20.172203 5.5 19.75 L 5.5 4.25 C 5.5 3.8277971 5.8277971 3.5 6.25 3.5 L 17.75 3.5 C 18.172203 3.5 18.5 3.8277971 18.5 4.25 L 18.5 5.25 A 0.750075 0.750075 0 1 0 20 5.25 L 20 4.25 C 20 3.0162029 18.983797 2 17.75 2 L 6.25 2 z M 16.992188 8.2421875 A 0.750075 0.750075 0 0 0 16.46875 9.53125 L 18.1875 11.25 L 8.5 11.25 A 0.750075 0.750075 0 1 0 8.5 12.75 L 18.1875 12.75 L 16.46875 14.46875 A 0.75130096 0.75130096 0 1 0 17.53125 15.53125 L 20.53125 12.53125 A 0.750075 0.750075 0 0 0 20.53125 11.46875 L 17.53125 8.46875 A 0.750075 0.750075 0 0 0 16.992188 8.2421875 z"></path>
+                              </svg> -->
+                            </td>
+                            <td class="cell-step">
+                              <div style="padding: 1rem; color: #6c757d; font-weight: normal;">
+                                {{formatExecutionTime(stepRow.combined_iteration_metrics.metrics.summary.duration_seconds)}}
+                              </div>
+                            </td>
+                            <td class="cell-step">
+                              <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
+                                {{stepRow.combined_iteration_metrics.metrics.cpu.min_percent | number:'1.2-2'}}%
+                              </div>
+                            </td>
+                            <td class="cell-step">
+                              <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
+                                {{stepRow.combined_iteration_metrics.metrics.cpu.max_percent | number:'1.2-2'}}%
+                              </div>
+                            </td>
+                            <td class="cell-step">
+                              <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
+                                {{stepRow.combined_iteration_metrics.metrics.cpu.avg_percent | number:'1.2-2'}}%
+                              </div>
+                            </td>
+                            <td class="cell-step">
+                              <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
+                                {{stepRow.combined_iteration_metrics.metrics.cpu.total_cpu_time | number:'1.2-2'}}s
+                              </div>
+                            </td>
+                            <td class="cell-step">
+                              <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
+                                {{stepRow.combined_iteration_metrics.metrics.cpu.total_user_time | number:'1.2-2'}}s
+                              </div>
+                            </td>
+                            <td class="cell-step">
+                              <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
+                                {{stepRow.combined_iteration_metrics.metrics.cpu.total_system_time | number:'1.2-2'}}s
+                              </div>
+                            </td>
+                            <td class="cell-step">
+                              <div style="padding: 0rem; color: #6c757d; font-weight: normal;">
+                                {{stepRow.combined_iteration_metrics.metrics.cpu.cpu_efficiency | number:'1.2-2'}}%
+                              </div>
+                            </td>
+                        </tr>
+                      </ng-container>
                     </ng-container>
 
                     <!--

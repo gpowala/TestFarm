@@ -1,5 +1,10 @@
 // Interfaces describing the structure of combined_benchmark_data.json
 
+export interface ProcessedIterationMetrics {
+  iteration_index: number;
+  combined_iteration_metrics: ProcessedCombinedMetrics;
+}
+
 export interface ProcessedCombinedMetrics {
   step_index: number;       // -1 for overall
   step_name: string;        // e.g. "step-0" or "overall"
@@ -13,6 +18,212 @@ export interface ProcessedMetricsSummary {
   io: IOSummary;
   network: NetworkSummary;
   process_info: ProcessInfoSummary;
+}
+
+export function calculateCombinedStepsMetricsPerIteration(data: BenchmarkResultMeasurements): ProcessedIterationMetrics[] {
+  const MB = 1024 * 1024;
+
+  const zeroedMetrics = (command: string): ProcessedMetricsSummary => ({
+    summary: {
+      command,
+      start_time: '',
+      end_time: '',
+      stdout: '',
+      stderr: '',
+      exit_code: 0,
+      duration_seconds: 0,
+      samples_collected: 0,
+      monitoring_interval: 0,
+      operating_system: {
+        system: '',
+        release: '',
+        version: '',
+        machine: '',
+        processor: '',
+        cpu_count_logical: 0,
+        cpu_count_physical: 0
+      }
+    },
+    cpu: {
+      max_percent: 0,
+      avg_percent: 0,
+      min_percent: 0,
+      total_user_time: 0,
+      total_system_time: 0,
+      total_cpu_time: 0,
+      cpu_efficiency: 0
+    },
+    memory: {
+      max_rss_bytes: 0,
+      max_rss_mb: 0,
+      avg_rss_bytes: 0,
+      avg_rss_mb: 0,
+      max_percent: 0,
+      avg_percent: 0
+    },
+    io: {
+      total_read_bytes: 0,
+      total_write_bytes: 0,
+      total_read_mb: 0,
+      total_write_mb: 0
+    },
+    network: {
+      total_bytes_sent: 0,
+      total_bytes_recv: 0,
+      total_sent_mb: 0,
+      total_recv_mb: 0,
+      max_connections: 0,
+      avg_connections: 0
+    },
+    process_info: {
+      max_threads: 0,
+      avg_threads: 0,
+      max_fd_handles: 0,
+      avg_fd_handles: 0,
+      fd_handle_type: '',
+      max_connections: 0,
+      avg_connections: 0,
+      total_context_switches: 0
+    }
+  });
+
+  const buildSingleIterationSummary = (samples: BenchmarkDetailedMetric[], command: string): ProcessedMetricsSummary => {
+    if (!samples || samples.length === 0) {
+      return zeroedMetrics(command);
+    }
+
+    const first = samples[0];
+    const last = samples[samples.length - 1];
+    const duration_seconds = Math.max(0, last.timestamp - first.timestamp);
+    if (duration_seconds === 0) {
+      return zeroedMetrics(command);
+    }
+
+    const procCpu = samples.map(s => s.process.cpu_percent);
+    const memRss = samples.map(s => s.process.memory_rss);
+    const memPct = samples.map(s => s.process.memory_percent);
+    const threads = samples.map(s => s.process.num_threads);
+    const fdHandles = samples.map(s => s.process.fd_handle_count);
+    const connections = samples.map(s => s.process.network_connections);
+
+    const numAvg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+    const numMax = (arr: number[]) => (arr.length ? Math.max(...arr) : 0);
+    const numMin = (arr: number[]) => (arr.length ? Math.min(...arr) : 0);
+
+    // Deltas for monotonic counters (single iteration: last - first)
+    const delta = (sel: (p: ProcessDetailedMetrics) => number) => (samples.length >= 2 ? sel(last.process) - sel(first.process) : 0);
+
+    const ctxFirst = first.process.context_switches;
+    const ctxLast = last.process.context_switches;
+    const totalCtx = (ctxLast?.voluntary || 0) + (ctxLast?.involuntary || 0) - ((ctxFirst?.voluntary || 0) + (ctxFirst?.involuntary || 0));
+
+    return {
+      summary: {
+        command,
+        start_time: new Date(first.timestamp * 1000).toISOString(),
+        end_time: new Date(last.timestamp * 1000).toISOString(),
+        stdout: '',
+        stderr: '',
+        exit_code: 0,
+        duration_seconds,
+        samples_collected: samples.length,
+        monitoring_interval: 0,
+        operating_system: {
+          system: '',
+          release: '',
+          version: '',
+          machine: '',
+          processor: '',
+          cpu_count_logical: 0,
+          cpu_count_physical: 0
+        }
+      },
+      cpu: {
+        max_percent: numMax(procCpu),
+        avg_percent: numAvg(procCpu),
+        min_percent: numMin(procCpu),
+        total_user_time: delta(p => p.cpu_times_user),
+        total_system_time: delta(p => p.cpu_times_system),
+        total_cpu_time: delta(p => p.cpu_times_total),
+        cpu_efficiency: numAvg(procCpu)
+      },
+      memory: {
+        max_rss_bytes: numMax(memRss),
+        max_rss_mb: Math.round(numMax(memRss) / MB),
+        avg_rss_bytes: Math.round(numAvg(memRss)),
+        avg_rss_mb: Math.round(numAvg(memRss) / MB),
+        max_percent: numMax(memPct),
+        avg_percent: numAvg(memPct)
+      },
+      io: {
+        total_read_bytes: delta(p => p.io_read_bytes),
+        total_write_bytes: delta(p => p.io_write_bytes),
+        total_read_mb: Math.round(delta(p => p.io_read_bytes) / MB),
+        total_write_mb: Math.round(delta(p => p.io_write_bytes) / MB)
+      },
+      network: {
+        total_bytes_sent: delta(p => p.network_bytes_sent),
+        total_bytes_recv: delta(p => p.network_bytes_recv),
+        total_sent_mb: Math.round(delta(p => p.network_bytes_sent) / MB),
+        total_recv_mb: Math.round(delta(p => p.network_bytes_recv) / MB),
+        max_connections: numMax(connections),
+        avg_connections: numAvg(connections)
+      },
+      process_info: {
+        max_threads: numMax(threads),
+        avg_threads: numAvg(threads),
+        max_fd_handles: numMax(fdHandles),
+        avg_fd_handles: numAvg(fdHandles),
+        fd_handle_type: samples[0].process.fd_handle_type || '',
+        max_connections: numMax(connections),
+        avg_connections: numAvg(connections),
+        total_context_switches: totalCtx
+      }
+    };
+  };
+
+  const results: ProcessedIterationMetrics[] = [];
+
+  (data.iterations || []).forEach((iter, iterIndex) => {
+    if (!iter) return;
+    const events = iter.events || [];
+    if (events.length < 2) {
+      // Still produce an overall (even if zeroed) for visibility
+      const overallMetrics: ProcessedCombinedMetrics = {
+        step_index: -1,
+        step_name: 'overall',
+        metrics: buildSingleIterationSummary(iter.metrics_detailed || [], 'overall')
+      };
+      results.push({ iteration_index: iterIndex, combined_iteration_metrics: overallMetrics });
+      return;
+    }
+
+    // Convert event timestamps to epoch seconds
+    const eventEpochs = events.map(e => new Date(e.timestamp).getTime() / 1000);
+
+    for (let si = 0; si < events.length - 1; si++) {
+      const start = eventEpochs[si];
+      const end = eventEpochs[si + 1];
+      const stepSamples = (iter.metrics_detailed || []).filter(s => s.timestamp >= start && s.timestamp < end);
+      const stepName = events[si]?.name || `step-${si}`;
+      const stepMetrics: ProcessedCombinedMetrics = {
+        step_index: si,
+        step_name: stepName,
+        metrics: buildSingleIterationSummary(stepSamples, stepName)
+      };
+      results.push({ iteration_index: iterIndex, combined_iteration_metrics: stepMetrics });
+    }
+
+    // Overall for this iteration
+    const overall: ProcessedCombinedMetrics = {
+      step_index: -1,
+      step_name: 'overall',
+      metrics: buildSingleIterationSummary(iter.metrics_detailed || [], 'overall')
+    };
+    results.push({ iteration_index: iterIndex, combined_iteration_metrics: overall });
+  });
+
+  return results;
 }
 
 /**

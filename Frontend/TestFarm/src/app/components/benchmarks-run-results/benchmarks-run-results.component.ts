@@ -10,7 +10,7 @@ import { BenchmarkResultDescription } from 'src/app/models/benchmark-result-desc
 import { BenchmarksRunDetailsDescription } from 'src/app/models/benchmarks-run-details-description';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { BenchmarkResultDetailsDescription } from 'src/app/models/benchmark-result-details-description';
-import { BenchmarkResultMeasurements, ProcessedCombinedMetrics, calculateCombinedStepsMetrics } from 'src/app/models/benchmark-result-measurements';
+import { BenchmarkResultMeasurements, ProcessedIterationMetrics, ProcessedCombinedMetrics, calculateCombinedStepsMetrics, calculateCombinedStepsMetricsPerIteration } from 'src/app/models/benchmark-result-measurements';
 
 Chart.register(...registerables);
 
@@ -23,12 +23,15 @@ class BenchmarksResultDescriptionRow {
   showHistory: boolean = false;
 
   baseMeasurements: BenchmarkResultMeasurements | null = null;
-  processedStepsCombinedMetrics: ProcessedCombinedMetrics[] | null = null;
+  processedStepsCombinedMetrics: ProcessedCombinedMetrics[] = [];
   processedOverallCombinedMetrics: ProcessedCombinedMetrics | null = null;
 
+  processedStepsIterationMetrics: ProcessedIterationMetrics[][] = [];
+  processedOverallIterationMetrics: ProcessedIterationMetrics[] = [];
+
   // Dropdown related
-  iterationOptions: (string | number)[] = ['C'];
-  selectedIteration: string | number = 'C';
+  iterationOptions: number[] = [0];
+  selectedIteration: number = 0;
 
   constructor(public result: BenchmarkResultDescription) {}
 }
@@ -63,6 +66,52 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
   };
   public selectedIterationsView: string = 'combined';
 
+  public profileViewPresets: { [key: string]: string } = {
+    'general': 'General profile',
+    'cpu': 'CPU profile',
+    'memory-io-network': 'Memory, I/O, Network profile',
+    'process': 'Process profile'
+  };
+  public selectedProfileView: string = 'general';
+
+  public metricsColumnsVisibility: { [key: string]: boolean } = {
+    cpu_efficiency: false,
+    cpu_avg_percent: false,
+    cpu_max_percent: false,
+    cpu_min_percent: false,
+    cpu_total_time: false,
+    cpu_total_system_time: false,
+    cpu_total_user_time: false,
+
+    io_total_read_bytes: false,
+    io_total_read_mb: false,
+    io_total_write_bytes: false,
+    io_total_write_mb: false,
+
+    mem_avg_percent: false,
+    mem_avg_rss_bytes: false,
+    mem_avg_rss_mb: false,
+    mem_max_percent: false,
+    mem_max_rss_bytes: false,
+    mem_max_rss_mb: false,
+
+    net_avg_connections: false,
+    net_max_connections: false,
+    net_total_bytes_recv: false,
+    net_total_bytes_sent: false,
+    net_total_recv_mb: false,
+    net_total_sent_mb: false,
+
+    proc_avg_connections: false,
+    proc_avg_fd_handles: false,
+    proc_avg_threads: false,
+    proc_fd_handle_type: false,
+    proc_max_connections: false,
+    proc_max_fd_handles: false,
+    proc_max_threads: false,
+    proc_total_context_switches: false
+  };
+
   constructor(private route: ActivatedRoute, private benchmarksApiHttpClientService: BenchmarksApiHttpClientService) {}
 
   ngOnInit() {
@@ -71,6 +120,8 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
 
     this.fetchBenchmarksRunDetails();
     this.fetchBenchmarksRunResults();
+
+    this.changeProfileView();
   }
 
   ngAfterViewInit() {
@@ -119,6 +170,22 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
 
                       console.log(`Processed steps combined metrics for benchmark ${row.result.Id}:`, row.processedStepsCombinedMetrics);
                       console.log(`Processed overall combined metrics for benchmark ${row.result.Id}:`, row.processedOverallCombinedMetrics);
+
+                      const processedIterationsMetrics = calculateCombinedStepsMetricsPerIteration(row.baseMeasurements);
+                      processedIterationsMetrics.forEach(metric => {
+                        if (!row.processedStepsIterationMetrics[metric.iteration_index]) {
+                          row.processedStepsIterationMetrics[metric.iteration_index] = [];
+                        }
+
+                        if (metric.combined_iteration_metrics.step_index === -1) {
+                          row.processedOverallIterationMetrics[metric.iteration_index] = metric;
+                        } else {
+                          row.processedStepsIterationMetrics[metric.iteration_index].push(metric);
+                        }
+                      });
+
+                      console.log(`Processed steps iteration metrics for benchmark ${row.result.Id}:`, row.processedStepsIterationMetrics);
+                      console.log(`Processed overall iteration metrics for benchmark ${row.result.Id}:`, row.processedOverallIterationMetrics);
                     }
                   },
                   error: (err) => {
@@ -475,9 +542,9 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
     }
   }
 
-  private buildIterationOptions(row: BenchmarksResultDescriptionRow): (string | number)[] {
+  private buildIterationOptions(row: BenchmarksResultDescriptionRow): number[] {
     const len = row.baseMeasurements?.iterations?.length ?? 0;
-    const numeric = Array.from({ length: len + 1 }, (_, i) => i); // 0..len
+    const numeric = Array.from({ length: (len - 1) + 1 }, (_, i) => i); // 0..len
     return numeric;
   }
 
@@ -486,5 +553,77 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
     if (!row.iterationOptions.includes(row.selectedIteration)) {
       row.selectedIteration = 0;
     }
+  }
+
+  changeProfileView(): void {
+    // reset all columns to hidden
+    Object.keys(this.metricsColumnsVisibility).forEach(col => {
+      this.metricsColumnsVisibility[col] = false;
+    });
+
+    let toShow: string[] = [];
+    switch (this.selectedProfileView) {
+      case 'cpu':
+        toShow = [
+          'cpu_efficiency',
+          'cpu_avg_percent',
+          'cpu_max_percent',
+          'cpu_min_percent',
+          'cpu_total_time',
+          'cpu_total_system_time',
+          'cpu_total_user_time'
+        ];
+        break;
+
+      case 'memory-io-network':
+        toShow = [
+          'mem_avg_percent',
+          'mem_avg_rss_mb',
+          'mem_max_percent',
+          'mem_max_rss_mb',
+          'io_total_read_mb',
+          'io_total_write_mb',
+          'net_avg_connections',
+          'net_max_connections',
+          'net_total_recv_mb',
+          'net_total_sent_mb'
+        ];
+        break;
+
+      case 'process':
+        toShow = [
+          'proc_avg_connections',
+          'proc_avg_fd_handles',
+          'proc_avg_threads',
+          'proc_fd_handle_type',
+          'proc_max_connections',
+          'proc_max_fd_handles',
+          'proc_max_threads',
+          'proc_total_context_switches'
+        ];
+        break;
+
+      case 'general':
+      default:
+        toShow = [
+          'cpu_total_time',
+          'mem_avg_rss_mb',
+          'mem_max_rss_mb',
+          'io_total_read_mb',
+          'io_total_write_mb',
+          'net_avg_connections',
+          'net_max_connections',
+          'net_total_recv_mb',
+          'net_total_sent_mb'
+
+        ]
+        break;
+    }
+
+    toShow.forEach(col => {
+      if (col in this.metricsColumnsVisibility) {
+        this.metricsColumnsVisibility[col] = true;
+      }
+    });
   }
 }
