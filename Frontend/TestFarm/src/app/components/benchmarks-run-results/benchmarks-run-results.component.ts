@@ -268,21 +268,24 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
     const testCounts = [
       benchmarksRunDetails.CompletedBenchmarks,
       benchmarksRunDetails.RunningBenchmarks,
-      benchmarksRunDetails.QueuedBenchmarks
+      benchmarksRunDetails.QueuedBenchmarks,
+      0
     ];
 
     const data = {
       labels: [
         `Completed (${benchmarksRunDetails.CompletedBenchmarks})`,
         `Running (${benchmarksRunDetails.RunningBenchmarks})`,
-        `Queued (${benchmarksRunDetails.QueuedBenchmarks})`
+        `Queued (${benchmarksRunDetails.QueuedBenchmarks})`,
+        `Total (${benchmarksRunDetails.CompletedBenchmarks + benchmarksRunDetails.RunningBenchmarks + benchmarksRunDetails.QueuedBenchmarks})`
       ],
       datasets: [{
         data: testCounts,
         backgroundColor: [
           '#2196f3',  // Blue for completed
           '#ff9800',  // Orange for running
-          '#9e9e9e'   // Grey for queued
+          '#9e9e9e',  // Grey for queued
+          '#ffffff00'   // Transparent for total
         ],
         // borderColor: '#ffffff',
         // borderWidth: 3,

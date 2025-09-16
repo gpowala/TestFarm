@@ -2,7 +2,7 @@ const { appSettings } = require('./appsettings');
 
 const express = require('express');
 const { Sequelize } = require('sequelize');
-const { sequelize, Grid, Host, TestRun, Test, TestResult, TestResultDiff, Repository, BenchmarksRun, BenchmarkResult, Benchmark } = require('./database');
+const { sequelize, Grid, Host, TestRun, Test, TestResult, TestResultDiff, Repository, BenchmarksRun, BenchmarkResult, Benchmark, Artifact } = require('./database');
 const gridsRouter = require('./grids-router');
 const repositoriesRouter = require('./reporitories-router');
 const testsRunsRouter = require('./tests-router');
@@ -435,9 +435,14 @@ app.get('/benchmarks-run-details/:benchmarksRunId', async (req, res) => {
       totalDurationMs = maxEndMs - minStartMs;
     }
 
+    const artifacts = await Artifact.findAll({
+      where: { Id: { [Sequelize.Op.in]: benchmarksRun.Artifacts || [] } }
+    });
+
     const formattedDetails = {
       Id: benchmarksRun.Id,
       Name: benchmarksRun.Name,
+      Artifacts: artifacts,
       RepositoryName: benchmarksRun.RepositoryName,
       SuiteName: benchmarksRun.SuiteName,
       GridName: benchmarksRun.GridName,
