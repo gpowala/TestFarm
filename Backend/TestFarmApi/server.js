@@ -342,6 +342,53 @@ app.get('/tests-runs', async (req, res) => {
   }
 });
 
+app.get('/benchmarks-runs', async (req, res) => {
+  try {
+    const { name, timespan, result, limit } = req.query;
+    
+    let whereClause = {};
+    
+    if (name) {
+      whereClause.Name = {
+        [Sequelize.Op.like]: `%${name}%`
+      };
+    }
+
+    if (result && result !== 'all') {
+      whereClause.OverallStatus = {
+        [Sequelize.Op.eq]: result
+      };
+    }
+    
+    if (timespan && timespan !== '-1') {
+      const timeSpanHours = parseInt(timespan);
+      whereClause.OverallCreationTimestamp = {
+        [Sequelize.Op.gte]: new Date(Date.now() - timeSpanHours * 60 * 60 * 1000)
+      };
+    }
+
+    const benchmarksRuns = await BenchmarksRun.findAll({
+      attributes: [
+        'Id', 
+        'RepositoryName',
+        'SuiteName',
+        'GridName',
+        'Name',
+        'OverallCreationTimestamp',
+        'OverallStatus'
+      ],
+      where: whereClause,
+      order: [['Id', 'DESC']],
+      limit: limit ? parseInt(limit) : 500
+    });
+
+    res.status(200).json(benchmarksRuns);
+  } catch (error) {
+    console.error('Error fetching benchmarks runs:', error);
+    res.status(500).send('Error fetching benchmarks runs');
+  }
+});
+
 app.get('/benchmarks-run-details/:benchmarksRunId', async (req, res) => {
   try {
     const benchmarksRunId = parseInt(req.params.benchmarksRunId);

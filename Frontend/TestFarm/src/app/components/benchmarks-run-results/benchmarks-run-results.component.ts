@@ -1,6 +1,6 @@
 import * as pako from 'pako';
 
-import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TestsRunResultDescription } from '../../models/tests-run-result-description';
 import { BenchmarksApiHttpClientService } from '../../services/benchmarks-api-http-cient-service';
@@ -21,6 +21,7 @@ class BenchmarksResultDescriptionRow {
   showDetails: boolean = false;
   showDiffs: boolean = false;
   showHistory: boolean = false;
+  showSteps: boolean = false;
 
   baseMeasurements: BenchmarkResultMeasurements | null = null;
   processedStepsCombinedMetrics: ProcessedCombinedMetrics[] = [];
@@ -29,7 +30,6 @@ class BenchmarksResultDescriptionRow {
   processedStepsIterationMetrics: ProcessedIterationMetrics[][] = [];
   processedOverallIterationMetrics: ProcessedIterationMetrics[] = [];
 
-  // Dropdown related
   iterationOptions: number[] = [0];
   selectedIteration: number = 0;
 
@@ -112,7 +112,11 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
     proc_total_context_switches: false
   };
 
-  constructor(private route: ActivatedRoute, private benchmarksApiHttpClientService: BenchmarksApiHttpClientService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private benchmarksApiHttpClientService: BenchmarksApiHttpClientService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.benchmarksRunId = this.route.snapshot.paramMap.get('benchmarksRunId');
@@ -369,7 +373,7 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
     // Use setTimeout to ensure DOM has been updated
     setTimeout(() => {
       // Get all table rows and update their styles based on current state
-      const tableRows = document.querySelectorAll('#testsRunsTable tbody tr#result');
+  const tableRows = document.querySelectorAll('#benchmarksRunResultsTable tbody tr#result');
       tableRows.forEach((rowElement, index) => {
         if (index < this.filteredBenchmarksResultsRows.length) {
           const row = this.filteredBenchmarksResultsRows[index];
@@ -459,12 +463,12 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
   }
 
   updateSortIndicators(activeColumn: string, direction: 'asc' | 'desc'): void {
-    document.querySelectorAll('#testsRunsTable .column-sortable svg').forEach(svg => {
+  document.querySelectorAll('#benchmarksRunResultsTable .column-sortable svg').forEach(svg => {
       (svg as HTMLElement).style.opacity = '0.5';
       svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>';
     });
 
-    const activeSortSvg = document.querySelector(`#testsRunsTable [data-sort="${activeColumn}"] svg`);
+  const activeSortSvg = document.querySelector(`#benchmarksRunResultsTable [data-sort="${activeColumn}"] svg`);
     if (activeSortSvg) {
       (activeSortSvg as HTMLElement).style.opacity = '1';
       activeSortSvg.innerHTML = direction === 'asc'
@@ -555,6 +559,10 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
     }
   }
 
+  toggleBenchmarkSteps(row: BenchmarksResultDescriptionRow) {
+    row.showSteps = !row.showSteps;
+  }
+
   changeProfileView(): void {
     // reset all columns to hidden
     Object.keys(this.metricsColumnsVisibility).forEach(col => {
@@ -625,5 +633,13 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
         this.metricsColumnsVisibility[col] = true;
       }
     });
+    this.rerenderTableStructure();
+    // Re-render rows so any style logic depending on column schema is refreshed after structure changes
+    setTimeout(() => this.renderAllRows(), 0);
+  }
+
+  private rerenderTableStructure(): void {
+    // Trigger change detection so *ngIf-bound <th>/<td>/<tr> elements appear/disappear
+    this.cdr.detectChanges();
   }
 }

@@ -32,6 +32,7 @@ import { MatCardModule } from '@angular/material/card';
 import { AddArtifactDefinitionDialogComponent } from './components/builds/add-artifact-definition-dialog/add-artifact-definition-dialog.component';
 import { ArtifactsComponent } from './components/artifacts/artifacts.component';
 import { AddArtifactDialogComponent } from './components/builds/add-artifact-dialog/add-artifact-dialog.component';
+import { BenchmarksRunsComponent } from './components/benchmarks-runs/benchmarks-runs.component';
 
 @NgModule({  declarations: [
     AppComponent,
@@ -43,6 +44,7 @@ import { AddArtifactDialogComponent } from './components/builds/add-artifact-dia
     GroupsComponent,
     RunsComponent,
     TestsRunResultsComponent,
+    BenchmarksRunsComponent,
     BenchmarksRunResultsComponent,
     TestHistoryComponent,
     ConsoleOutputToHtmlPipe,

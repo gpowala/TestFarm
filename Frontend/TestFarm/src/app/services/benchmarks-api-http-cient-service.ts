@@ -31,16 +31,16 @@ export class BenchmarksApiHttpClientService {
         return this.http.get<BenchmarkResultDetailsDescription>(`${environment.baseApiUrl}/benchmark-result-details/${benchmarkResultId}`);
     }
 
-    // getAllTestsRunsData(name: string, timespan: number, result: string, limit: number) {
-    //     return this.http.get<TestsRunDescription[]>(`${environment.baseApiUrl}/tests-runs`, {
-    //         params: {
-    //             name: name,
-    //             timespan: timespan.toString(),
-    //             result: result,
-    //             limit: limit.toString()
-    //         }
-    //     });
-    // }
+    getAllBenchmarksRuns(name: string, timespan: number, result: string, limit: number) {
+        return this.http.get<BenchmarksRunDescription[]>(`${environment.baseApiUrl}/benchmarks-runs`, {
+            params: {
+                name: name,
+                timespan: timespan.toString(),
+                result: result,
+                limit: limit.toString()
+            }
+        });
+    }
 
     // getAllTestsRunResultsData(testsRunId: string) {
     //     return this.http.get<TestsRunResultDescription[]>(`${environment.baseApiUrl}/tests-run-results/${testsRunId}`);
