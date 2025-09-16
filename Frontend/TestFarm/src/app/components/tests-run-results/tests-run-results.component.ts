@@ -8,6 +8,7 @@ import { catchError, retry, tap, throwError, of } from 'rxjs';
 import { TestsRunResultDiffDescription } from 'src/app/models/tests-run-result-diff-description';
 import { TestsRunDetailsDescription } from 'src/app/models/tests-run-details-description';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import { Artifact } from 'src/app/models/artifact';
 
 Chart.register(...registerables);
 
@@ -156,7 +157,8 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
       testsRunDetails.PassedTests,
       testsRunDetails.FailedTests,
       testsRunDetails.RunningTests,
-      testsRunDetails.QueuedTests
+      testsRunDetails.QueuedTests,
+      0
     ];
 
     const data = {
@@ -164,7 +166,8 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
         `Passed (${testsRunDetails.PassedTests})`,
         `Failed (${testsRunDetails.FailedTests})`,
         `Running (${testsRunDetails.RunningTests})`,
-        `Queued (${testsRunDetails.QueuedTests})`
+        `Queued (${testsRunDetails.QueuedTests})`,
+        `Total (${testsRunDetails.PassedTests + testsRunDetails.FailedTests + testsRunDetails.RunningTests + testsRunDetails.QueuedTests})`
       ],
       datasets: [{
         data: testCounts,
@@ -172,7 +175,8 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
           '#4caf50', // Green for passed
           '#f44336', // Red for failed
           '#ff9800', // Orange for running
-          '#2196f3'  // Blue for queued
+          '#2196f3', // Blue for queued
+          '#ffffff00' // Transparent for total
         ],
         // borderColor: '#ffffff',
         // borderWidth: 3,
@@ -465,5 +469,9 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
         console.error('Error fetching diff data:', error);
       }
     );
+  }
+
+  getArtifactNames(artifacts: Artifact[]): string {
+    return artifacts.map(artifact => artifact.BuildName).join(', ');
   }
 }

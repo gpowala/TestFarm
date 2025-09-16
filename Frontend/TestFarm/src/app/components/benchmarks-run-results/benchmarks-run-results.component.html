@@ -33,6 +33,20 @@
         <span style="color: #6c757d; font-size: 0.875rem;">{{ benchmarksRunDetails?.Name }}</span>
       </div>
       <div class="test-item">
+        <span class="test-name">Artifacts</span>
+        <ng-container *ngIf="getArtifactNames(benchmarksRunDetails?.Artifacts ?? []) as artifactNames">
+          <span
+            class="artifact-names"
+            [title]="artifactNames"
+            style="color: #6c757d; font-size: 0.875rem; cursor: help; text-decoration: underline dotted;"
+          >
+            {{ artifactNames.length > 30
+              ? (artifactNames | slice: 0:30) + '...'
+              : artifactNames }}
+          </span>
+        </ng-container>
+      </div>
+      <div class="test-item">
         <span class="test-name">Repository</span>
         <span style="color: #6c757d; font-size: 0.875rem;">{{ benchmarksRunDetails?.RepositoryName }}</span>
       </div>
@@ -43,10 +57,6 @@
       <div class="test-item">
         <span class="test-name">Grid</span>
         <span style="color: #6c757d; font-size: 0.875rem;">{{ benchmarksRunDetails?.GridName }}</span>
-      </div>
-      <div class="test-item">
-        <span class="test-name">Scheduled</span>
-        <span style="color: #6c757d; font-size: 0.875rem;">{{ benchmarksRunDetails?.TotalBenchmarks }}</span>
       </div>
     </div>
 

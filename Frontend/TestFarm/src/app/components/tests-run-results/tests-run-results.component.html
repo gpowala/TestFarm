@@ -8,7 +8,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
           </svg>
           <div class="breadcrumb-item">
-              <a href="/runs">Tests Runs</a>
+              <a routerLink="/runs">Tests Runs</a>
           </div>
           <svg xmlns="http://www.w3.org/2000/svg" class="breadcrumb-separator" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
@@ -33,6 +33,20 @@
         <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.Name }}</span>
       </div>
       <div class="test-item">
+        <span class="test-name">Artifacts</span>
+        <ng-container *ngIf="getArtifactNames(testsRunDetails?.Artifacts ?? []) as artifactNames">
+          <span
+            class="artifact-names"
+            [title]="artifactNames"
+            style="color: #6c757d; font-size: 0.875rem; cursor: help; text-decoration: underline dotted;"
+          >
+            {{ artifactNames.length > 30
+              ? (artifactNames | slice: 0:30) + '...'
+              : artifactNames }}
+          </span>
+        </ng-container>
+      </div>
+      <div class="test-item">
         <span class="test-name">Repository</span>
         <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.RepositoryName }}</span>
       </div>
@@ -43,10 +57,6 @@
       <div class="test-item">
         <span class="test-name">Grid</span>
         <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.GridName }}</span>
-      </div>
-      <div class="test-item">
-        <span class="test-name">Scheduled</span>
-        <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.TotalTests }}</span>
       </div>
     </div>
 

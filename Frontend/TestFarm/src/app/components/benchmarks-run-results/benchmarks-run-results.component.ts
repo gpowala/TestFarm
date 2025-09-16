@@ -11,6 +11,7 @@ import { BenchmarksRunDetailsDescription } from 'src/app/models/benchmarks-run-d
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { BenchmarkResultDetailsDescription } from 'src/app/models/benchmark-result-details-description';
 import { BenchmarkResultMeasurements, ProcessedIterationMetrics, ProcessedCombinedMetrics, calculateCombinedStepsMetrics, calculateCombinedStepsMetricsPerIteration } from 'src/app/models/benchmark-result-measurements';
+import { Artifact } from 'src/app/models/artifact';
 
 Chart.register(...registerables);
 
@@ -626,7 +627,6 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
           'net_max_connections',
           'net_total_recv_mb',
           'net_total_sent_mb'
-
         ]
         break;
     }
@@ -644,5 +644,9 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
   private rerenderTableStructure(): void {
     // Trigger change detection so *ngIf-bound <th>/<td>/<tr> elements appear/disappear
     this.cdr.detectChanges();
+  }
+
+  getArtifactNames(artifacts: Artifact[]): string {
+    return artifacts.map(artifact => artifact.BuildName).join(', ');
   }
 }

@@ -673,6 +673,10 @@ app.get('/tests-run-details/:testsRunId', async (req, res) => {
       totalDurationMs = maxEndMs - minStartMs;
     }
 
+    const artifacts = await Artifact.findAll({
+      where: { Id: { [Sequelize.Op.in]: testsRun.Artifacts || [] } }
+    });
+
     const formattedDetails = {
       Id: testsRun.Id,
       RepositoryName: testsRun.RepositoryName,
@@ -682,6 +686,7 @@ app.get('/tests-run-details/:testsRunId', async (req, res) => {
       TeamsNotificationUrl: testsRun.TeamsNotificationUrl,
       OverallCreationTimestamp: testsRun.OverallCreationTimestamp,
       OverallStatus: testsRun.OverallStatus,
+      Artifacts: artifacts,
 
       OverallExecutionStartTimestamp: overallStart,
       OverallExecutionEndTimestamp: overallEnd,

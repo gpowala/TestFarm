@@ -1,6 +1,9 @@
+import { Artifact } from "./artifact";
+
 export interface TestsRunDetailsDescription {
   Id: number;
   Name: string;
+  Artifacts: Artifact[];
   GridName: string;
   RepositoryName: string;
   SuiteName: string;
