@@ -106,31 +106,9 @@
     </div>
 
     <div class="island-chart">
-      <canvas #resultsChart data-chart="results"></canvas>
+      <canvas id="main-results-chart" data-chart="results"></canvas>
     </div>
   </div>
-  <!-- <div class="stats-row" *ngIf="testsRunDetails">
-    <div class="stat-card">
-        <div class="stat-number">{{ testsRunDetails.TotalTests }}</div>
-        <div class="stat-label">Total Tests</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-number">{{ testsRunDetails.TotalTests > 0 ? ((testsRunDetails.PassedTests / testsRunDetails.TotalTests) * 100 | number:'1.0-0') + '%' : '0%' }}</div>
-        <div class="stat-label">Pass Rate</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-number">{{ testsRunDetails.PassedTests }}</div>
-        <div class="stat-label">Passed Tests</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-number">{{ testsRunDetails.FailedTests }}</div>
-        <div class="stat-label">Failed Tests</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-number">{{ testsRunDetails.TotalDurationMs ? (testsRunDetails.TotalDurationMs / 1000 | number:'1.1-1') + 's' : 'N/A' }}</div>
-        <div class="stat-label">Total Duration</div>
-    </div>
-</div> -->
   <div class="islands-grid">
       <div class="island island-large">
           <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
@@ -226,6 +204,11 @@
                               <a href="#" class="row-action-link" data-tooltip="Benchmark steps" style="margin-left: 0.5rem;" (click)="toggleBenchmarkSteps(row); $event.preventDefault();">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="" fill="currentColor" stroke="none" x="0px" y="0px" width="22" height="22" viewBox="0 0 24 24">
                                   <path d="M 5.765625 1.9960938 A 0.750075 0.750075 0 0 0 5.4121094 2.0761719 L 3.4160156 3.0859375 A 0.750075 0.750075 0 0 0 3.0058594 3.7558594 L 3.0058594 20.232422 A 0.750075 0.750075 0 0 0 3.4140625 20.902344 L 5.4121094 21.917969 A 0.750075 0.750075 0 0 0 5.9882812 21.962891 L 7.9863281 21.300781 L 9.7382812 21.953125 A 0.750075 0.750075 0 0 0 10.263672 21.951172 L 12.015625 21.291016 L 14.015625 21.960938 A 0.750075 0.750075 0 0 0 14.548828 21.939453 L 16.037109 21.304688 L 18.025391 21.939453 A 0.750075 0.750075 0 0 0 18.587891 21.896484 L 20.580078 20.904297 A 0.750075 0.750075 0 0 0 20.994141 20.232422 L 20.994141 3.7558594 A 0.750075 0.750075 0 0 0 20.552734 3.0703125 L 18.306641 2.0625 A 0.750075 0.750075 0 0 0 17.664062 2.0761719 L 16 2.9101562 L 14.335938 2.0761719 A 0.750075 0.750075 0 0 0 13.664062 2.0761719 L 11.998047 2.9121094 L 10.333984 2.0839844 A 0.750075 0.750075 0 0 0 9.6660156 2.0839844 L 7.9824219 2.921875 L 6.0546875 2.0605469 A 0.750075 0.750075 0 0 0 5.765625 1.9960938 z M 5.7695312 3.5761719 L 7.6953125 4.4355469 A 0.750075 0.750075 0 0 0 8.3339844 4.421875 L 10 3.59375 L 11.666016 4.421875 A 0.750075 0.750075 0 0 0 12.335938 4.4199219 L 14 3.5859375 L 15.664062 4.4199219 A 0.750075 0.750075 0 0 0 16.335938 4.4199219 L 18.017578 3.5761719 L 19.494141 4.2402344 L 19.494141 19.769531 L 18.191406 20.417969 L 16.228516 19.791016 A 0.750075 0.750075 0 0 0 15.705078 19.816406 L 14.222656 20.449219 L 12.238281 19.785156 A 0.750075 0.750075 0 0 0 11.736328 19.794922 L 9.9980469 20.449219 L 8.2617188 19.802734 A 0.750075 0.750075 0 0 0 7.7636719 19.794922 L 5.8144531 20.439453 L 4.5058594 19.773438 L 4.5058594 4.2167969 L 5.7695312 3.5761719 z M 8 7.25 A 0.750075 0.750075 0 1 0 8 8.75 L 16 8.75 A 0.750075 0.750075 0 1 0 16 7.25 L 8 7.25 z M 8 11.25 A 0.750075 0.750075 0 1 0 8 12.75 L 16 12.75 A 0.750075 0.750075 0 1 0 16 11.25 L 8 11.25 z M 8 15.25 A 0.750075 0.750075 0 1 0 8 16.75 L 14 16.75 A 0.750075 0.750075 0 1 0 14 15.25 L 8 15.25 z"></path>
+                                </svg>
+                              </a>
+                              <a href="#" class="row-action-link" data-tooltip="Benchmark charts" style="margin-left: 0.5rem;" (click)="toggleBenchmarkCharts(row); $event.preventDefault();">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="" fill="currentColor" stroke="none" x="0px" y="0px" width="22" height="22" viewBox="0 0 24 24">
+                                  <path d="M 20.5 2 A 1.5 1.5 0 0 0 19.029297 3.7910156 L 12.587891 8.6230469 A 1.5 1.5 0 0 0 12 8.5 A 1.5 1.5 0 0 0 11.046875 8.8417969 L 4.9960938 6.5722656 A 1.5 1.5 0 0 0 3.5 5 A 1.5 1.5 0 0 0 3.5 8 A 1.5 1.5 0 0 0 4.140625 7.8535156 L 10.521484 10.248047 A 1.5 1.5 0 0 0 12 11.5 A 1.5 1.5 0 0 0 13.490234 9.8203125 L 20.021484 4.921875 A 1.5 1.5 0 0 0 20.5 5 A 1.5 1.5 0 0 0 20.5 2 z M 18 9 C 17.180203 9 16.5 9.6802029 16.5 10.5 L 16.5 19.5 C 16.5 20.319797 17.180203 21 18 21 L 20.5 21 C 21.319797 21 22 20.319797 22 19.5 L 22 10.5 C 22 9.6802029 21.319797 9 20.5 9 L 18 9 z M 18 10.5 L 20.5 10.5 L 20.5 19.5 L 18 19.5 L 18 10.5 z M 4 12 C 3.1802029 12 2.5 12.680203 2.5 13.5 L 2.5 19.5 C 2.5 20.319797 3.1802029 21 4 21 L 6.5 21 C 7.3197971 21 8 20.319797 8 19.5 L 8 13.5 C 8 12.680203 7.3197971 12 6.5 12 L 4 12 z M 4 13.5 L 6.5 13.5 L 6.5 19.5 L 4 19.5 L 4 13.5 z M 11 14 C 10.180203 14 9.5 14.680203 9.5 15.5 L 9.5 19.5 C 9.5 20.319797 10.180203 21 11 21 L 13.5 21 C 14.319797 21 15 20.319797 15 19.5 L 15 15.5 C 15 14.680203 14.319797 14 13.5 14 L 11 14 z M 11 15.5 L 13.5 15.5 L 13.5 19.5 L 11 19.5 L 11 15.5 z"></path>
                                 </svg>
                               </a>
                             </div>
@@ -503,6 +486,12 @@
                         </td>
                     </tr>
                     </ng-container>
+                    <tr *ngIf="row.showSteps" class="row-step">
+                      <td colspan="100" style="padding: 1px; width: 100%; background-color: grey">
+                        <div>
+                        </div>
+                      </td>
+                    </tr>
                     <ng-container *ngIf="row.showSteps && selectedIterationsView === 'combined'">
                       <ng-container *ngFor="let stepRow of row.processedStepsCombinedMetrics">
                       <tr class="row-step">
@@ -757,14 +746,19 @@
                         </tr>
                       </ng-container>
                     </ng-container>
-
-                    <ng-container>
+                    <tr *ngIf="row.showCharts" class="row-step">
+                      <td colspan="100" style="padding: 1px; width: 100%; background-color: grey">
+                        <div>
+                        </div>
+                      </td>
+                    </tr>
+                    <ng-container *ngIf="row.showCharts">
                         <tr class="row-step">
                           <td colspan="100" style="padding: 0; width: 100%;">
-                          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
-                            <div style="margin: 2rem;">
+                          <div class="grid-container">
+
                             <!-- CPU Chart Legend Control -->
-                            <div style="position: relative; margin-bottom: 1rem;">
+                            <!-- <div style="position: relative; margin-bottom: 1rem;">
                               <button
                                 type="button"
                                 class="btn btn-secondary cpu-chart-legend-button"
@@ -792,43 +786,71 @@
                                 </div>
                                 <div style="padding: 0.75rem;">
                                   <div
-                                    *ngFor="let datasetKey of getCpuChartDatasetKeys()"
+                                    *ngFor="let datasetKey of getCpuChartDatasetKeys(row)"
                                     style="display: flex; align-items: center; padding: 0.5rem; margin: 0.25rem 0; border-radius: 4px; border: 1px solid #eee; transition: background-color 0.2s ease;"
-                                    [style.background-color]="cpuChartDatasetVisibility[datasetKey] ? '#f0f8ff' : '#f9f9f9'">
+                                    [style.background-color]="row.charts[0].chartDatasetVisibility[datasetKey] ? '#f0f8ff' : '#f9f9f9'">
                                     <input
                                       type="checkbox"
                                       [id]="'cpu-dataset-' + datasetKey"
-                                      [checked]="cpuChartDatasetVisibility[datasetKey]"
-                                      (change)="toggleCpuChartDataset(datasetKey)"
+                                      [checked]="row.charts[0].chartDatasetVisibility[datasetKey]"
+                                      (change)="toggleCpuChartDataset(row, datasetKey)"
                                       style="margin-right: 0.75rem; transform: scale(1.1);">
                                     <label
                                       [for]="'cpu-dataset-' + datasetKey"
                                       style="margin: 0; font-size: 0.875rem; cursor: pointer; flex: 1; font-weight: 500;"
-                                      [style.color]="cpuChartDatasetVisibility[datasetKey] ? '#0066cc' : '#666'">
-                                      {{ getCpuChartDatasetLabel(datasetKey) }}
+                                      [style.color]="row.charts[0].chartDatasetVisibility[datasetKey] ? '#0066cc' : '#666'">
+                                      {{ getCpuChartDatasetLabel(row, datasetKey) }}
                                     </label>
                                   </div>
-                                  <div *ngIf="getCpuChartDatasetKeys().length === 0" style="text-align: center; color: #999; font-style: italic; padding: 1rem;">
+                                  <div *ngIf="getCpuChartDatasetKeys(row).length === 0" style="text-align: center; color: #999; font-style: italic; padding: 1rem;">
                                     No datasets available
                                   </div>
                                 </div>
                               </div>
-                            </div>
+                            </div> -->
 
-                            <div style="height: 300px;">
-                            <canvas
-                              #resultsChart
-                              id="canvas-cpu-total"
-                              data-chart="cpu-total"
-                              style="display: block;"
-                            ></canvas>
+                            <!-- <div style="height: 100%;">
+                              <canvas id="canvas-cpu-total-{{row.result.Id}}" data-chart="cpu-total" style="display: block;"></canvas>
+                            </div> -->
+                            <div class="small-item" style="margin: 1rem;">
+                              <div style="height: 100%;">
+                                <canvas id="canvas-cpu-user-{{row.result.Id}}" data-chart="cpu-user" style="display: block;"></canvas>
+                              </div>
                             </div>
+                            <div class="small-item" style="margin: 1rem;">
+                              <div style="height: 100%;">
+                                <canvas id="canvas-cpu-system-{{row.result.Id}}" data-chart="cpu-system" style="display: block;"></canvas>
+                              </div>
                             </div>
-                            <div>
-
+                            <div class="small-item" style="margin: 1rem;">
+                              <div style="height: 100%;">
+                                <canvas id="canvas-cpu-percent-{{row.result.Id}}" data-chart="cpu-percent" style="display: block;"></canvas>
+                              </div>
                             </div>
-                            <div>
-
+                            <div class="small-item" style="margin: 1rem;">
+                              <div style="height: 100%;">
+                                <canvas id="canvas-ram-{{row.result.Id}}" data-chart="ram" style="display: block;"></canvas>
+                              </div>
+                            </div>
+                            <div class="small-item" style="margin: 1rem;">
+                              <div style="height: 100%;">
+                                <canvas id="canvas-io-read-{{row.result.Id}}" data-chart="io-read" style="display: block;"></canvas>
+                              </div>
+                            </div>
+                            <div class="small-item" style="margin: 1rem;">
+                              <div style="height: 100%;">
+                                <canvas id="canvas-io-write-{{row.result.Id}}" data-chart="io-write" style="display: block;"></canvas>
+                              </div>
+                            </div>
+                            <div class="small-item" style="margin: 1rem;">
+                              <div style="height: 100%;">
+                                <canvas id="canvas-network-recv-{{row.result.Id}}" data-chart="network-recv" style="display: block;"></canvas>
+                              </div>
+                            </div>
+                            <div class="small-item" style="margin: 1rem;">
+                              <div style="height: 100%;">
+                                <canvas id="canvas-network-sent-{{row.result.Id}}" data-chart="network-sent" style="display: block;"></canvas>
+                              </div>
                             </div>
                           </div>
                           </td>

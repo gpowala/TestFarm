@@ -15,14 +15,24 @@ import { Artifact } from 'src/app/models/artifact';
 
 Chart.register(...registerables);
 
+class ChartControl {
+  chartDatasetVisibility: { [key: string]: boolean } = {};
+
+  constructor(public name: string, public chart: Chart, public visible: boolean) {
+    this.chartDatasetVisibility = {};
+    this.chart.data.datasets?.forEach((dataset, index) => {
+      const key = `dataset_${index}`;
+      this.chartDatasetVisibility[key] = !dataset.hidden;
+    });
+  }
+}
+
 class BenchmarksResultDescriptionRow {
   active: boolean = false;
   checked: boolean = false;
 
-  showDetails: boolean = false;
-  showDiffs: boolean = false;
-  showHistory: boolean = false;
   showSteps: boolean = false;
+  showCharts: boolean = false;
 
   baseMeasurements: BenchmarkResultMeasurements | null = null;
   processedStepsCombinedMetrics: ProcessedCombinedMetrics[] = [];
@@ -34,7 +44,14 @@ class BenchmarksResultDescriptionRow {
   iterationOptions: number[] = [0];
   selectedIteration: number = 0;
 
+  charts: ChartControl[] = [];
+
   constructor(public result: BenchmarkResultDescription) {}
+
+  destroyAllCharts() {
+    this.charts.forEach(chartControl => chartControl.chart.destroy());
+    this.charts = [];
+  }
 }
 
 @Component({
@@ -43,8 +60,6 @@ class BenchmarksResultDescriptionRow {
   styleUrls: ['./benchmarks-run-results.component.css']
 })
 export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('resultsChart', { static: false }) statusChartRef!: ElementRef<HTMLCanvasElement>;
-
   benchmarksRunId: string | null = null;
 
   benchmarksRunDetails: BenchmarksRunDetailsDescription | null = null;
@@ -60,6 +75,7 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
 
   statusChart: Chart | null = null;
   cpuTotalChart: Chart | null = null;
+  resultCharts: Map<string, Chart> = new Map(); // Store multiple results charts
   private viewInitialized = false;
 
   public iterationsViewPresets: { [key: string]: string } = {
@@ -76,9 +92,7 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
   };
   public selectedProfileView: string = 'general';
 
-  // CPU Chart Legend Control
   public cpuChartLegendDropdownOpen: boolean = false;
-  public cpuChartDatasetVisibility: { [key: string]: boolean } = {};
 
   public metricsColumnsVisibility: { [key: string]: boolean } = {
     cpu_efficiency: false,
@@ -136,7 +150,7 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
 
   ngAfterViewInit() {
     this.viewInitialized = true;
-    console.log('View initialized, statusChartRef:', this.statusChartRef);
+    console.log('View initialized');
 
     // Use setTimeout to ensure the view is fully rendered
     setTimeout(() => {
@@ -153,6 +167,9 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
     if (this.cpuTotalChart) {
       this.cpuTotalChart.destroy();
     }
+    // Destroy all results charts
+    this.resultCharts.forEach(chart => chart.destroy());
+    this.resultCharts.clear();
   }
 
   private fetchBenchmarksRunResults() {
@@ -199,8 +216,6 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
 
                       console.log(`Processed steps iteration metrics for benchmark ${row.result.Id}:`, row.processedStepsIterationMetrics);
                       console.log(`Processed overall iteration metrics for benchmark ${row.result.Id}:`, row.processedOverallIterationMetrics);
-
-                      this.createCPUTotalChart();
                     }
                   },
                   error: (err) => {
@@ -213,16 +228,6 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
             console.error('Error fetching benchmarks run results data:', error);
           }
         });
-
-
-      // this.testsApiHttpClientService.getAllTestsRunResultsData(this.testsRunId).subscribe(
-      //   (data: TestsRunResultDescription[]) => {
-      //     this.testsRunResults = data;
-      //   },
-      //   (error: any) => {
-      //     console.error('Error fetching tests run results data:', error);
-      //   }
-      // );
     }
   }
 
@@ -247,12 +252,36 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
     }
   }
 
-  createCPUTotalChart() {
-    const measurements = this.benchmarksResultsRows[0].baseMeasurements;
+  toggleBenchmarkCharts(row: BenchmarksResultDescriptionRow) {
+    // Toggle the visibility of the benchmark charts for the specified row
+    row.showCharts = !row.showCharts;
 
-    const ctx = document.getElementById('canvas-cpu-total') as HTMLCanvasElement | null;
+    // Use setTimeout to allow the DOM to update and render the canvas element
+    setTimeout(() => {
+      if (row.showCharts) {
+        this.createCPUUserChart(row);
+        this.createCPUSystemChart(row);
+        this.createCPUPercentChart(row);
+
+        this.createRAMChart(row);
+
+        this.createIOReadChart(row);
+        this.createIOWriteChart(row);
+
+        this.createNetworkRecvChart(row);
+        this.createNetworkSentChart(row);
+      } else {
+        row.destroyAllCharts();
+      }
+    }, 0);
+  }
+
+  createCPUUserChart(row: BenchmarksResultDescriptionRow) {
+    const measurements = row.baseMeasurements;
+
+    const ctx = document.getElementById('canvas-cpu-user-' + row.result.Id) as HTMLCanvasElement | null;
     if (!ctx) {
-      console.error('No canvas element found for chart creation - neither ViewChild nor DOM query worked');
+      console.error('No canvas element found for chart creation - neither ViewChild nor DOM query worked - ' + row.result.Id);
       return;
     }
 
@@ -268,7 +297,7 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
     const datasets = measurements.iterations.map((iteration, iterIndex) => {
       const data = iteration.metrics_detailed.map(metric => ({
         x: metric.elapsed_time,
-        y: metric.process.cpu_times_total
+        y: metric.process.cpu_times_user
       }));
 
       return {
@@ -300,7 +329,7 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
             return Math.abs(current.elapsed_time - elapsedTime) < Math.abs(closest.elapsed_time - elapsedTime)
               ? current : closest;
           });
-          cpuValue = closestMetric.process.cpu_times_total;
+          cpuValue = closestMetric.process.cpu_times_user;
         }
 
         return {
@@ -346,10 +375,10 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
       plugins: {
         title: {
         display: true,
-        text: 'CPU Total Time Over Time by Iteration (with Event Markers)'
+        text: 'cpu-user(t)'
         },
         legend: {
-        display: true,
+        display: false,
         position: 'top'
         },
         tooltip: {
@@ -373,10 +402,10 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
             `Subject: ${dataPoint.eventSubject}`,
             `Time: ${dataPoint.eventTimestamp}`,
             `Elapsed: ${timeValue}s`,
-            `CPU: ${cpuValue}s`
+            `CPU User: ${cpuValue}s`
             ];
           } else {
-            return `${iterationLabel}: ${cpuValue}s CPU at ${timeValue}s elapsed`;
+            return `${iterationLabel}: ${cpuValue}s CPU User at ${timeValue}s elapsed`;
           }
           }
         }
@@ -388,7 +417,7 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
         display: true,
         title: {
           display: true,
-          text: 'Elapsed Time (seconds)'
+          text: 't [s]'
         },
         grid: {
           color: 'rgba(255, 255, 255, 0.1)'
@@ -399,7 +428,7 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
         display: true,
         title: {
           display: true,
-          text: 'CPU Total Time (seconds)'
+          text: 'cpu-user [s]'
         },
         grid: {
           color: 'rgba(255, 255, 255, 0.1)'
@@ -415,55 +444,1246 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
       }
     };
 
-    // Destroy existing chart if it exists
-    if (this.cpuTotalChart) {
-      this.cpuTotalChart.destroy();
-    }
-
-    this.cpuTotalChart = new Chart(ctx, config);
-
-    // Initialize dataset visibility tracking
-    this.initializeCpuChartLegendControl();
+    row.charts.push(new ChartControl('cpu-user', new Chart(ctx, config), true));
   }
 
-  private initializeCpuChartLegendControl() {
-    if (!this.cpuTotalChart) return;
+  createCPUSystemChart(row: BenchmarksResultDescriptionRow) {
+    const measurements = row.baseMeasurements;
 
-    this.cpuChartDatasetVisibility = {};
-    this.cpuTotalChart.data.datasets?.forEach((dataset, index) => {
-      const key = `dataset_${index}`;
-      this.cpuChartDatasetVisibility[key] = !dataset.hidden;
+    const ctx = document.getElementById('canvas-cpu-system-' + row.result.Id) as HTMLCanvasElement | null;
+    if (!ctx) {
+      console.error('No canvas element found for chart creation - neither ViewChild nor DOM query worked - ' + row.result.Id);
+      return;
+    }
+
+    if (!measurements || !measurements.iterations || measurements.iterations.length === 0) {
+      console.error('No measurements data available for CPU chart');
+      return;
+    }
+
+    // Generate colors for each iteration
+    const colors = this.generateColors(measurements.iterations.length);
+
+    // Create datasets for each iteration
+    const datasets = measurements.iterations.map((iteration, iterIndex) => {
+      const data = iteration.metrics_detailed.map(metric => ({
+        x: metric.elapsed_time,
+        y: metric.process.cpu_times_system
+      }));
+
+      return {
+        label: `Iteration ${iteration.id}`,
+        data: data,
+        borderColor: colors[iterIndex],
+        backgroundColor: colors[iterIndex] + '20', // Add transparency
+        borderWidth: 2,
+        fill: true,
+        tension: 0.1,
+        pointRadius: 0,        // Hide points for line data
+        pointHoverRadius: 0    // Hide points on hover for line data
+      };
     });
+
+    // Create event markers datasets for each iteration
+    const eventDatasets = measurements.iterations.map((iteration, iterIndex) => {
+      // Convert event timestamps to elapsed time and get corresponding CPU values
+      const eventData = iteration.events.map(event => {
+        // Parse the event timestamp and convert to elapsed time
+        const eventTimestamp = new Date(event.timestamp).getTime() / 1000;
+        const startTimestamp = new Date(iteration.metrics_summary.summary.start_time).getTime() / 1000;
+        const elapsedTime = eventTimestamp - startTimestamp;
+
+        // Find the closest metric data point to interpolate CPU value
+        let cpuValue = 0;
+        if (iteration.metrics_detailed.length > 0) {
+          const closestMetric = iteration.metrics_detailed.reduce((closest, current) => {
+            return Math.abs(current.elapsed_time - elapsedTime) < Math.abs(closest.elapsed_time - elapsedTime)
+              ? current : closest;
+          });
+          cpuValue = closestMetric.process.cpu_times_system;
+        }
+
+        return {
+          x: elapsedTime,
+          y: cpuValue,
+          eventName: event.name,
+          eventSubject: event.subject,
+          eventTimestamp: event.timestamp
+        };
+      }).filter(point => point.x >= 0); // Only include events that occurred after start
+
+      return {
+        label: `Events - Iteration ${iteration.id}`,
+        data: eventData,
+        borderColor: colors[iterIndex],
+        backgroundColor: colors[iterIndex],
+        borderWidth: 3,
+        fill: false,
+        showLine: false, // Only show points, no connecting lines
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        pointStyle: 'circle',
+        pointBorderWidth: 2,
+        pointBorderColor: '#ffffff'
+      };
+    }).filter(dataset => dataset.data.length > 0); // Only include iterations that have events
+
+    // Combine line datasets and event datasets
+    const allDatasets = [...datasets, ...eventDatasets];
+
+    const config: ChartConfiguration<'line'> = {
+      type: 'line',
+      data: {
+      datasets: allDatasets
+      },
+      options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        title: {
+        display: true,
+        text: 'cpu-system(t)'
+        },
+        legend: {
+        display: false,
+        position: 'top'
+        },
+        tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        borderColor: '#ffffff',
+        borderWidth: 1,
+        cornerRadius: 8,
+        callbacks: {
+          label: (context) => {
+          const dataPoint = context.raw as any;
+          const iterationLabel = context.dataset.label || '';
+          const timeValue = context.parsed.x.toFixed(2);
+          const cpuValue = context.parsed.y.toFixed(3);
+
+          // Check if this is an event marker
+          if (dataPoint && dataPoint.eventName) {
+            return [
+            `Event: ${dataPoint.eventName}`,
+            `Subject: ${dataPoint.eventSubject}`,
+            `Time: ${dataPoint.eventTimestamp}`,
+            `Elapsed: ${timeValue}s`,
+            `CPU System: ${cpuValue}s`
+            ];
+          } else {
+            return `${iterationLabel}: ${cpuValue}s CPU System at ${timeValue}s elapsed`;
+          }
+          }
+        }
+        }
+      },
+      scales: {
+        x: {
+        type: 'linear',
+        display: true,
+        title: {
+          display: true,
+          text: 't [s]'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+        },
+        y: {
+        type: 'linear',
+        display: true,
+        title: {
+          display: true,
+          text: 'cpu-system [s]'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+        }
+      },
+      elements: {
+        point: {
+        radius: 0,
+        hoverRadius: 0
+        }
+      }
+      }
+    };
+
+    row.charts.push(new ChartControl('cpu-system', new Chart(ctx, config), true));
+  }
+
+  createCPUPercentChart(row: BenchmarksResultDescriptionRow) {
+    const measurements = row.baseMeasurements;
+
+    const ctx = document.getElementById('canvas-cpu-percent-' + row.result.Id) as HTMLCanvasElement | null;
+    if (!ctx) {
+      console.error('No canvas element found for chart creation - neither ViewChild nor DOM query worked - ' + row.result.Id);
+      return;
+    }
+
+    if (!measurements || !measurements.iterations || measurements.iterations.length === 0) {
+      console.error('No measurements data available for CPU chart');
+      return;
+    }
+
+    // Generate colors for each iteration
+    const colors = this.generateColors(measurements.iterations.length);
+
+    // Create datasets for each iteration
+    const datasets = measurements.iterations.map((iteration, iterIndex) => {
+      const data = iteration.metrics_detailed.map(metric => ({
+        x: metric.elapsed_time,
+        y: metric.process.cpu_percent
+      }));
+
+      return {
+        label: `Iteration ${iteration.id}`,
+        data: data,
+        borderColor: colors[iterIndex],
+        backgroundColor: colors[iterIndex] + '20', // Add transparency
+        borderWidth: 2,
+        fill: true,
+        tension: 0.1,
+        pointRadius: 0,        // Hide points for line data
+        pointHoverRadius: 0    // Hide points on hover for line data
+      };
+    });
+
+    // Create event markers datasets for each iteration
+    const eventDatasets = measurements.iterations.map((iteration, iterIndex) => {
+      // Convert event timestamps to elapsed time and get corresponding CPU values
+      const eventData = iteration.events.map(event => {
+        // Parse the event timestamp and convert to elapsed time
+        const eventTimestamp = new Date(event.timestamp).getTime() / 1000;
+        const startTimestamp = new Date(iteration.metrics_summary.summary.start_time).getTime() / 1000;
+        const elapsedTime = eventTimestamp - startTimestamp;
+
+        // Find the closest metric data point to interpolate CPU value
+        let cpuValue = 0;
+        if (iteration.metrics_detailed.length > 0) {
+          const closestMetric = iteration.metrics_detailed.reduce((closest, current) => {
+            return Math.abs(current.elapsed_time - elapsedTime) < Math.abs(closest.elapsed_time - elapsedTime)
+              ? current : closest;
+          });
+          cpuValue = closestMetric.process.cpu_percent;
+        }
+
+        return {
+          x: elapsedTime,
+          y: cpuValue,
+          eventName: event.name,
+          eventSubject: event.subject,
+          eventTimestamp: event.timestamp
+        };
+      }).filter(point => point.x >= 0); // Only include events that occurred after start
+
+      return {
+        label: `Events - Iteration ${iteration.id}`,
+        data: eventData,
+        borderColor: colors[iterIndex],
+        backgroundColor: colors[iterIndex],
+        borderWidth: 3,
+        fill: false,
+        showLine: false, // Only show points, no connecting lines
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        pointStyle: 'circle',
+        pointBorderWidth: 2,
+        pointBorderColor: '#ffffff'
+      };
+    }).filter(dataset => dataset.data.length > 0); // Only include iterations that have events
+
+    // Combine line datasets and event datasets
+    const allDatasets = [...datasets, ...eventDatasets];
+
+    const config: ChartConfiguration<'line'> = {
+      type: 'line',
+      data: {
+      datasets: allDatasets
+      },
+      options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        title: {
+        display: true,
+        text: 'cpu(t)'
+        },
+        legend: {
+        display: false,
+        position: 'top'
+        },
+        tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        borderColor: '#ffffff',
+        borderWidth: 1,
+        cornerRadius: 8,
+        callbacks: {
+          label: (context) => {
+          const dataPoint = context.raw as any;
+          const iterationLabel = context.dataset.label || '';
+          const timeValue = context.parsed.x.toFixed(2);
+          const cpuValue = context.parsed.y.toFixed(3);
+
+          // Check if this is an event marker
+          if (dataPoint && dataPoint.eventName) {
+            return [
+            `Event: ${dataPoint.eventName}`,
+            `Subject: ${dataPoint.eventSubject}`,
+            `Time: ${dataPoint.eventTimestamp}`,
+            `Elapsed: ${timeValue}s`,
+            `CPU: ${cpuValue}%`
+            ];
+          } else {
+            return `${iterationLabel}: ${cpuValue}% CPU at ${timeValue}s elapsed`;
+          }
+          }
+        }
+        }
+      },
+      scales: {
+        x: {
+        type: 'linear',
+        display: true,
+        title: {
+          display: true,
+          text: 't [s]'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+        },
+        y: {
+        type: 'linear',
+        display: true,
+        title: {
+          display: true,
+          text: 'cpu [%]'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+        }
+      },
+      elements: {
+        point: {
+        radius: 0,
+        hoverRadius: 0
+        }
+      }
+      }
+    };
+
+    row.charts.push(new ChartControl('cpu-percent', new Chart(ctx, config), true));
+  }
+
+  createRAMChart(row: BenchmarksResultDescriptionRow) {
+    const measurements = row.baseMeasurements;
+
+    const ctx = document.getElementById('canvas-ram-' + row.result.Id) as HTMLCanvasElement | null;
+    if (!ctx) {
+      console.error('No canvas element found for chart creation - neither ViewChild nor DOM query worked - ' + row.result.Id);
+      return;
+    }
+
+    if (!measurements || !measurements.iterations || measurements.iterations.length === 0) {
+      console.error('No measurements data available for CPU chart');
+      return;
+    }
+
+    // Generate colors for each iteration
+    const colors = this.generateColors(measurements.iterations.length);
+
+    const megabyte = 1024 * 1024;
+    // Create datasets for each iteration
+    const datasets = measurements.iterations.map((iteration, iterIndex) => {
+      const data = iteration.metrics_detailed.map(metric => ({
+        x: metric.elapsed_time,
+        y: metric.process.memory_rss / megabyte
+      }));
+
+      return {
+        label: `Iteration ${iteration.id}`,
+        data: data,
+        borderColor: colors[iterIndex],
+        backgroundColor: colors[iterIndex] + '20', // Add transparency
+        borderWidth: 2,
+        fill: true,
+        tension: 0.1,
+        pointRadius: 0,        // Hide points for line data
+        pointHoverRadius: 0    // Hide points on hover for line data
+      };
+    });
+
+    // Create event markers datasets for each iteration
+    const eventDatasets = measurements.iterations.map((iteration, iterIndex) => {
+      // Convert event timestamps to elapsed time and get corresponding CPU values
+      const eventData = iteration.events.map(event => {
+        // Parse the event timestamp and convert to elapsed time
+        const eventTimestamp = new Date(event.timestamp).getTime() / 1000;
+        const startTimestamp = new Date(iteration.metrics_summary.summary.start_time).getTime() / 1000;
+        const elapsedTime = eventTimestamp - startTimestamp;
+
+        // Find the closest metric data point to interpolate CPU value
+        let cpuValue = 0;
+        if (iteration.metrics_detailed.length > 0) {
+          const closestMetric = iteration.metrics_detailed.reduce((closest, current) => {
+            return Math.abs(current.elapsed_time - elapsedTime) < Math.abs(closest.elapsed_time - elapsedTime)
+              ? current : closest;
+          });
+          cpuValue = closestMetric.process.memory_rss / megabyte;
+        }
+
+        return {
+          x: elapsedTime,
+          y: cpuValue,
+          eventName: event.name,
+          eventSubject: event.subject,
+          eventTimestamp: event.timestamp
+        };
+      }).filter(point => point.x >= 0); // Only include events that occurred after start
+
+      return {
+        label: `Events - Iteration ${iteration.id}`,
+        data: eventData,
+        borderColor: colors[iterIndex],
+        backgroundColor: colors[iterIndex],
+        borderWidth: 3,
+        fill: false,
+        showLine: false, // Only show points, no connecting lines
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        pointStyle: 'circle',
+        pointBorderWidth: 2,
+        pointBorderColor: '#ffffff'
+      };
+    }).filter(dataset => dataset.data.length > 0); // Only include iterations that have events
+
+    // Combine line datasets and event datasets
+    const allDatasets = [...datasets, ...eventDatasets];
+
+    const config: ChartConfiguration<'line'> = {
+      type: 'line',
+      data: {
+      datasets: allDatasets
+      },
+      options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        title: {
+        display: true,
+        text: 'ram(t)'
+        },
+        legend: {
+        display: false,
+        position: 'top'
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          titleColor: '#ffffff',
+          bodyColor: '#ffffff',
+          borderColor: '#ffffff',
+          borderWidth: 1,
+          cornerRadius: 8,
+          callbacks: {
+            label: (context) => {
+              const dataPoint = context.raw as any;
+              const iterationLabel = context.dataset.label || '';
+              const timeValue = context.parsed.x.toFixed(2);
+              const cpuValue = context.parsed.y.toFixed(3);
+
+              // Check if this is an event marker
+              if (dataPoint && dataPoint.eventName) {
+                return [
+                `Event: ${dataPoint.eventName}`,
+                `Subject: ${dataPoint.eventSubject}`,
+                `Time: ${dataPoint.eventTimestamp}`,
+                `Elapsed: ${timeValue}s`,
+                `RAM: ${cpuValue}MB`
+                ];
+              } else {
+                return `${iterationLabel}: ${cpuValue}MB RAM at ${timeValue}s elapsed`;
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+        type: 'linear',
+        display: true,
+        title: {
+          display: true,
+          text: 't [s]'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+        },
+        y: {
+        type: 'linear',
+        display: true,
+        title: {
+          display: true,
+          text: 'ram [MB]'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+        }
+      },
+      elements: {
+        point: {
+        radius: 0,
+        hoverRadius: 0
+        }
+      }
+      }
+    };
+
+    row.charts.push(new ChartControl('cpu-percent', new Chart(ctx, config), true));
+  }
+
+  createIOWriteChart(row: BenchmarksResultDescriptionRow) {
+    const measurements = row.baseMeasurements;
+
+    const ctx = document.getElementById('canvas-io-write-' + row.result.Id) as HTMLCanvasElement | null;
+    if (!ctx) {
+      console.error('No canvas element found for chart creation - neither ViewChild nor DOM query worked - ' + row.result.Id);
+      return;
+    }
+
+    if (!measurements || !measurements.iterations || measurements.iterations.length === 0) {
+      console.error('No measurements data available for CPU chart');
+      return;
+    }
+
+    // Generate colors for each iteration
+    const colors = this.generateColors(measurements.iterations.length);
+
+    const megabyte = 1024 * 1024;
+    // Create datasets for each iteration
+    const datasets = measurements.iterations.map((iteration, iterIndex) => {
+      const data = iteration.metrics_detailed.map(metric => ({
+        x: metric.elapsed_time,
+        y: metric.process.io_write_bytes / megabyte
+      }));
+
+      return {
+        label: `Iteration ${iteration.id}`,
+        data: data,
+        borderColor: colors[iterIndex],
+        backgroundColor: colors[iterIndex] + '20', // Add transparency
+        borderWidth: 2,
+        fill: true,
+        tension: 0.1,
+        pointRadius: 0,        // Hide points for line data
+        pointHoverRadius: 0    // Hide points on hover for line data
+      };
+    });
+
+    // Create event markers datasets for each iteration
+    const eventDatasets = measurements.iterations.map((iteration, iterIndex) => {
+      // Convert event timestamps to elapsed time and get corresponding CPU values
+      const eventData = iteration.events.map(event => {
+        // Parse the event timestamp and convert to elapsed time
+        const eventTimestamp = new Date(event.timestamp).getTime() / 1000;
+        const startTimestamp = new Date(iteration.metrics_summary.summary.start_time).getTime() / 1000;
+        const elapsedTime = eventTimestamp - startTimestamp;
+
+        // Find the closest metric data point to interpolate CPU value
+        let cpuValue = 0;
+        if (iteration.metrics_detailed.length > 0) {
+          const closestMetric = iteration.metrics_detailed.reduce((closest, current) => {
+            return Math.abs(current.elapsed_time - elapsedTime) < Math.abs(closest.elapsed_time - elapsedTime)
+              ? current : closest;
+          });
+          cpuValue = closestMetric.process.io_write_bytes / megabyte;
+        }
+
+        return {
+          x: elapsedTime,
+          y: cpuValue,
+          eventName: event.name,
+          eventSubject: event.subject,
+          eventTimestamp: event.timestamp
+        };
+      }).filter(point => point.x >= 0); // Only include events that occurred after start
+
+      return {
+        label: `Events - Iteration ${iteration.id}`,
+        data: eventData,
+        borderColor: colors[iterIndex],
+        backgroundColor: colors[iterIndex],
+        borderWidth: 3,
+        fill: false,
+        showLine: false, // Only show points, no connecting lines
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        pointStyle: 'circle',
+        pointBorderWidth: 2,
+        pointBorderColor: '#ffffff'
+      };
+    }).filter(dataset => dataset.data.length > 0); // Only include iterations that have events
+
+    // Combine line datasets and event datasets
+    const allDatasets = [...datasets, ...eventDatasets];
+
+    const config: ChartConfiguration<'line'> = {
+      type: 'line',
+      data: {
+      datasets: allDatasets
+      },
+      options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        title: {
+        display: true,
+        text: 'io-write(t)'
+        },
+        legend: {
+        display: false,
+        position: 'top'
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          titleColor: '#ffffff',
+          bodyColor: '#ffffff',
+          borderColor: '#ffffff',
+          borderWidth: 1,
+          cornerRadius: 8,
+          callbacks: {
+            label: (context) => {
+              const dataPoint = context.raw as any;
+              const iterationLabel = context.dataset.label || '';
+              const timeValue = context.parsed.x.toFixed(2);
+              const cpuValue = context.parsed.y.toFixed(3);
+
+              // Check if this is an event marker
+              if (dataPoint && dataPoint.eventName) {
+                return [
+                `Event: ${dataPoint.eventName}`,
+                `Subject: ${dataPoint.eventSubject}`,
+                `Time: ${dataPoint.eventTimestamp}`,
+                `Elapsed: ${timeValue}s`,
+                `I/O Write: ${cpuValue}MB`
+                ];
+              } else {
+                return `${iterationLabel}: ${cpuValue}MB I/O Write at ${timeValue}s elapsed`;
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+        type: 'linear',
+        display: true,
+        title: {
+          display: true,
+          text: 't [s]'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+        },
+        y: {
+        type: 'linear',
+        display: true,
+        title: {
+          display: true,
+          text: 'io-write [MB]'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+        }
+      },
+      elements: {
+        point: {
+        radius: 0,
+        hoverRadius: 0
+        }
+      }
+      }
+    };
+
+    row.charts.push(new ChartControl('io-write', new Chart(ctx, config), true));
+  }
+
+  createIOReadChart(row: BenchmarksResultDescriptionRow) {
+    const measurements = row.baseMeasurements;
+
+    const ctx = document.getElementById('canvas-io-read-' + row.result.Id) as HTMLCanvasElement | null;
+    if (!ctx) {
+      console.error('No canvas element found for chart creation - neither ViewChild nor DOM query worked - ' + row.result.Id);
+      return;
+    }
+
+    if (!measurements || !measurements.iterations || measurements.iterations.length === 0) {
+      console.error('No measurements data available for CPU chart');
+      return;
+    }
+
+    // Generate colors for each iteration
+    const colors = this.generateColors(measurements.iterations.length);
+
+    const megabyte = 1024 * 1024;
+    // Create datasets for each iteration
+    const datasets = measurements.iterations.map((iteration, iterIndex) => {
+      const data = iteration.metrics_detailed.map(metric => ({
+        x: metric.elapsed_time,
+        y: metric.process.io_read_bytes / megabyte
+      }));
+
+      return {
+        label: `Iteration ${iteration.id}`,
+        data: data,
+        borderColor: colors[iterIndex],
+        backgroundColor: colors[iterIndex] + '20', // Add transparency
+        borderWidth: 2,
+        fill: true,
+        tension: 0.1,
+        pointRadius: 0,        // Hide points for line data
+        pointHoverRadius: 0    // Hide points on hover for line data
+      };
+    });
+
+    // Create event markers datasets for each iteration
+    const eventDatasets = measurements.iterations.map((iteration, iterIndex) => {
+      // Convert event timestamps to elapsed time and get corresponding CPU values
+      const eventData = iteration.events.map(event => {
+        // Parse the event timestamp and convert to elapsed time
+        const eventTimestamp = new Date(event.timestamp).getTime() / 1000;
+        const startTimestamp = new Date(iteration.metrics_summary.summary.start_time).getTime() / 1000;
+        const elapsedTime = eventTimestamp - startTimestamp;
+
+        // Find the closest metric data point to interpolate CPU value
+        let cpuValue = 0;
+        if (iteration.metrics_detailed.length > 0) {
+          const closestMetric = iteration.metrics_detailed.reduce((closest, current) => {
+            return Math.abs(current.elapsed_time - elapsedTime) < Math.abs(closest.elapsed_time - elapsedTime)
+              ? current : closest;
+          });
+          cpuValue = closestMetric.process.memory_rss / megabyte;
+        }
+
+        return {
+          x: elapsedTime,
+          y: cpuValue,
+          eventName: event.name,
+          eventSubject: event.subject,
+          eventTimestamp: event.timestamp
+        };
+      }).filter(point => point.x >= 0); // Only include events that occurred after start
+
+      return {
+        label: `Events - Iteration ${iteration.id}`,
+        data: eventData,
+        borderColor: colors[iterIndex],
+        backgroundColor: colors[iterIndex],
+        borderWidth: 3,
+        fill: false,
+        showLine: false, // Only show points, no connecting lines
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        pointStyle: 'circle',
+        pointBorderWidth: 2,
+        pointBorderColor: '#ffffff'
+      };
+    }).filter(dataset => dataset.data.length > 0); // Only include iterations that have events
+
+    // Combine line datasets and event datasets
+    const allDatasets = [...datasets, ...eventDatasets];
+
+    const config: ChartConfiguration<'line'> = {
+      type: 'line',
+      data: {
+      datasets: allDatasets
+      },
+      options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        title: {
+        display: true,
+        text: 'io-read(t)'
+        },
+        legend: {
+        display: false,
+        position: 'top'
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          titleColor: '#ffffff',
+          bodyColor: '#ffffff',
+          borderColor: '#ffffff',
+          borderWidth: 1,
+          cornerRadius: 8,
+          callbacks: {
+            label: (context) => {
+              const dataPoint = context.raw as any;
+              const iterationLabel = context.dataset.label || '';
+              const timeValue = context.parsed.x.toFixed(2);
+              const cpuValue = context.parsed.y.toFixed(3);
+
+              // Check if this is an event marker
+              if (dataPoint && dataPoint.eventName) {
+                return [
+                `Event: ${dataPoint.eventName}`,
+                `Subject: ${dataPoint.eventSubject}`,
+                `Time: ${dataPoint.eventTimestamp}`,
+                `Elapsed: ${timeValue}s`,
+                `I/O Read: ${cpuValue}MB`
+                ];
+              } else {
+                return `${iterationLabel}: ${cpuValue}MB I/O Read at ${timeValue}s elapsed`;
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+        type: 'linear',
+        display: true,
+        title: {
+          display: true,
+          text: 't [s]'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+        },
+        y: {
+        type: 'linear',
+        display: true,
+        title: {
+          display: true,
+          text: 'io-read [MB]'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+        }
+      },
+      elements: {
+        point: {
+        radius: 0,
+        hoverRadius: 0
+        }
+      }
+      }
+    };
+
+    row.charts.push(new ChartControl('io-read', new Chart(ctx, config), true));
+  }
+
+  createNetworkSentChart(row: BenchmarksResultDescriptionRow) {
+    const measurements = row.baseMeasurements;
+
+    const ctx = document.getElementById('canvas-network-sent-' + row.result.Id) as HTMLCanvasElement | null;
+    if (!ctx) {
+      console.error('No canvas element found for chart creation - neither ViewChild nor DOM query worked - ' + row.result.Id);
+      return;
+    }
+
+    if (!measurements || !measurements.iterations || measurements.iterations.length === 0) {
+      console.error('No measurements data available for CPU chart');
+      return;
+    }
+
+    // Generate colors for each iteration
+    const colors = this.generateColors(measurements.iterations.length);
+
+    const megabyte = 1024 * 1024;
+    // Create datasets for each iteration
+    const datasets = measurements.iterations.map((iteration, iterIndex) => {
+      const data = iteration.metrics_detailed.map(metric => ({
+        x: metric.elapsed_time,
+        y: metric.process.network_bytes_sent / megabyte
+      }));
+
+      return {
+        label: `Iteration ${iteration.id}`,
+        data: data,
+        borderColor: colors[iterIndex],
+        backgroundColor: colors[iterIndex] + '20', // Add transparency
+        borderWidth: 2,
+        fill: true,
+        tension: 0.1,
+        pointRadius: 0,        // Hide points for line data
+        pointHoverRadius: 0    // Hide points on hover for line data
+      };
+    });
+
+    // Create event markers datasets for each iteration
+    const eventDatasets = measurements.iterations.map((iteration, iterIndex) => {
+      // Convert event timestamps to elapsed time and get corresponding CPU values
+      const eventData = iteration.events.map(event => {
+        // Parse the event timestamp and convert to elapsed time
+        const eventTimestamp = new Date(event.timestamp).getTime() / 1000;
+        const startTimestamp = new Date(iteration.metrics_summary.summary.start_time).getTime() / 1000;
+        const elapsedTime = eventTimestamp - startTimestamp;
+
+        // Find the closest metric data point to interpolate CPU value
+        let cpuValue = 0;
+        if (iteration.metrics_detailed.length > 0) {
+          const closestMetric = iteration.metrics_detailed.reduce((closest, current) => {
+            return Math.abs(current.elapsed_time - elapsedTime) < Math.abs(closest.elapsed_time - elapsedTime)
+              ? current : closest;
+          });
+          cpuValue = closestMetric.process.network_bytes_sent / megabyte;
+        }
+
+        return {
+          x: elapsedTime,
+          y: cpuValue,
+          eventName: event.name,
+          eventSubject: event.subject,
+          eventTimestamp: event.timestamp
+        };
+      }).filter(point => point.x >= 0); // Only include events that occurred after start
+
+      return {
+        label: `Events - Iteration ${iteration.id}`,
+        data: eventData,
+        borderColor: colors[iterIndex],
+        backgroundColor: colors[iterIndex],
+        borderWidth: 3,
+        fill: false,
+        showLine: false, // Only show points, no connecting lines
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        pointStyle: 'circle',
+        pointBorderWidth: 2,
+        pointBorderColor: '#ffffff'
+      };
+    }).filter(dataset => dataset.data.length > 0); // Only include iterations that have events
+
+    // Combine line datasets and event datasets
+    const allDatasets = [...datasets, ...eventDatasets];
+
+    const config: ChartConfiguration<'line'> = {
+      type: 'line',
+      data: {
+      datasets: allDatasets
+      },
+      options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        title: {
+        display: true,
+        text: 'network-sent(t)'
+        },
+        legend: {
+        display: false,
+        position: 'top'
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          titleColor: '#ffffff',
+          bodyColor: '#ffffff',
+          borderColor: '#ffffff',
+          borderWidth: 1,
+          cornerRadius: 8,
+          callbacks: {
+            label: (context) => {
+              const dataPoint = context.raw as any;
+              const iterationLabel = context.dataset.label || '';
+              const timeValue = context.parsed.x.toFixed(2);
+              const cpuValue = context.parsed.y.toFixed(3);
+
+              // Check if this is an event marker
+              if (dataPoint && dataPoint.eventName) {
+                return [
+                `Event: ${dataPoint.eventName}`,
+                `Subject: ${dataPoint.eventSubject}`,
+                `Time: ${dataPoint.eventTimestamp}`,
+                `Elapsed: ${timeValue}s`,
+                `Network Sent: ${cpuValue}MB`
+                ];
+              } else {
+                return `${iterationLabel}: ${cpuValue}MB Network Sent at ${timeValue}s elapsed`;
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+        type: 'linear',
+        display: true,
+        title: {
+          display: true,
+          text: 't [s]'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+        },
+        y: {
+        type: 'linear',
+        display: true,
+        title: {
+          display: true,
+          text: 'network-sent [MB]'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+        }
+      },
+      elements: {
+        point: {
+        radius: 0,
+        hoverRadius: 0
+        }
+      }
+      }
+    };
+
+    row.charts.push(new ChartControl('network-sent', new Chart(ctx, config), true));
+  }
+
+  createNetworkRecvChart(row: BenchmarksResultDescriptionRow) {
+    const measurements = row.baseMeasurements;
+
+    const ctx = document.getElementById('canvas-network-recv-' + row.result.Id) as HTMLCanvasElement | null;
+    if (!ctx) {
+      console.error('No canvas element found for chart creation - neither ViewChild nor DOM query worked - ' + row.result.Id);
+      return;
+    }
+
+    if (!measurements || !measurements.iterations || measurements.iterations.length === 0) {
+      console.error('No measurements data available for CPU chart');
+      return;
+    }
+
+    // Generate colors for each iteration
+    const colors = this.generateColors(measurements.iterations.length);
+
+    const megabyte = 1024 * 1024;
+    // Create datasets for each iteration
+    const datasets = measurements.iterations.map((iteration, iterIndex) => {
+      const data = iteration.metrics_detailed.map(metric => ({
+        x: metric.elapsed_time,
+        y: metric.process.network_bytes_recv / megabyte
+      }));
+
+      return {
+        label: `Iteration ${iteration.id}`,
+        data: data,
+        borderColor: colors[iterIndex],
+        backgroundColor: colors[iterIndex] + '20', // Add transparency
+        borderWidth: 2,
+        fill: true,
+        tension: 0.1,
+        pointRadius: 0,        // Hide points for line data
+        pointHoverRadius: 0    // Hide points on hover for line data
+      };
+    });
+
+    // Create event markers datasets for each iteration
+    const eventDatasets = measurements.iterations.map((iteration, iterIndex) => {
+      // Convert event timestamps to elapsed time and get corresponding CPU values
+      const eventData = iteration.events.map(event => {
+        // Parse the event timestamp and convert to elapsed time
+        const eventTimestamp = new Date(event.timestamp).getTime() / 1000;
+        const startTimestamp = new Date(iteration.metrics_summary.summary.start_time).getTime() / 1000;
+        const elapsedTime = eventTimestamp - startTimestamp;
+
+        // Find the closest metric data point to interpolate CPU value
+        let cpuValue = 0;
+        if (iteration.metrics_detailed.length > 0) {
+          const closestMetric = iteration.metrics_detailed.reduce((closest, current) => {
+            return Math.abs(current.elapsed_time - elapsedTime) < Math.abs(closest.elapsed_time - elapsedTime)
+              ? current : closest;
+          });
+          cpuValue = closestMetric.process.network_bytes_recv / megabyte;
+        }
+
+        return {
+          x: elapsedTime,
+          y: cpuValue,
+          eventName: event.name,
+          eventSubject: event.subject,
+          eventTimestamp: event.timestamp
+        };
+      }).filter(point => point.x >= 0); // Only include events that occurred after start
+
+      return {
+        label: `Events - Iteration ${iteration.id}`,
+        data: eventData,
+        borderColor: colors[iterIndex],
+        backgroundColor: colors[iterIndex],
+        borderWidth: 3,
+        fill: false,
+        showLine: false, // Only show points, no connecting lines
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        pointStyle: 'circle',
+        pointBorderWidth: 2,
+        pointBorderColor: '#ffffff'
+      };
+    }).filter(dataset => dataset.data.length > 0); // Only include iterations that have events
+
+    // Combine line datasets and event datasets
+    const allDatasets = [...datasets, ...eventDatasets];
+
+    const config: ChartConfiguration<'line'> = {
+      type: 'line',
+      data: {
+      datasets: allDatasets
+      },
+      options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        title: {
+        display: true,
+        text: 'network-recv(t)'
+        },
+        legend: {
+        display: false,
+        position: 'top'
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          titleColor: '#ffffff',
+          bodyColor: '#ffffff',
+          borderColor: '#ffffff',
+          borderWidth: 1,
+          cornerRadius: 8,
+          callbacks: {
+            label: (context) => {
+              const dataPoint = context.raw as any;
+              const iterationLabel = context.dataset.label || '';
+              const timeValue = context.parsed.x.toFixed(2);
+              const cpuValue = context.parsed.y.toFixed(3);
+
+              // Check if this is an event marker
+              if (dataPoint && dataPoint.eventName) {
+                return [
+                `Event: ${dataPoint.eventName}`,
+                `Subject: ${dataPoint.eventSubject}`,
+                `Time: ${dataPoint.eventTimestamp}`,
+                `Elapsed: ${timeValue}s`,
+                `Network Receive: ${cpuValue}MB`
+                ];
+              } else {
+                return `${iterationLabel}: ${cpuValue}MB Network Receive at ${timeValue}s elapsed`;
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+        type: 'linear',
+        display: true,
+        title: {
+          display: true,
+          text: 't [s]'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+        },
+        y: {
+        type: 'linear',
+        display: true,
+        title: {
+          display: true,
+          text: 'network-recv [MB]'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+        }
+      },
+      elements: {
+        point: {
+        radius: 0,
+        hoverRadius: 0
+        }
+      }
+      }
+    };
+
+    row.charts.push(new ChartControl('network-recv', new Chart(ctx, config), true));
   }
 
   toggleCpuChartLegendDropdown() {
     this.cpuChartLegendDropdownOpen = !this.cpuChartLegendDropdownOpen;
   }
 
-  toggleCpuChartDataset(datasetKey: string) {
-    if (!this.cpuTotalChart) return;
+  toggleCpuChartDataset(row: BenchmarksResultDescriptionRow, datasetKey: string) {
+    if (row.charts.length === 0) return;
 
     const datasetIndex = parseInt(datasetKey.replace('dataset_', ''));
-    const dataset = this.cpuTotalChart.data.datasets?.[datasetIndex];
+    const dataset = row.charts[0].chart.data.datasets?.[datasetIndex];
 
     if (dataset) {
       dataset.hidden = !dataset.hidden;
-      this.cpuChartDatasetVisibility[datasetKey] = !dataset.hidden;
-      this.cpuTotalChart.update();
+
+      row.charts.forEach(chart => {
+        if (chart instanceof ChartControl) {
+          chart.chartDatasetVisibility[datasetKey] = !dataset.hidden;
+          chart.chart.update();
+        }
+      });
     }
   }
 
-  getCpuChartDatasetLabel(datasetKey: string): string {
-    if (!this.cpuTotalChart) return '';
+  getCpuChartDatasetLabel(row: BenchmarksResultDescriptionRow, datasetKey: string): string {
+    if (row.charts.length === 0) return '';
 
     const datasetIndex = parseInt(datasetKey.replace('dataset_', ''));
-    const dataset = this.cpuTotalChart.data.datasets?.[datasetIndex];
+    const dataset = row.charts[0].chart.data.datasets?.[datasetIndex];
 
     return dataset?.label || `Dataset ${datasetIndex + 1}`;
   }
 
-  getCpuChartDatasetKeys(): string[] {
-    return Object.keys(this.cpuChartDatasetVisibility);
+  getCpuChartDatasetKeys(row: BenchmarksResultDescriptionRow): string[] {
+    if (row.charts.length === 0) return [];
+
+    return Object.keys(row.charts[0].chartDatasetVisibility);
   }
 
   @HostListener('document:click', ['$event'])
@@ -502,35 +1722,27 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
     return colors.slice(0, count);
   }
 
-  private createStatusChart(benchmarksRunDetails: BenchmarksRunDetailsDescription) {
+  createStatusChart(benchmarksRunDetails: BenchmarksRunDetailsDescription, canvasId?: string): Chart | null {
     if (!benchmarksRunDetails) {
       console.log('No benchmarks run details available for chart creation.');
-      return;
+      return null;
     }
 
-    console.log('Attempting to create chart, statusChartRef:', this.statusChartRef);
+    console.log('Attempting to create chart');
 
-    if (!this.statusChartRef || !this.statusChartRef.nativeElement) {
-      console.log('Canvas element not found via ViewChild, trying direct DOM access as fallback...');
-
-      // Fallback to direct DOM access
-      const ctx = document.querySelector('canvas[data-chart="results"]') as HTMLCanvasElement;
-      if (!ctx) {
-        console.error('No canvas element found for chart creation - neither ViewChild nor DOM query worked');
-        return;
-      }
-
-      console.log('Using fallback canvas element');
-      this.createChartWithContext(ctx, benchmarksRunDetails);
-      return;
+    // Use either provided canvasId or default selector
+    const selector = canvasId ? `#${canvasId}` : '#main-results-chart';
+    const ctx = document.querySelector(selector) as HTMLCanvasElement;
+    if (!ctx) {
+      console.error(`No canvas element found for chart creation with selector: ${selector}`);
+      return null;
     }
 
-    const ctx = this.statusChartRef.nativeElement;
-    console.log('Creating status chart with ViewChild canvas, data:', benchmarksRunDetails);
-    this.createChartWithContext(ctx, benchmarksRunDetails);
+    console.log('Creating status chart with canvas, data:', benchmarksRunDetails);
+    return this.createChartWithContext(ctx, benchmarksRunDetails);
   }
 
-  private createChartWithContext(ctx: HTMLCanvasElement, benchmarksRunDetails: BenchmarksRunDetailsDescription) {
+  private createChartWithContext(ctx: HTMLCanvasElement, benchmarksRunDetails: BenchmarksRunDetailsDescription): Chart {
     const testCounts = [
       benchmarksRunDetails.CompletedBenchmarks,
       benchmarksRunDetails.RunningBenchmarks,
@@ -616,27 +1828,36 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
       }
     };
 
-    this.statusChart = new Chart(ctx, config);
+    const chart = new Chart(ctx, config);
+
+    // Store the main status chart reference for cleanup
+    if (!this.statusChart) {
+      this.statusChart = chart;
+    }
+
+    return chart;
   }
 
-  // downloadTempDirArchive(testResultId: number) {
-  //   this.testsApiHttpClientService.downloadTempDirArchive(testResultId).subscribe(
-  //     (response: Blob) => {
-  //       const blob = new Blob([response], { type: 'application/zip' });
-  //       const url = URL.createObjectURL(blob);
-  //       const a = document.createElement('a');
-  //       a.href = url;
-  //       a.download = `temp_dir_${testResultId}.7z`;
-  //       document.body.appendChild(a);
-  //       a.click();
-  //       URL.revokeObjectURL(url);
-  //       a.remove();
-  //     },
-  //     (error: any) => {
-  //       console.error('Error downloading archive:', error);
-  //     }
-  //   );
-  // }
+  // Method to create multiple results charts dynamically
+  createMultipleResultsCharts(chartConfigs: Array<{id: string, data: BenchmarksRunDetailsDescription}>): void {
+    chartConfigs.forEach(config => {
+      setTimeout(() => {
+        const chart = this.createStatusChart(config.data, config.id);
+        if (chart) {
+          this.resultCharts.set(config.id, chart);
+        }
+      }, 0);
+    });
+  }
+
+  // Method to destroy a specific results chart
+  destroyResultsChart(chartId: string): void {
+    const chart = this.resultCharts.get(chartId);
+    if (chart) {
+      chart.destroy();
+      this.resultCharts.delete(chartId);
+    }
+  }
 
   renderAllRows(): void {
     // Use setTimeout to ensure DOM has been updated
@@ -663,30 +1884,6 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
       element.className = isHovering ? 'row-inactive-hovering' : 'row-inactive';
     }
   }
-
-  // markRowReviewed(row: TestsRunResultDescriptionRow, event: MouseEvent): void {
-  //   row.checked = true;
-
-  //   this.filteredTestsRunResultsRows.forEach(row => row.active = false);
-  //   row.active = true;
-
-  //   this.renderAllRows();
-  // }
-
-  // removeRowFromReviewed(row: TestsRunResultDescriptionRow, event: MouseEvent): void {
-  //   row.checked = false;
-  //   this.filteredTestsRunResultsRows.forEach(row => row.active = false);
-
-  //   this.renderAllRows();
-  // }
-
-  // onRowMouseOver(row: TestsRunResultDescriptionRow, event: MouseEvent): void {
-  //   this.updateRowClass(event.currentTarget as HTMLElement, row, true);
-  // }
-
-  // onRowMouseOut(row: TestsRunResultDescriptionRow, event: MouseEvent): void {
-  //   this.updateRowClass(event.currentTarget as HTMLElement, row, false);
-  // }
 
   sortTable(column: string): void {
     const isCurrentSort = this.sortDirection[column];
@@ -756,31 +1953,6 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
       });
     }, 0);
   }
-
-  // onSearchChange(event: any): void {
-  //   this.searchTerm = event.target.value.toLowerCase();
-  //   this.filterData();
-  // }
-
-  // filterData(): void {
-  //   if (!this.searchTerm.trim()) {
-  //     this.filteredTestsRunResultsRows = [...this.testsRunResultsRows];
-  //   } else {
-  //     this.filteredTestsRunResultsRows = this.testsRunResultsRows.filter(row => {
-  //       const testsRun = row.result;
-
-  //       // Search across all relevant fields
-  //       const searchableContent = [
-  //         testsRun.TestPath || '',
-  //         testsRun.TestName || '',
-  //       ].join(' ').toLowerCase();
-
-  //       return searchableContent.includes(this.searchTerm);
-  //     });
-  //   }
-
-  //   this.renderAllRows();
-  // }
 
   formatExecutionTime(duration: number | null): string {
     if (duration === null) {
