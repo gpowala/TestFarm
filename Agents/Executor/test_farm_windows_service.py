@@ -139,7 +139,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                 logging.error(f"Error during host shutdown: {e}")
 
     def install_artifacts(self, artifacts):
-        if artifacts is None or artifacts.count() == 0:
+        if artifacts is None or len(artifacts) == 0:
             logging.info("No artifacts to install.")
             return 0
         
