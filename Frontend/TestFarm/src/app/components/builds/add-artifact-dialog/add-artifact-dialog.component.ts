@@ -1,8 +1,5 @@
-import { Component, Inject, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { Artifact } from 'src/app/models/artifact';
 
 @Component({
@@ -10,20 +7,23 @@ import { Artifact } from 'src/app/models/artifact';
   templateUrl: './add-artifact-dialog.component.html',
   styleUrls: ['./add-artifact-dialog.component.css']
 })
-export class AddArtifactDialogComponent implements OnInit, AfterViewInit {
+export class AddArtifactDialogComponent {
+  @Input() artifactDefinitionId: number | undefined;
+  @Input() artifactDefinitionName: string | undefined;
+
+  @Output() artifactAdded = new EventEmitter<Partial<Artifact>>();
+  @Output() artifactDialogClosed = new EventEmitter<void>();
+
   artifactForm: FormGroup;
-  readonly separatorKeysCodes = [ENTER, COMMA] as const;
   tags: string[] = [];
+  newTagInput: string = '';
 
   constructor(
-    private fb: FormBuilder,
-    public dialogRef: MatDialogRef<AddArtifactDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any,
-    private cdr: ChangeDetectorRef
+    private fb: FormBuilder
   ) {
     this.artifactForm = this.fb.group({
       buildId: ['', [Validators.required]],
-      name: ['', [Validators.required]],
+      buildName: ['', [Validators.required]],
       repository: ['', [Validators.required]],
       branch: ['', [Validators.required]],
       revision: ['', [Validators.required]],
@@ -33,30 +33,25 @@ export class AddArtifactDialogComponent implements OnInit, AfterViewInit {
     });
   }
 
-  ngOnInit(): void {
-    // Initial form setup can go here
-  }
-
-  ngAfterViewInit(): void {
-    // Force detection of changes to make sure form elements are properly rendered
-    setTimeout(() => {
-      this.cdr.detectChanges();
-    }, 0);
-  }
-
   get tagsFormArray(): FormArray {
     return this.artifactForm.get('tags') as FormArray;
   }
 
-  addTag(event: MatChipInputEvent): void {
-    const value = (event.value || '').trim();
+  addTag(): void {
+    const value = this.newTagInput.trim();
 
-    if (value) {
+    if (value && !this.tags.includes(value)) {
       this.tags.push(value);
       this.tagsFormArray.push(this.fb.control(value));
+      this.newTagInput = '';
     }
+  }
 
-    event.chipInput!.clear();
+  onTagInputKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault();
+      this.addTag();
+    }
   }
 
   removeTag(tag: string): void {
@@ -66,10 +61,28 @@ export class AddArtifactDialogComponent implements OnInit, AfterViewInit {
       this.tags.splice(index, 1);
       this.tagsFormArray.removeAt(index);
     }
-  }  onSubmit(): void {
+  }
+
+  // Form field validation helpers
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.artifactForm.get(fieldName);
+    return !!(field && field.invalid && (field.dirty || field.touched));
+  }
+
+  getFieldError(fieldName: string): string {
+    const field = this.artifactForm.get(fieldName);
+    if (field && field.errors) {
+      if (field.errors['required']) {
+        return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
+      }
+    }
+    return '';
+  }
+
+  onSubmit(): void {
     if (this.artifactForm.valid) {
       const artifact: Partial<Artifact> = {
-        ArtifactDefinitionId: this.data.selectedArtifact.Id,
+        ArtifactDefinitionId: this.artifactDefinitionId,
         BuildId: this.artifactForm.get('buildId')?.value,
         BuildName: this.artifactForm.get('name')?.value,
         Repository: this.artifactForm.get('repository')?.value,
@@ -80,11 +93,11 @@ export class AddArtifactDialogComponent implements OnInit, AfterViewInit {
         Tags: this.tags
       };
 
-      this.dialogRef.close(artifact);
+      this.artifactAdded.emit(artifact);
     }
   }
 
   onCancel(): void {
-    this.dialogRef.close();
+    this.artifactDialogClosed.emit();
   }
 }

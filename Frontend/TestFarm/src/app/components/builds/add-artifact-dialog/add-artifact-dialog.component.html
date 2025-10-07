@@ -1,111 +1,178 @@
-<div class="dialog-container">
-  <h2 mat-dialog-title>Add New Artifact For {{data.selectedArtifact?.Name}}</h2>
-
-  <mat-dialog-content>
-    <form [formGroup]="artifactForm">
-      <div class="form-field">
-        <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Build ID</mat-label>
-          <input matInput formControlName="buildId" placeholder="Enter build ID" required>
-          <mat-error *ngIf="artifactForm.get('buildId')?.hasError('required')">
-            Build ID is required
-          </mat-error>
-        </mat-form-field>
+<div class="dialog-overlay" (click)="onCancel()">
+  <div class="dialog-container" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <div>
+        <h2 class="dialog-title" style="width: 100%;">Add Artifact</h2>
+        <div class="dialog-subtitle" style="margin-top: 0.5rem; font-size: small; color: #6c757d;">for {{ artifactDefinitionName }}</div>
       </div>
+      <button class="close-btn" (click)="onCancel()" type="button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
 
-      <div class="form-field">
-        <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Build Name</mat-label>
-          <input matInput formControlName="name" placeholder="Enter build name" required>
-          <mat-error *ngIf="artifactForm.get('name')?.hasError('required')">
-            Build Name is required
-          </mat-error>
-        </mat-form-field>
-      </div>
+    <div class="dialog-content">
+      <form [formGroup]="artifactForm">
+        <!-- Build ID Field -->
+        <div class="form-field">
+          <label class="form-label" for="buildId">Build ID <span class="required">*</span></label>
+          <input
+            id="buildId"
+            type="text"
+            class="form-input"
+            [class.form-input-error]="isFieldInvalid('buildId')"
+            formControlName="buildId"
+            placeholder="Enter build ID">
+          <div class="form-error" *ngIf="isFieldInvalid('buildId')">
+            {{ getFieldError('buildId') }}
+          </div>
+        </div>
 
-      <div class="form-field">
-        <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Repository</mat-label>
-          <input matInput formControlName="repository" placeholder="Enter repository" required>
-          <mat-error *ngIf="artifactForm.get('repository')?.hasError('required')">
-            Repository is required
-          </mat-error>
-        </mat-form-field>
-      </div>
+        <!-- Build Name Field -->
+        <div class="form-field">
+          <label class="form-label" for="buildName">Build Name <span class="required">*</span></label>
+          <input
+            id="buildName"
+            type="text"
+            class="form-input"
+            [class.form-input-error]="isFieldInvalid('buildName')"
+            formControlName="buildName"
+            placeholder="Enter build name">
+          <div class="form-error" *ngIf="isFieldInvalid('buildName')">
+            {{ getFieldError('buildName') }}
+          </div>
+        </div>
 
-      <div class="form-field">
-        <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Branch</mat-label>
-          <input matInput formControlName="branch" placeholder="Enter branch" required>
-          <mat-error *ngIf="artifactForm.get('branch')?.hasError('required')">
-            Branch is required
-          </mat-error>
-        </mat-form-field>
-      </div>
+        <!-- Repository Field -->
+        <div class="form-field">
+          <label class="form-label" for="repository">Repository <span class="required">*</span></label>
+          <input
+            id="repository"
+            type="text"
+            class="form-input"
+            [class.form-input-error]="isFieldInvalid('repository')"
+            formControlName="repository"
+            placeholder="Enter repository">
+          <div class="form-error" *ngIf="isFieldInvalid('repository')">
+            {{ getFieldError('repository') }}
+          </div>
+        </div>
 
-      <div class="form-field">
-        <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Revision</mat-label>
-          <input matInput formControlName="revision" placeholder="Enter revision" required>
-          <mat-error *ngIf="artifactForm.get('revision')?.hasError('required')">
-            Revision is required
-          </mat-error>
-        </mat-form-field>
-      </div>
+        <!-- Branch Field -->
+        <div class="form-field">
+          <label class="form-label" for="branch">Branch <span class="required">*</span></label>
+          <input
+            id="branch"
+            type="text"
+            class="form-input"
+            [class.form-input-error]="isFieldInvalid('branch')"
+            formControlName="branch"
+            placeholder="Enter branch">
+          <div class="form-error" *ngIf="isFieldInvalid('branch')">
+            {{ getFieldError('branch') }}
+          </div>
+        </div>
 
-      <div class="form-field">
-        <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Work Item URL</mat-label>
-          <input matInput formControlName="workItemUrl" placeholder="Enter work item URL" required>
-          <mat-error *ngIf="artifactForm.get('workItemUrl')?.hasError('required')">
-            Work Item URL is required
-          </mat-error>
-        </mat-form-field>
-      </div>
+        <!-- Revision Field -->
+        <div class="form-field">
+          <label class="form-label" for="revision">Revision <span class="required">*</span></label>
+          <input
+            id="revision"
+            type="text"
+            class="form-input"
+            [class.form-input-error]="isFieldInvalid('revision')"
+            formControlName="revision"
+            placeholder="Enter revision">
+          <div class="form-error" *ngIf="isFieldInvalid('revision')">
+            {{ getFieldError('revision') }}
+          </div>
+        </div>
 
-      <div class="form-field">
-        <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Build Page URL</mat-label>
-          <input matInput formControlName="buildPageUrl" placeholder="Enter build page URL" required>
-          <mat-error *ngIf="artifactForm.get('buildPageUrl')?.hasError('required')">
-            Build Page URL is required
-          </mat-error>
-        </mat-form-field>
-      </div>
+        <!-- Work Item URL Field -->
+        <div class="form-field">
+          <label class="form-label" for="workItemUrl">Work Item URL <span class="required">*</span></label>
+          <input
+            id="workItemUrl"
+            type="text"
+            class="form-input"
+            [class.form-input-error]="isFieldInvalid('workItemUrl')"
+            formControlName="workItemUrl"
+            placeholder="Enter work item URL">
+          <div class="form-error" *ngIf="isFieldInvalid('workItemUrl')">
+            {{ getFieldError('workItemUrl') }}
+          </div>
+        </div>
 
-      <div class="form-field">
-        <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Tags</mat-label>
-          <mat-chip-grid #chipGrid aria-label="Enter tags">
-            <mat-chip-row
-              *ngFor="let tag of tags"
-              (removed)="removeTag(tag)"
-              [editable]="true"
-              [removable]="true">
-              {{tag}}
-              <button matChipRemove aria-label="'remove ' + tag">
-                <mat-icon>cancel</mat-icon>
+        <!-- Build Page URL Field -->
+        <div class="form-field">
+          <label class="form-label" for="buildPageUrl">Build Page URL <span class="required">*</span></label>
+          <input
+            id="buildPageUrl"
+            type="text"
+            class="form-input"
+            [class.form-input-error]="isFieldInvalid('buildPageUrl')"
+            formControlName="buildPageUrl"
+            placeholder="Enter build page URL">
+          <div class="form-error" *ngIf="isFieldInvalid('buildPageUrl')">
+            {{ getFieldError('buildPageUrl') }}
+          </div>
+        </div>
+
+        <!-- Tags Field -->
+        <div class="form-field">
+          <label class="form-label" for="tagInput">Tags</label>
+          <div class="tags-container">
+            <!-- Existing Tags -->
+            <div class="tags-list" *ngIf="tags.length > 0">
+              <span *ngFor="let tag of tags" class="tag-chip">
+                {{ tag }}
+                <button type="button" class="tag-remove" (click)="removeTag(tag)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </span>
+            </div>
+            <!-- Tag Input -->
+            <div class="tag-input-container">
+              <input
+                id="tagInput"
+                type="text"
+                class="form-input tag-input"
+                [(ngModel)]="newTagInput"
+                [ngModelOptions]="{standalone: true}"
+                (keydown)="onTagInputKeyDown($event)"
+                placeholder="Add tag and press Enter">
+              <button type="button" class="add-tag-btn" (click)="addTag()" [disabled]="!newTagInput.trim()">
+                Add
               </button>
-            </mat-chip-row>
-            <input
-              placeholder="New tag..."
-              [matChipInputFor]="chipGrid"
-              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-              (matChipInputTokenEnd)="addTag($event)" />
-          </mat-chip-grid>
-        </mat-form-field>
-      </div>
-    </form>
-  </mat-dialog-content>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
 
-  <mat-dialog-actions align="end">
-    <button mat-button (click)="onCancel()">Cancel</button>
-    <button
-      mat-raised-button
-      color="primary"
-      [disabled]="artifactForm.invalid"
-      (click)="onSubmit()">
-      Create Artifact
-    </button>
-  </mat-dialog-actions>
+    <div class="dialog-actions">
+      <button class="btn btn-secondary btn-modal" (click)="onCancel()">
+        Cancel
+      </button>
+      <button class="btn btn-primary btn-modal" [disabled]="artifactForm.invalid" (click)="onSubmit()">
+        Add
+      </button>
+
+      <!-- <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="artifactForm.invalid"
+        (click)="onSubmit()">
+        Create Artifact
+      </button> -->
+    </div>
+  </div>
 </div>

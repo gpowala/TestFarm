@@ -440,6 +440,17 @@ body::after {
     inset -1px 0 0 rgba(0, 0, 0, 0.1);
 }
 
+.btn-secondary:disabled {
+  background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%);
+  color: #6c757d;
+  border: 1px solid #6c757d;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 1px 0 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05),
+    inset -1px 0 0 rgba(0, 0, 0, 0.05);
+}
+
 .btn-modal {
   margin: 0rem !important;
 }

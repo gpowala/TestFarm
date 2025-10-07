@@ -11,6 +11,8 @@ class ArtifactDefinitionRow {
   active: boolean = false;
   checked: boolean = false;
 
+  selected: boolean = false;
+
   constructor(public artifact: ArtifactDefinition) {}
 }
 
@@ -23,9 +25,14 @@ export class BuildsComponent implements OnInit {
   artifacts: ArtifactDefinition[] = [];
   artifactsRows: ArtifactDefinitionRow[] = [];
   filteredArtifactsRows: ArtifactDefinitionRow[] = [];
+
+  showAddArtifactDefinitionDialog: boolean = false;
   showAddArtifactDialog: boolean = false;
+
   sortDirection: { [key: string]: 'asc' | 'desc' } = {};
   searchTerm: string = '';
+
+  selectedArtifactsNumber: number = 0;
 
   constructor(
     private artifactsApiHttpClientService: ArtifactsApiHttpClientService
@@ -194,32 +201,77 @@ export class BuildsComponent implements OnInit {
     this.renderAllRows();
   }
 
-  createArtifactDefinition() {
-    this.showAddArtifactDialog = true;
+  onSelectionChange(row: ArtifactDefinitionRow, event: Event) {
+    row.selected = (event.target as HTMLInputElement).checked;
+    this.recalculatedSelection();
+    console.log(this.selectedArtifactsNumber);
   }
 
-  onDialogClose(result?: any) {
-    this.showAddArtifactDialog = false;
-    if (result) {
-      this.artifactsApiHttpClientService.addArtifactDefinition(
-        result.Name,
-        result.InstallScript,
-        result.Tags
-      ).subscribe(
-        (data: ArtifactDefinition) => {
-          this.fetchArtifacts();
-          console.log('Artifact added successfully:', data);
-        },
-        (error: any) => {
-          console.error('Error adding artifact:', error);
-        }
-      );
-    }
+  recalculatedSelection() {
+    this.selectedArtifactsNumber = this.artifactsRows.filter(row => row.selected).length
+  }
+
+  getSelectedRow(): ArtifactDefinitionRow | undefined {
+    return this.artifactsRows.find(row => row.selected);
+  }
+
+  addArtifactDefinition() {
+    this.showAddArtifactDefinitionDialog = true;
+  }
+
+  artifactDefinitionAdded(result: any) {
+    this.showAddArtifactDefinitionDialog = false;
+
+    this.artifactsApiHttpClientService.addArtifactDefinition(
+      result.Name,
+      result.InstallScript,
+      result.Tags
+    ).subscribe(
+      (data: ArtifactDefinition) => {
+        this.fetchArtifacts();
+        console.log('Artifact definition added successfully:', data);
+      },
+      (error: any) => {
+        console.error('Error adding artifact definition:', error);
+      }
+    );
+  }
+
+  artifactDefinitionDialogClosed() {
+    this.showAddArtifactDefinitionDialog = false;
   }
 
   addArtifact() {
-    // TODO: Implement add artifact functionality
-    console.log('Add artifact functionality not implemented yet');
+    this.showAddArtifactDialog = true;
+  }
+
+  artifactAdded(result: any) {
+    this.showAddArtifactDefinitionDialog = false;
+
+    this.artifactsApiHttpClientService.addArtifact(
+      result.ArtifactDefinitionId,
+      result.BuildId,
+      result.BuildName,
+      result.Repository,
+      result.Branch,
+      result.Revision,
+      result.WorkItemUrl,
+      result.BuildPageUrl,
+      result.Tags
+
+    ).subscribe(
+      (data: ArtifactDefinition) => {
+        this.fetchArtifacts();
+        console.log('Artifact definition added successfully:', data);
+      },
+      (error: any) => {
+        console.error('Error adding artifact definition:', error);
+      }
+    );
+  }
+
+  artifactDialogClosed() {
+    this.showAddArtifactDialog = false;
   }
 
   removeArtifact(id: number) {

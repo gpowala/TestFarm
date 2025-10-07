@@ -8,8 +8,8 @@ import { ArtifactDefinition } from 'src/app/models/artifact-definition';
   styleUrls: ['./add-artifact-definition-dialog.component.css']
 })
 export class AddArtifactDefinitionDialogComponent {
-  @Output() artifactCreated = new EventEmitter<Partial<ArtifactDefinition>>();
-  @Output() dialogClosed = new EventEmitter<void>();
+  @Output() artifactDefinitionAdded = new EventEmitter<Partial<ArtifactDefinition>>();
+  @Output() artifactDefinitionDialogClosed = new EventEmitter<void>();
 
   artifactForm: FormGroup;
   tags: string[] = [];
@@ -79,11 +79,11 @@ export class AddArtifactDefinitionDialogComponent {
         Tags: this.tags
       };
 
-      this.artifactCreated.emit(artifact);
+      this.artifactDefinitionAdded.emit(artifact);
     }
   }
 
   onCancel(): void {
-    this.dialogClosed.emit();
+    this.artifactDefinitionDialogClosed.emit();
   }
 }
