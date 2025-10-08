@@ -478,42 +478,6 @@ router.post('/complete-test', async (req, res) => {
   }
 });
 
-router.get('/cancel-tests-run', async (req, res) => {
-  const { TestRunId } = req.query;
-
-  try {
-    const testsRun = await TestRun.findByPk(TestRunId);
-
-    if (!testsRun) {
-      return res.status(404).json({ message: 'Test run not found' });
-    }
-
-    // Cancel all tests in this test run
-    await TestResult.update({ Status: 'canceled' }, {
-      where: {
-        TestRunId: testsRun.Id,
-        Status: ['queued', 'running']
-      }
-    });
-
-    // Optionally, you can also remove any queued jobs related to this test run
-    await MicroJobsQueue.destroy({
-      where: {
-        Type: 'test',
-        ResultId: testsRun.Id
-      }
-    });
-
-    testsRun.OverallStatus = 'canceled';
-    await testsRun.save();
-
-    res.status(200).json({ message: 'Test run canceled successfully' });
-  } catch (error) {
-    console.error('Error canceling test run:', error);
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
-  }
-});
-
 const multer = require('multer');
 const zlib = require('zlib');
 const { Result } = require('pg');
