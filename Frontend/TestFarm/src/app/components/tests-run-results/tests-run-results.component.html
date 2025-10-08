@@ -163,6 +163,9 @@
 </div> -->
   <div class="islands-grid">
       <div class="island island-large">
+          <button class="btn btn-secondary" [disabled]="!enableCancelButton()" (click)="cancelTestsRun()">
+            Cancel Tests Run
+          </button>
           <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
               <div style="flex: 1; min-width: 200px;">
                   <input type="text" id="dataSearch" placeholder="Search..."

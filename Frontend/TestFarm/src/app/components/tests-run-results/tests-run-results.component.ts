@@ -474,4 +474,27 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
   getArtifactNames(artifacts: Artifact[]): string {
     return artifacts.map(artifact => artifact.BuildName).join(', ');
   }
+
+  testsRunningOrQueued(): boolean {
+    return this.filteredTestsRunResultsRows.some(row => row.result.Status === 'running' || row.result.Status === 'queued');
+  }
+
+  enableCancelButton(): boolean {
+    return this.testsRunId !== null && this.testsRunningOrQueued();
+  }
+
+  cancelTestsRun(): void {
+    if (this.testsRunId !== null && this.testsRunningOrQueued()) {
+      this.testsApiHttpClientService.cancelTestsRun(this.testsRunId).subscribe(
+        (response: { message: string }) => {
+          console.log('Tests run cancelled successfully:', response);
+          this.fetchTestsRunResultsData();
+        },
+        (error) => {
+          console.error('Error cancelling tests run:', error);
+          // Handle error (e.g., show an error notification)
+        }
+      );
+    }
+  }
 }

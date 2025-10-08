@@ -45,4 +45,8 @@ export class TestsApiHttpClientService {
     getDiff(testResultDiffId: number) {
         return this.http.get<TestsRunResultDiffDescription>(`${environment.baseApiUrl}/diff/${testResultDiffId}`);
     }
+
+    cancelTestsRun(testsRunId: string) {
+        return this.http.get<{ message: string }>(`${environment.baseApiUrl}/cancel-tests-run/${testsRunId}`);
+    }
 }
