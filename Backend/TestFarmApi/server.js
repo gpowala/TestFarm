@@ -648,7 +648,7 @@ app.get('/cancel-tests-run/:testsRunId', async (req, res) => {
     await MicroJobsQueue.destroy({
       where: {
         Type: 'test',
-        ResultId: testsRun.Id
+        RunId: testsRun.Id
       }
     });
 
