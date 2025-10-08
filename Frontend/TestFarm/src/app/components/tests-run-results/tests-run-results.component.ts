@@ -47,6 +47,10 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
   statusChart: Chart | null = null;
   private viewInitialized = false;
 
+  // Confirmation dialog properties
+  showConfirmationDialog: boolean = false;
+  confirmationMessage: string = '';
+
   constructor(private route: ActivatedRoute, private testsApiHttpClientService: TestsApiHttpClientService) {}
 
   ngOnInit() {
@@ -485,9 +489,18 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
 
   cancelTestsRun(): void {
     if (this.testsRunId !== null && this.testsRunningOrQueued()) {
+      this.confirmationMessage = 'Are you sure you want to cancel this tests run?';
+      this.showConfirmationDialog = true;
+    }
+  }
+
+  confirmCancel(): void {
+    this.showConfirmationDialog = false;
+    if (this.testsRunId !== null && this.testsRunningOrQueued()) {
       this.testsApiHttpClientService.cancelTestsRun(this.testsRunId).subscribe(
         (response: { message: string }) => {
           console.log('Tests run cancelled successfully:', response);
+          this.fetchTestsRunDetailsData();
           this.fetchTestsRunResultsData();
         },
         (error) => {
@@ -496,5 +509,10 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
         }
       );
     }
+  }
+
+  dismissConfirmation(): void {
+    this.showConfirmationDialog = false;
+    this.confirmationMessage = '';
   }
 }

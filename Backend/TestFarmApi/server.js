@@ -2,7 +2,7 @@ const { appSettings } = require('./appsettings');
 
 const express = require('express');
 const { Sequelize } = require('sequelize');
-const { sequelize, Grid, Host, TestRun, Test, TestResult, TestResultDiff, Repository, BenchmarksRun, BenchmarkResult, Benchmark, Artifact } = require('./database');
+const { sequelize, MicroJobsQueue, Grid, Host, TestRun, Test, TestResult, TestResultDiff, Repository, BenchmarksRun, BenchmarkResult, Benchmark, Artifact } = require('./database');
 const gridsRouter = require('./grids-router');
 const repositoriesRouter = require('./reporitories-router');
 const testsRunsRouter = require('./tests-router');
@@ -623,6 +623,42 @@ app.get('/tests-run-results/:testsRunId', async (req, res) => {
   } catch (error) {
     console.error('Error fetching test results:', error);
     res.status(500).send('Error fetching test results');
+  }
+});
+
+app.get('/cancel-tests-run/:testsRunId', async (req, res) => {
+  const testsRunId = parseInt(req.params.testsRunId);
+
+  try {
+    const testsRun = await TestRun.findByPk(testsRunId);
+
+    if (!testsRun) {
+      return res.status(404).json({ message: 'Test run not found' });
+    }
+
+    // Cancel all tests in this test run
+    await TestResult.update({ Status: 'canceled' }, {
+      where: {
+        TestRunId: testsRun.Id,
+        Status: ['queued', 'running']
+      }
+    });
+
+    // Optionally, you can also remove any queued jobs related to this test run
+    await MicroJobsQueue.destroy({
+      where: {
+        Type: 'test',
+        ResultId: testsRun.Id
+      }
+    });
+
+    testsRun.OverallStatus = 'canceled';
+    await testsRun.save();
+
+    res.status(200).json({ message: 'Test run canceled successfully' });
+  } catch (error) {
+    console.error('Error canceling test run:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 });
 
