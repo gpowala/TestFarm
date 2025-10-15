@@ -16,6 +16,6 @@ pywin32==308
 pyzstd==0.16.2
 requests==2.32.3
 smmap==5.0.2
-testfarmutils==0.1.10
+testfarmutils==0.2.1
 texttable==1.7.0
 urllib3==2.3.0
