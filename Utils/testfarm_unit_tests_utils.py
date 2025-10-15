@@ -60,7 +60,7 @@ def convert_trx_to_json(input_trx_file_path: str, output_json_file_path: str):
                 "name": test_method.get('name', '')
             }
         
-        json_data["testDefinitions"].append(definition)
+        json_data["data"]["testDefinitions"].append(definition)
     
     # Extract test results
     test_results = root.findall('.//ns:UnitTestResult', namespaces)
@@ -104,28 +104,28 @@ def convert_trx_to_json(input_trx_file_path: str, output_json_file_path: str):
                 if stack_trace is not None and stack_trace.text:
                     test_result["output"]["errorInfo"]["stackTrace"] = stack_trace.text.strip()
         
-        json_data["testResults"].append(test_result)
+        json_data["data"]["testResults"].append(test_result)
         
         # Update summary counts
         outcome = result.get('outcome', '').lower()
-        json_data["summary"]["total"] += 1
+        json_data["data"]["summary"]["total"] += 1
         
         if outcome == 'passed':
-            json_data["summary"]["passed"] += 1
+            json_data["data"]["summary"]["passed"] += 1
         elif outcome == 'notexecuted' or outcome == 'skipped':
-            json_data["summary"]["skipped"] += 1
+            json_data["data"]["summary"]["skipped"] += 1
         elif outcome == 'inconclusive':
-            json_data["summary"]["inconclusive"] += 1
+            json_data["data"]["summary"]["inconclusive"] += 1
         else:
             # Treat all other outcomes as failures
-            json_data["summary"]["failed"] += 1
+            json_data["data"]["summary"]["failed"] += 1
     
     # Extract result summary if present in TRX
     result_summary = root.find('.//ns:ResultSummary', namespaces)
     if result_summary is not None:
         counters = result_summary.find('.//ns:Counters', namespaces)
         if counters is not None:
-            json_data["summary"] = {
+            json_data["data"]["summary"] = {
                 "total": int(counters.get('total', 0)),
                 "executed": int(counters.get('executed', 0)),
                 "passed": int(counters.get('passed', 0)),
