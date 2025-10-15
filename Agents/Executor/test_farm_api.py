@@ -506,14 +506,15 @@ def update_host_status(status: str, host: Host, config: Config):
     
     if not response.ok:
         raise RuntimeError(f"Failed to update host status with status code: {response.status_code} and message: {response.reason}")
-    
-def complete_test(test_result: TestResult, status: str, execution_output: str, config: Config):
+
+def complete_test(test_result: TestResult, status: str, execution_output: str, atomic_results: str, config: Config):
     url = urljoin(config.test_farm_api.base_url, "complete-test")
     
     payload = {
         "TestResultId": test_result.id, 
         "Status": status, 
-        "ExecutionOutput": execution_output
+        "ExecutionOutput": execution_output,
+        "AtomicResults": atomic_results
     }
     
     response = requests.post(

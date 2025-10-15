@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "testfarmutils"
-version = "0.1.10"
+version = "0.2.1"
 authors = [
   { name="Grzegorz Powała", email="gpowala@gmail.com" }
 ]
@@ -14,4 +14,4 @@ license = { file = "LICENSE" }
 dependencies = []
 
 [tool.setuptools]
-py-modules = ["testfarm_agents_utils", "testfarm_benchmarks_utils"]
+py-modules = ["testfarm_agents_utils", "testfarm_benchmarks_utils", "testfarm_unit_tests_utils"]

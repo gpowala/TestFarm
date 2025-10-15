@@ -321,10 +321,10 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
                     if test_passed:
                         logging.info("Test PASSED! Publishing results...")
-                        complete_test(test, "passed", self.read_execution_output(test_case), self._config)
+                        complete_test(test, "passed", self.read_execution_output(test_case), self.read_atomic_results(test_case), self._config)
                     else:
                         logging.info("Test FAILED! Publishing results...")
-                        complete_test(test, "failed", self.read_execution_output(test_case), self._config)
+                        complete_test(test, "failed", self.read_execution_output(test_case), self.read_atomic_results(test_case), self._config)
 
                     logging.info("Test completed.")
 
@@ -533,6 +533,22 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                 raise RuntimeError(f"Error reading execution output file {output_file_path}: {e}")
         else:
             raise RuntimeError(f"Execution output file not found: {output_file_path}")
+        
+    def read_atomic_results(self, test_case: TestCase) -> str:
+        if not test_case.atomic_results:
+            return ""
+        
+        atomic_results_file_path = expand_magic_variables(test_case.atomic_results)
+
+        if os.path.exists(atomic_results_file_path):
+            try:
+                print(f"Reading atomic results file: {atomic_results_file_path}")
+                with open(atomic_results_file_path, 'r', encoding='utf-8', errors='replace') as atomic_results_file:
+                    return atomic_results_file.read()
+            except Exception as e:
+                raise RuntimeError(f"Error reading atomic results file {atomic_results_file_path}: {e}")
+        else:
+            return ""
 
     def detect_encoding(self, file_path):
         with open(file_path, 'rb') as f:

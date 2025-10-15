@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 import json
 import subprocess
 import os
@@ -24,7 +24,9 @@ class TestCase:
     owner: str
     
     command: str
+    
     output: str
+    atomic_results: Optional[str]
     
     pre_steps: List[str] = None
     post_steps: List[str] = None
@@ -92,3 +94,50 @@ class BenchmarkCase:
             data["diffs"] = diffs
 
         return BenchmarkCase(**data)
+    
+# @dataclass
+# class UnitTestsAtomicResults:
+#     @dataclass
+#     class TestResult:
+#         executionId: str = ''
+#         testId: str = ''
+#         testName: str = ''
+#         computerName: str = ''
+#         duration: str = ''
+#         startTime: str = ''
+#         endTime: str = ''
+#         testType: str = ''
+#         outcome: str = ''
+#         testListId: str = ''
+#         relativeResultsDirectory: str = ''
+
+#     @dataclass
+#     class TestSummary:
+#         total: int = 0
+#         passed: int = 0
+#         failed: int = 0
+#         skipped: int = 0
+#         inconclusive: int = 0
+
+#     @dataclass
+#     class UnitTestData:
+#         testResults: List['UnitTestsAtomicResults.TestResult'] = None
+#         summary: 'UnitTestsAtomicResults.TestSummary'
+
+#     def __post_init__(self):
+#         if self.testResults is None:
+#             self.testResults = []
+
+#     interpreter: str
+#     data: UnitTestData
+
+#     @staticmethod
+#     def from_dict(data: dict) -> "UnitTestsAtomicResults":
+#         test_results = [UnitTestsAtomicResults.TestResult(**result) for result in data.get('data', {}).get('testResults', [])]
+#         summary = UnitTestsAtomicResults.TestSummary(**data.get('data', {}).get('summary', {}))
+#         unit_test_data = UnitTestsAtomicResults.UnitTestData(testResults=test_results, summary=summary)
+
+#         return UnitTestsAtomicResults(
+#             interpreter=data.get('interpreter', 'unittest'),
+#             data=unit_test_data
+#         )

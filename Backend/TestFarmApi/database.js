@@ -376,6 +376,10 @@ const TestResult = sequelize.define('TestResult', {
   ExecutionOutput: {
     type: DataTypes.TEXT('long'),
     allowNull: true
+  },
+  AtomicResults: {
+    type: DataTypes.TEXT('long'),
+    allowNull: true
   }
 }, {
   tableName: 'TestsResults',

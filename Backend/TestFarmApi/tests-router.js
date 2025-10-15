@@ -424,7 +424,7 @@ router.post('/complete-benchmark', async (req, res) => {
 });
 
 router.post('/complete-test', async (req, res) => {
-  const { TestResultId, Status, ExecutionOutput } = req.body;
+  const { TestResultId, Status, ExecutionOutput, AtomicResults } = req.body;
 
   try {
     const testResult = await TestResult.findByPk(TestResultId);
@@ -436,6 +436,7 @@ router.post('/complete-test', async (req, res) => {
     testResult.Status = Status;
     testResult.ExecutionEndTimestamp = new Date();
     testResult.ExecutionOutput = ExecutionOutput;
+    testResult.AtomicResults = AtomicResults;
     await testResult.save();
 
     await MicroJobsQueue.destroy({

@@ -587,7 +587,7 @@ app.get('/tests-run-results/:testsRunId', async (req, res) => {
 
     const testsResults = await TestResult.findAll({
       where: { TestRunId: testsRunId },
-      attributes: ['Id', 'TestId', 'Status', 'ExecutionOutput', 'ExecutionStartTimestamp', 'ExecutionEndTimestamp'],
+      attributes: ['Id', 'TestId', 'Status', 'ExecutionOutput', 'ExecutionStartTimestamp', 'ExecutionEndTimestamp', 'AtomicResults'],
       include: [
         {
           model: Test,
@@ -616,6 +616,7 @@ app.get('/tests-run-results/:testsRunId', async (req, res) => {
       ExecutionStartTimestamp: result.ExecutionStartTimestamp,
       ExecutionEndTimestamp: result.ExecutionEndTimestamp,
       ExecutionOutput: result.ExecutionOutput,
+      AtomicResults: result.AtomicResults,
       Diffs: result.TestsResultsDiffs
     }));
 
