@@ -26,7 +26,7 @@ class TestCase:
     command: str
     
     output: str
-    atomic_results: Optional[str]
+    atomic_results: Optional[str] = None
     
     pre_steps: List[str] = None
     post_steps: List[str] = None
