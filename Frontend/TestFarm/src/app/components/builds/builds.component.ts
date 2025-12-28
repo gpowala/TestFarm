@@ -29,6 +29,9 @@ export class BuildsComponent implements OnInit {
   showAddArtifactDefinitionDialog: boolean = false;
   showAddArtifactDialog: boolean = false;
 
+  showEditArtifactDefinitionDialog: boolean = false;
+  artifactDefinitionToEdit!: ArtifactDefinition | null;
+
   sortDirection: { [key: string]: 'asc' | 'desc' } = {};
   searchTerm: string = '';
 
@@ -239,6 +242,41 @@ export class BuildsComponent implements OnInit {
 
   artifactDefinitionDialogClosed() {
     this.showAddArtifactDefinitionDialog = false;
+  }
+
+  editArtifactDefinition(artifactDefinition: ArtifactDefinition) {
+    this.artifactDefinitionToEdit = artifactDefinition;
+    this.showEditArtifactDefinitionDialog = true;
+
+    console.log(this.artifactDefinitionToEdit);
+  }
+
+  artifactDefinitionChanged(result: any) {
+    if (result.Id === -1) {
+      throw new Error('ArtifactDefinition Id should not be -1 when editing an existing definition.');
+    }
+
+    this.artifactsApiHttpClientService.updateArtifactDefinition(
+      result.Id,
+      result.Name,
+      result.InstallScript,
+      result.Tags
+    ).subscribe(
+      (data: ArtifactDefinition) => {
+        this.fetchArtifacts();
+        this.editArtifactDefinitionDialogClosed();
+        console.log('Artifact definition updated successfully:', data);
+      },
+      (error: any) => {
+        this.editArtifactDefinitionDialogClosed();
+        console.error('Error updating artifact definition:', error);
+      }
+    );
+  }
+
+  editArtifactDefinitionDialogClosed() {
+    this.showEditArtifactDefinitionDialog = false;
+    this.artifactDefinitionToEdit = null;
   }
 
   addArtifact() {

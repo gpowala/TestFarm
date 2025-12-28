@@ -48,21 +48,37 @@ router.get('/artifact-definition', async (req, res) => {
 
 router.get('/artifacts-definitions', async (req, res) => {
   try {
-    const artifactDefinitions = await ArtifactDefinition.findAll();
-    res.status(200).json(artifactDefinitions);
+    const artifactDefinitions = await ArtifactDefinition.findAll({
+      include: [{
+        model: Artifact,
+        as: 'Artifacts',
+        required: false,
+        limit: 1,
+        order: [['CreationTimestamp', 'DESC']],
+        attributes: ['Id', 'BuildId', 'BuildName', 'Repository', 'Branch', 'Revision', 'CreationTimestamp', 'BuildPageUrl']
+      }]
+    });
+    
+    // Add LatestBuild property to each definition
+    const response = artifactDefinitions.map(def => {
+      const defJson = def.toJSON();
+      defJson.LatestBuild = defJson.Artifacts && defJson.Artifacts.length > 0 ? defJson.Artifacts[0] : null;
+      return defJson;
+    });
+    
+    res.status(200).json(response);
   } catch (error) {
     res.status(500).json({ error: `Internal Server Error: ${error}` });
   }
 });
 
 router.put('/artifact-definition', async (req, res) => {
-  const { id } = req.body;
-  const { Name, InstallScript, Tags } = req.body;
+  const { Id, Name, InstallScript, Tags } = req.body;
 
   try {
-    const artifactDefinition = await ArtifactDefinition.findByPk(id);
+    const artifactDefinition = await ArtifactDefinition.findByPk(Id);
     if (!artifactDefinition) {
-      return res.status(404).json({ error: 'Artifact definition not found' });
+      return res.status(404).json({ error: `Artifact definition not found for ID ${Id}` });
     }
 
     artifactDefinition.Name = Name;
@@ -77,12 +93,23 @@ router.put('/artifact-definition', async (req, res) => {
 });
 
 router.delete('/artifact-definition', async (req, res) => {
-  const { id } = req.body;
+  const { id } = req.query;
 
   try {
     const artifactDefinition = await ArtifactDefinition.findByPk(id);
     if (!artifactDefinition) {
       return res.status(404).json({ error: 'Artifact definition not found' });
+    }
+
+    // Check if there are any artifacts related to this definition
+    const relatedArtifactsCount = await Artifact.count({
+      where: { ArtifactDefinitionId: id }
+    });
+
+    if (relatedArtifactsCount > 0) {
+      return res.status(400).json({ 
+        error: `Cannot delete artifact definition: ${relatedArtifactsCount} artifact(s) are still associated with it` 
+      });
     }
 
     await artifactDefinition.destroy();

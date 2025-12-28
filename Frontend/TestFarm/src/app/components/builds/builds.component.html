@@ -37,7 +37,7 @@
           <div style="overflow-x: auto; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); border-radius: 8px; border: 1px solid #e9ecef;">
               <table id="artifactsDefinitionsTable" style="width: 100%; border-collapse: collapse;">
                   <thead>
-                      <tr style="background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%); border-bottom: 2px solid #e9ecef;">
+                      <tr style="background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%); border-bottom: 2px solid #e9ecef;  font-size: small;">
                           <th class="column fit-content">
 
                           </th>
@@ -45,14 +45,14 @@
                           <th class="column-sortable fit-content" data-sort="id"
                             (click)="sortTable('id')">
                               Id
-                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg style="width: 12px; height: 12px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
                               </svg>
                             </th>
                           <th class="column-sortable" data-sort="name" style="text-align: center;"
                           (click)="sortTable('name')">
                               Name
-                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg style="width: 12px; height: 12px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
                               </svg>
                           </th>
@@ -97,10 +97,10 @@
                         </div>
                         </td>
                         <td class="cell" style="color: #6c757d;">
-                            <span *ngFor="let tag of row.artifact.Tags" style="padding: 0.25rem 0.75rem; background: linear-gradient(315deg, #e9ecef 0%, #f8f9fa 100%); border-radius: 12px; font-size: 0.75rem; font-weight: 600; border: 1px solid #dee2e6;">{{tag}}</span>
+                            <span *ngFor="let tag of row.artifact.Tags" style="padding: 0.25rem 0.75rem; margin-right: 0.25rem; background: linear-gradient(315deg, #e9ecef 0%, #f8f9fa 100%); border-radius: 12px; font-size: 0.75rem; font-weight: 600; border: 1px solid #dee2e6;">{{tag}}</span>
                         </td>
                         <td class="cell" style="font-weight: 500; color: #2c3e50;">
-                           <!-- {{artifact.Id}} -->
+                           {{ row.artifact.LatestBuild?.BuildName || 'N/A' }}
                         </td>
                         <td class="cell" style="font-weight: 500; color: #2c3e50;">
                             <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
@@ -109,7 +109,7 @@
                                     <path d="M 1.7421875 0.9921875 A 0.750075 0.750075 0 0 0 1.21875 2.28125 L 4.78125 5.84375 C 1.7144403 8.3819966 0.076171875 11.671875 0.076171875 11.671875 A 0.750075 0.750075 0 0 0 0.07421875 12.326172 C 0.07421873 12.326172 4.1708964 21 12 21 C 14.345073 21 16.345405 20.168101 18.007812 19.070312 L 21.71875 22.78125 A 0.75130096 0.75130096 0 1 0 22.78125 21.71875 L 2.28125 1.21875 A 0.750075 0.750075 0 0 0 1.7421875 0.9921875 z M 12 3 C 10.78172 3 9.6606832 3.2331341 8.6347656 3.5878906 A 0.75016086 0.75016086 0 1 0 9.125 5.0058594 C 10.025082 4.6946159 10.97228 4.5 12 4.5 C 18.206232 4.5 21.848953 10.992025 22.367188 11.970703 C 22.235599 12.230883 21.536914 13.669939 19.957031 15.431641 A 0.7503364 0.7503364 0 1 0 21.074219 16.433594 C 22.937735 14.355617 23.923828 12.328125 23.923828 12.328125 A 0.750075 0.750075 0 0 0 23.925781 11.673828 C 23.925734 11.673828 19.829104 3 12 3 z M 5.8554688 6.9179688 L 8 9.0625 C 7.3913107 9.8845814 7 10.890398 7 12 C 7 14.752411 9.2475888 17 12 17 C 13.109602 17 14.115419 16.608689 14.9375 16 L 16.90625 17.96875 C 15.490882 18.851043 13.884696 19.5 12 19.5 C 5.7636654 19.5 2.1079824 12.934883 1.6191406 12.007812 C 1.855615 11.550495 3.2725629 9.019239 5.8554688 6.9179688 z M 12.361328 7.0351562 A 0.750075 0.750075 0 0 0 12.304688 8.5332031 C 13.995351 8.6810434 15.318957 10.004649 15.466797 11.695312 A 0.750075 0.750075 0 1 0 16.960938 11.564453 C 16.750778 9.1611179 14.838882 7.2492223 12.435547 7.0390625 A 0.750075 0.750075 0 0 0 12.361328 7.0351562 z M 9.0683594 10.130859 L 13.869141 14.931641 C 13.325468 15.286116 12.693023 15.5 12 15.5 C 10.058411 15.5 8.5 13.941589 8.5 12 C 8.5 11.306977 8.7138842 10.674532 9.0683594 10.130859 z"></path>
                                   </svg>
                                 </a>
-                                <a href="#" class="row-action-link" data-tooltip="Edit">
+                                <a href="#" class="row-action-link" data-tooltip="Edit" (click)="editArtifactDefinition(row.artifact); $event.stopPropagation();">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="" fill="currentColor" stroke="none" x="0px" y="0px" width="22" height="22" viewBox="0 0 24 24">
                                         <path d="M 18.027344 2.0625 A 0.750075 0.750075 0 0 0 17.474609 2.28125 L 3.1953125 16.560547 A 0.750075 0.750075 0 0 0 2.9941406 16.925781 L 2.0683594 21.035156 A 0.750075 0.750075 0 0 0 2.9648438 21.931641 L 7.0742188 21.005859 A 0.750075 0.750075 0 0 0 7.4394531 20.804688 L 21.71875 6.5253906 A 0.750075 0.750075 0 0 0 21.931641 5.8984375 C 21.931641 5.8984375 21.757842 4.4961237 20.630859 3.3691406 C 19.503876 2.2421576 18.101562 2.0683594 18.101562 2.0683594 A 0.750075 0.750075 0 0 0 18.027344 2.0625 z M 18.177734 3.6992188 C 18.402665 3.7448027 18.944619 3.803994 19.570312 4.4296875 C 20.196006 5.055381 20.255198 5.5973355 20.300781 5.8222656 L 18.550781 7.5722656 L 16.427734 5.4492188 L 18.177734 3.6992188 z M 15.367188 6.5097656 L 17.490234 8.6328125 L 6.5332031 19.589844 L 3.7929688 20.208984 L 4.4101562 17.466797 L 15.367188 6.5097656 z"></path>
                                     </svg>
@@ -141,6 +141,13 @@
   (artifactDefinitionAdded)="artifactDefinitionAdded($event)"
   (artifactDefinitionDialogClosed)="artifactDefinitionDialogClosed()">
 </app-add-artifact-definition-dialog>
+
+<app-edit-artifact-definition-dialog
+  *ngIf="showEditArtifactDefinitionDialog"
+  [artifactDefinition]="artifactDefinitionToEdit"
+  (artifactDefinitionChanged)="artifactDefinitionChanged($event)"
+  (editArtifactDefinitionDialogClosed)="editArtifactDefinitionDialogClosed()">
+</app-edit-artifact-definition-dialog>
 
 <app-add-artifact-dialog
   *ngIf="showAddArtifactDialog"

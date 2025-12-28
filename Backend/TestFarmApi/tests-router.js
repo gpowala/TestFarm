@@ -424,7 +424,7 @@ router.post('/complete-benchmark', async (req, res) => {
 });
 
 router.post('/complete-test', async (req, res) => {
-  const { TestResultId, Status, ExecutionOutput, AtomicResults } = req.body;
+  const { TestResultId, Status } = req.body;
 
   try {
     const testResult = await TestResult.findByPk(TestResultId);
@@ -435,8 +435,6 @@ router.post('/complete-test', async (req, res) => {
     
     testResult.Status = Status;
     testResult.ExecutionEndTimestamp = new Date();
-    testResult.ExecutionOutput = ExecutionOutput;
-    testResult.AtomicResults = AtomicResults;
     await testResult.save();
 
     await MicroJobsQueue.destroy({
@@ -514,6 +512,74 @@ router.post('/upload-benchmark-results', uploadBenchmarkResults.single('report')
     res.status(201).json({ message: 'Benchmark results uploaded successfully' });
   } catch (error) {
     console.error('Error uploading report:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
+const uploadOutput = multer({ 
+  dest: 'uploads/',
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB size limit
+});
+
+router.post('/upload-output', uploadOutput.single('output'), async (req, res) => {
+  const { TestResultId } = req.body;
+  const outputFile = req.file;
+
+  try {
+    const testResult = await TestResult.findByPk(TestResultId);
+
+    if (!testResult) {
+      return res.status(404).json({ message: 'Test result not found' });
+    }
+
+    let outputContent = null;
+    if (outputFile) {
+      const filePath = outputFile.path;
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      outputContent = zlib.gzipSync(fileContent).toString('base64');
+      fs.unlinkSync(filePath); // Clean up the uploaded file
+    }
+
+    testResult.ExecutionOutput = outputContent;
+    await testResult.save();
+
+    res.status(201).json({ message: 'Test output uploaded successfully' });
+  } catch (error) {
+    console.error('Error uploading output:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
+const uploadAtomicResults = multer({ 
+  dest: 'uploads/',
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB size limit
+});
+
+router.post('/upload-atomic-results', uploadAtomicResults.single('atomics'), async (req, res) => {
+  const { TestResultId } = req.body;
+  const atomicsFile = req.file;
+
+  try {
+    const testResult = await TestResult.findByPk(TestResultId);
+
+    if (!testResult) {
+      return res.status(404).json({ message: 'Test result not found' });
+    }
+
+    let atomicsContent = null;
+    if (atomicsFile) {
+      const filePath = atomicsFile.path;
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      atomicsContent = zlib.gzipSync(fileContent).toString('base64');
+      fs.unlinkSync(filePath); // Clean up the uploaded file
+    }
+
+    testResult.AtomicResults = atomicsContent;
+    await testResult.save();
+
+    res.status(201).json({ message: 'Test atomic results uploaded successfully' });
+  } catch (error) {
+    console.error('Error uploading atomic results:', error);
     res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 });

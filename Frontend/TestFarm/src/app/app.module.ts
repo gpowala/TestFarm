@@ -33,6 +33,7 @@ import { AddArtifactDefinitionDialogComponent } from './components/builds/add-ar
 import { ArtifactsComponent } from './components/artifacts/artifacts.component';
 import { AddArtifactDialogComponent } from './components/builds/add-artifact-dialog/add-artifact-dialog.component';
 import { BenchmarksRunsComponent } from './components/benchmarks-runs/benchmarks-runs.component';
+import { EditArtifactDefinitionDialogComponent } from './components/builds/edit-artifact-definition-dialog/edit-artifact-definition-dialog.component';
 
 @NgModule({  declarations: [
     AppComponent,
@@ -50,6 +51,7 @@ import { BenchmarksRunsComponent } from './components/benchmarks-runs/benchmarks
     ConsoleOutputToHtmlPipe,
     RepositoriesComponent,
     AddArtifactDialogComponent,
+    EditArtifactDefinitionDialogComponent,
     AddArtifactDefinitionDialogComponent
   ],
   imports: [

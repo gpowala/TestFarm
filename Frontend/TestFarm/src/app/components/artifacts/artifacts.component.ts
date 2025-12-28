@@ -68,7 +68,9 @@ export class ArtifactsComponent implements OnInit {
           this.totalBuilds = data.length;
           this.activeRepositories = new Set(data.filter(artifact => artifact.Repository).map(artifact => artifact.Repository)).size;
           this.activeBranches = new Set(data.filter(artifact => artifact.Branch).map(artifact => artifact.Branch)).size;
-          this.lastBuild = data.length > 0 ? data[0].CreationTimestamp : null;
+
+          const sortedByDate = [...data].sort((a, b) => new Date(b.CreationTimestamp).getTime() - new Date(a.CreationTimestamp).getTime());
+          this.lastBuild = sortedByDate.length > 0 ? new Date(sortedByDate[0].CreationTimestamp) : null;
 
           this.sortDirection = { 'createdAt': 'asc' };
           this.sortTable('createdAt');

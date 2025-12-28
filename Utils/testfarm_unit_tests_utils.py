@@ -28,6 +28,7 @@ def convert_trx_to_json(input_trx_file_path: str, output_json_file_path: str):
     # Initialize the JSON structure
     json_data = {
         "interpreter": "unittest",
+        "overallStatus": "unknown",
         "data": {
             "testResults": [],
             "testDefinitions": [],
@@ -120,30 +121,11 @@ def convert_trx_to_json(input_trx_file_path: str, output_json_file_path: str):
             # Treat all other outcomes as failures
             json_data["data"]["summary"]["failed"] += 1
     
-    # Extract result summary if present in TRX
-    result_summary = root.find('.//ns:ResultSummary', namespaces)
-    if result_summary is not None:
-        counters = result_summary.find('.//ns:Counters', namespaces)
-        if counters is not None:
-            json_data["data"]["summary"] = {
-                "total": int(counters.get('total', 0)),
-                "executed": int(counters.get('executed', 0)),
-                "passed": int(counters.get('passed', 0)),
-                "failed": int(counters.get('failed', 0)),
-                "error": int(counters.get('error', 0)),
-                "timeout": int(counters.get('timeout', 0)),
-                "aborted": int(counters.get('aborted', 0)),
-                "inconclusive": int(counters.get('inconclusive', 0)),
-                "passedButRunAborted": int(counters.get('passedButRunAborted', 0)),
-                "notRunnable": int(counters.get('notRunnable', 0)),
-                "notExecuted": int(counters.get('notExecuted', 0)),
-                "disconnected": int(counters.get('disconnected', 0)),
-                "warning": int(counters.get('warning', 0)),
-                "completed": int(counters.get('completed', 0)),
-                "inProgress": int(counters.get('inProgress', 0)),
-                "pending": int(counters.get('pending', 0))
-            }
-    
+    if json_data["data"]["summary"]["passed"]  == json_data["data"]["summary"]["total"]:
+        json_data["data"]["overallStatus"] = "passed"
+    else:
+        json_data["data"]["overallStatus"] = "failed"
+
     # Save to file if output path is provided
     if output_json_file_path:
         with open(output_json_file_path, 'w', encoding='utf-8') as json_file:

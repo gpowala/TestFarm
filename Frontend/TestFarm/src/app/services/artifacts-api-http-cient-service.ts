@@ -32,13 +32,10 @@ export class ArtifactsApiHttpClientService {
 
     updateArtifactDefinition(id: number, name: string, installScript: string, tags: string[]) {
       return this.http.put<ArtifactDefinition>(`${environment.baseApiUrl}/artifact-definition`, {
+        Id: id,
         Name: name,
         InstallScript: installScript,
         Tags: tags
-      }, {
-        params: {
-          id: id
-        }
       });
     }
 
