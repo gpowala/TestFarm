@@ -327,6 +327,16 @@ const Test = sequelize.define('Test', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  Parent: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: null
+  },
+  Type: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'native'
+  },
   CreationTimestamp: {
     type: DataTypes.DATE,
     allowNull: false
@@ -374,10 +384,6 @@ const TestResult = sequelize.define('TestResult', {
     allowNull: true
   },
   ExecutionOutput: {
-    type: DataTypes.TEXT('long'),
-    allowNull: true
-  },
-  AtomicResults: {
     type: DataTypes.TEXT('long'),
     allowNull: true
   }
