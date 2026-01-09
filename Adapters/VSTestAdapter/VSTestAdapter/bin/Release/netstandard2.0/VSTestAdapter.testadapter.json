@@ -1,0 +1,8 @@
+{
+  "logging": {
+    "VSTestAdapter.TestFarmLogger": {
+      "friendlyName": "TestFarmLogger",
+      "uri": "logger://TestFarmLogger"
+    }
+  }
+}
