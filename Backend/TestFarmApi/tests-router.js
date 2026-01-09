@@ -550,40 +550,6 @@ router.post('/upload-output', uploadOutput.single('output'), async (req, res) =>
   }
 });
 
-const uploadAtomicResults = multer({ 
-  dest: 'uploads/',
-  limits: { fileSize: 100 * 1024 * 1024 } // 100MB size limit
-});
-
-router.post('/upload-atomic-results', uploadAtomicResults.single('atomics'), async (req, res) => {
-  const { TestResultId } = req.body;
-  const atomicsFile = req.file;
-
-  try {
-    const testResult = await TestResult.findByPk(TestResultId);
-
-    if (!testResult) {
-      return res.status(404).json({ message: 'Test result not found' });
-    }
-
-    let atomicsContent = null;
-    if (atomicsFile) {
-      const filePath = atomicsFile.path;
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      atomicsContent = zlib.gzipSync(fileContent).toString('base64');
-      fs.unlinkSync(filePath); // Clean up the uploaded file
-    }
-
-    testResult.AtomicResults = atomicsContent;
-    await testResult.save();
-
-    res.status(201).json({ message: 'Test atomic results uploaded successfully' });
-  } catch (error) {
-    console.error('Error uploading atomic results:', error);
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
-  }
-});
-
 const uploadDiff = multer({ 
   dest: 'uploads/',
   limits: { fileSize: 100 * 1024 * 1024 } // 100MB size limit
