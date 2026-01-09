@@ -22,7 +22,7 @@ class TestCase:
     name: str
     description: str
     owner: str
-	type: str = "native"
+    type: str = "native"
     
     command: str
     
