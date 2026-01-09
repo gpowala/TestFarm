@@ -22,11 +22,11 @@ class TestCase:
     name: str
     description: str
     owner: str
+	type: str = "native"
     
     command: str
     
     output: str
-    atomic_results: Optional[str] = None
     
     pre_steps: List[str] = None
     post_steps: List[str] = None

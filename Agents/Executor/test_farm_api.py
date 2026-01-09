@@ -8,6 +8,7 @@ import psutil
 import os
 
 from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
+from test_farm_tests import TestCase
 
 __all__ = [
     'ArtifactDefinition',
@@ -148,6 +149,8 @@ class Test:
     path: str
     name: str
     owner: str
+    parent: Optional[int]
+    type: str
     creation_timestamp: datetime
 
     @staticmethod
@@ -159,6 +162,8 @@ class Test:
             path=data['Path'],
             name=data['Name'],
             owner=data['Owner'],
+            parent=data.get('Parent'),
+            type=data.get('Type'),
             creation_timestamp=datetime.fromisoformat(data['CreationTimestamp'].replace('Z', '+00:00'))
         )
     
@@ -630,3 +635,37 @@ def upload_temp_dir_archive(test_result: TestResult, config: Config, archive_fil
     
     if not response.ok:
         raise RuntimeError(f"Failed to upload temp dir archive with status code: {response.status_code} and message: {response.reason}")
+
+def add_child_test_to_run(config: Config, test_run: TestRun, parent_result: TestResult, child_test_case_name: str) -> Optional[tuple[Test, TestResult]]:
+    url = urljoin(config.test_farm_api.base_url, "add-child-test-to-run")
+    
+    payload = {
+        "TestRunId": test_run.id,
+        "RepositoryName": test_run.repository_name,
+        "SuiteName": test_run.suite_name,
+        "Path": parent_result.test.path,
+        "Name": child_test_case_name,
+        "Owner": parent_result.test.owner,
+        "Parent": parent_result.test.name,
+        "Type": parent_result.test.type
+    }
+    
+    response = requests.post(
+        url=url,
+        json=payload,
+        timeout=config.test_farm_api.timeout
+    )
+    
+    if response.ok:
+        data = response.json()
+        test = Test.from_dict(data['Test'])
+        test_result = TestResult.from_dict(config, data['TestResult'])
+        return (test, test_result)
+    elif response.status_code == 409:
+        # TestResult already exists for this Test in the specified TestRun
+        data = response.json()
+        test = Test.from_dict(data['Test'])
+        test_result = TestResult.from_dict(config, data['TestResult'])
+        return (test, test_result)
+    else:
+        raise RuntimeError(f"Failed to add child test to run with status code: {response.status_code} and message: {response.reason}")
