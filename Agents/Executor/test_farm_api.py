@@ -28,7 +28,10 @@ __all__ = [
     'complete_test',
     'complete_benchmark',
     'upload_diff',
-    'upload_benchmark_results'
+    'upload_benchmark_results',
+    'add_child_test_to_run',
+    'complete_child_test',
+    'upload_output'
 ]
 
 @dataclass
@@ -512,14 +515,12 @@ def update_host_status(status: str, host: Host, config: Config):
     if not response.ok:
         raise RuntimeError(f"Failed to update host status with status code: {response.status_code} and message: {response.reason}")
 
-def complete_test(test_result: TestResult, status: str, execution_output: str, atomic_results: str, config: Config):
+def complete_test(test_result: TestResult, status: str, config: Config):
     url = urljoin(config.test_farm_api.base_url, "complete-test")
     
     payload = {
         "TestResultId": test_result.id, 
-        "Status": status, 
-        "ExecutionOutput": execution_output,
-        "AtomicResults": atomic_results
+        "Status": status
     }
     
     response = requests.post(
@@ -669,3 +670,51 @@ def add_child_test_to_run(config: Config, test_run: TestRun, parent_result: Test
         return (test, test_result)
     else:
         raise RuntimeError(f"Failed to add child test to run with status code: {response.status_code} and message: {response.reason}")
+
+def complete_child_test(config: Config, test_result_id: int, status: str) -> TestResult:
+    url = urljoin(config.test_farm_api.base_url, "complete-child-test")
+    
+    payload = {
+        "TestResultId": test_result_id,
+        "Status": status
+    }
+    
+    response = requests.post(
+        url=url,
+        json=payload,
+        timeout=config.test_farm_api.timeout
+    )
+    
+    if response.ok:
+        return TestResult.from_dict(config, response.json())
+    else:
+        raise RuntimeError(f"Failed to complete child test with status code: {response.status_code} and message: {response.reason}")
+
+def upload_output(test_result: TestResult, config: Config, output_file_path: Optional[str] = None):
+    url = urljoin(config.test_farm_api.base_url, "upload-output")
+    
+    form_data = {
+        'TestResultId': str(test_result.id)
+    }
+    
+    files = {}
+    
+    if output_file_path and os.path.exists(output_file_path):
+        files = {
+            'output': (os.path.basename(output_file_path), 
+                      open(output_file_path, 'rb'), 
+                      'application/octet-stream')
+        }
+    
+    response = requests.post(
+        url=url,
+        data=form_data,
+        files=files,
+        timeout=config.test_farm_api.timeout
+    )
+    
+    if files and 'output' in files:
+        files['output'][1].close()
+    
+    if not response.ok:
+        raise RuntimeError(f"Failed to upload output with status code: {response.status_code} and message: {response.reason}")
