@@ -12,6 +12,7 @@ namespace VSTestAdapter;
 public sealed class TestFarmLogger : ITestLoggerWithParameters
 {
     private string? _workDir;
+    private bool _hasFailures;
     private static readonly JsonSerializerSettings JsonSettings = new()
     {
         Formatting = Formatting.Indented,
@@ -63,6 +64,12 @@ public sealed class TestFarmLogger : ITestLoggerWithParameters
             var testResult = e.Result;
             var testCase = testResult.TestCase;
             
+            // Track if any test failed
+            if (testResult.Outcome == TestOutcome.Failed)
+            {
+                _hasFailures = true;
+            }
+            
             // Debug: show raw values
             Console.WriteLine($"[TestFarmLogger] FullyQualifiedName: {testCase.FullyQualifiedName}");
             Console.WriteLine($"[TestFarmLogger] DisplayName: {testCase.DisplayName}");
@@ -93,6 +100,28 @@ public sealed class TestFarmLogger : ITestLoggerWithParameters
     private void OnTestRunComplete(object? sender, TestRunCompleteEventArgs e)
     {
         Console.WriteLine($"[TestFarmLogger] Test run completed. IsAborted: {e.IsAborted}, IsCanceled: {e.IsCanceled}");
+        
+        try
+        {
+            if (string.IsNullOrEmpty(_workDir))
+            {
+                Console.WriteLine("[TestFarmLogger] ERROR: Cannot create status file - TF_WORK_DIR is not set.");
+                return;
+            }
+
+            // Determine overall status - consider aborted/canceled runs as failures
+            var overallPassed = !_hasFailures && !e.IsAborted && !e.IsCanceled;
+            var statusFileName = overallPassed ? "passed.testfarm" : "failed.testfarm";
+            var statusFilePath = Path.Combine(_workDir, statusFileName);
+            
+            Console.WriteLine($"[TestFarmLogger] Creating status file: {statusFilePath}");
+            File.WriteAllText(statusFilePath, string.Empty);
+            Console.WriteLine($"[TestFarmLogger] Status file created successfully: {statusFileName}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[TestFarmLogger] ERROR creating status file: {ex}");
+        }
     }
 
     private void CreateRunningFile(string testDir)
@@ -148,6 +177,14 @@ public sealed class TestFarmLogger : ITestLoggerWithParameters
         {
             File.Delete(runningFilePath);
         }
+        
+        // Create passed.testfarm or failed.testfarm based on test outcome
+        var testPassed = testResult.Outcome == TestOutcome.Passed;
+        var testStatusFileName = testPassed ? "passed.testfarm" : "failed.testfarm";
+        var testStatusFilePath = Path.Combine(testDir, testStatusFileName);
+        
+        Console.WriteLine($"[TestFarmLogger] Creating test status file: {testStatusFilePath}");
+        File.WriteAllText(testStatusFilePath, string.Empty);
         
         Console.WriteLine($"[TestFarmLogger] Wrote result to: {resultPath}");
     }
