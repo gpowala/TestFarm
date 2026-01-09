@@ -126,7 +126,7 @@ router.post('/schedule-tests-run', async (req, res) => {
         let testConfig = JSON.parse(fs.readFileSync(testConfigPath, 'utf8'));
 
         let test = await Test.findOne({ where: {RepositoryName: RepositoryName, SuiteName: SuiteName, Path: testPath, Name: testConfig.name} })
-                ?? await Test.create({ RepositoryName: RepositoryName, SuiteName: SuiteName, Path: testPath,  Name: testConfig.name, Owner: testConfig.owner, CreationTimestamp: new Date() });
+                ?? await Test.create({ RepositoryName: RepositoryName, SuiteName: SuiteName, Path: testPath,  Name: testConfig.name, Owner: testConfig.owner, Type: testConfig.type || 'native', CreationTimestamp: new Date() });
 
         let result = await TestResult.create({ TestRunId: testsRun.Id, TestId: test.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null });
 
