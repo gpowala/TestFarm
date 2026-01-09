@@ -146,6 +146,80 @@ router.post('/schedule-tests-run', async (req, res) => {
   }
 });
 
+router.post('/add-child-test-to-run', async (req, res) => {
+  console.log('Adding child test to run:', req.body);
+
+  const { TestRunId, RepositoryName, SuiteName, Path, Name, Owner, Parent, Type } = req.body;
+
+  try {
+    // Validate that the TestRun exists
+    const testsRun = await TestRun.findByPk(TestRunId);
+    if (!testsRun) {
+      return res.status(404).json({ error: 'TestRun not found' });
+    }
+
+    // Find or create the Test
+    let test = await Test.findOne({
+      where: { RepositoryName, SuiteName, Path, Name }
+    });
+
+    if (!test) {
+      test = await Test.create({
+        RepositoryName,
+        SuiteName,
+        Path,
+        Name,
+        Owner: Owner || null,
+        Parent: Parent || null,
+        Type: Type || 'native',
+        CreationTimestamp: new Date()
+      });
+    }
+
+    // Check if TestResult already exists for this TestRun and Test combination
+    const existingTestResult = await TestResult.findOne({
+      where: { TestRunId: testsRun.Id, TestId: test.Id }
+    });
+
+    if (existingTestResult) {
+      return res.status(409).json({
+        error: 'TestResult already exists for this Test in the specified TestRun',
+        Test: test,
+        TestResult: existingTestResult
+      });
+    }
+
+    // Create the TestResult
+    const testResult = await TestResult.create({
+      TestRunId: testsRun.Id,
+      TestId: test.Id,
+      Status: 'queued',
+      ExecutionStartTimestamp: null,
+      ExecutionEndTimestamp: null,
+      ExecutionOutput: null
+    });
+
+    // Create MicroJobsQueue entry if GridName is available
+    if (testsRun.GridName) {
+      await MicroJobsQueue.create({
+        Type: 'test',
+        Status: 'queued',
+        GridName: testsRun.GridName,
+        RunId: testsRun.Id,
+        ResultId: testResult.Id
+      });
+    }
+
+    res.status(201).json({
+      Test: test,
+      TestResult: testResult
+    });
+  } catch (error) {
+    console.error('Error adding test to run:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
 router.get('/get-next-job', async (req, res) => {
   const { GridName } = req.query;
 
@@ -473,6 +547,27 @@ router.post('/complete-test', async (req, res) => {
     res.status(200).json(testResult);
   } catch (error) {
     console.error('Error completing test:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
+router.post('/complete-child-test', async (req, res) => {
+  const { TestResultId, Status } = req.body;
+
+  try {
+    const testResult = await TestResult.findByPk(TestResultId);
+    
+    if (!testResult) {
+      return res.status(404).json({ message: 'Test result not found' });
+    }
+    
+    testResult.Status = Status;
+    testResult.ExecutionEndTimestamp = new Date();
+    await testResult.save();
+    
+    res.status(200).json(testResult);
+  } catch (error) {
+    console.error('Error completing child test:', error);
     res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 });
