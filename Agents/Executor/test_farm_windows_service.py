@@ -231,7 +231,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                             update_host_status("Failed to install artifacts", self._host, self._config)
                             logging.error(f"Artifact installation failed for test run: {test.test_run.name} (ID: {test.test_run.id})")
 
-                            complete_test(test, "failed", self.read_execution_output(test_case), self._config)
+                            complete_test(test, "failed", self._config)
                             logging.info("Test FAILED!")
 
                             self.cleanup_temp_dir()
@@ -335,10 +335,10 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
                     if test_passed:
                         logging.info("Test PASSED! Publishing results...")
-                        complete_test(test, "passed", self.read_execution_output(test_case), self._config)
+                        complete_test(test, "passed", self._config)
                     else:
                         logging.info("Test FAILED! Publishing results...")
-                        complete_test(test, "failed", self.read_execution_output(test_case), self._config)
+                        complete_test(test, "failed", self._config)
 
                     logging.info("Test completed.")
 
@@ -373,7 +373,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                             update_host_status("Failed to install artifacts", self._host, self._config)
                             logging.error(f"Artifact installation failed for benchmark run: {benchmark.benchmark_run.name} (ID: {benchmark.benchmark_run.id})")
 
-                            complete_test(benchmark, "failed", self.read_execution_output(benchmark_case), self._config)
+                            complete_test(benchmark, "failed", self._config)
                             logging.info("Benchmark FAILED!")
 
                             self.cleanup_temp_dir()

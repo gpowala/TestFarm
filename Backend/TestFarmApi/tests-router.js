@@ -216,17 +216,6 @@ router.post('/add-child-test-to-run', async (req, res) => {
       ExecutionOutput: null
     });
 
-    // Create MicroJobsQueue entry if GridName is available
-    if (testsRun.GridName) {
-      await MicroJobsQueue.create({
-        Type: 'test',
-        Status: 'queued',
-        GridName: testsRun.GridName,
-        RunId: testsRun.Id,
-        ResultId: testResult.Id
-      });
-    }
-
     res.status(201).json({
       Test: test,
       TestResult: testResult
