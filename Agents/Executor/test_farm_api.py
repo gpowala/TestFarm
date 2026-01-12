@@ -1,14 +1,13 @@
 from datetime import datetime
 from dataclasses import dataclass
-from typing import Optional, Dict, Union, BinaryIO
+from typing import Optional, Dict
 import requests
 from urllib.parse import urljoin
 import socket
 import psutil
 import os
 
-from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
-from test_farm_tests import TestCase
+from test_farm_service_config import Config
 
 __all__ = [
     'ArtifactDefinition',
@@ -150,7 +149,7 @@ class Test:
     path: str
     name: str
     owner: str
-    parent: Optional[int]
+    parent_test_id: Optional[int]
     type: str
     creation_timestamp: datetime
 
@@ -163,7 +162,7 @@ class Test:
             path=data['Path'],
             name=data['Name'],
             owner=data['Owner'],
-            parent=data.get('Parent'),
+            parent_test_id=data.get('ParentTestId'),
             type=data.get('Type'),
             creation_timestamp=datetime.fromisoformat(data['CreationTimestamp'].replace('Z', '+00:00'))
         )

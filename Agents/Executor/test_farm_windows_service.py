@@ -18,14 +18,14 @@ import chardet
 import sys
 import py7zr
 import shutil
+
 from testfarm_agents_utils import *
 from testfarm_benchmarks_utils import *
 
-from test_farm_tests import DiffPair, TestCase, BenchmarkCase
-from test_farm_api import get_artifact, get_next_job, get_scheduled_test, get_scheduled_benchmark, register_host, unregister_host, update_host_status, complete_test, complete_benchmark, upload_diff, upload_benchmark_results, upload_temp_dir_archive, upload_output, Repository, MicroJob, TestRun, TestResult
-from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
+from test_farm_tests import TestCase, BenchmarkCase
+from test_farm_api import get_next_job, get_scheduled_test, get_scheduled_benchmark, register_host, unregister_host, update_host_status, complete_test, complete_benchmark, upload_diff, upload_benchmark_results, upload_temp_dir_archive, upload_output, Repository
+from test_farm_service_config import Config
 from logging.handlers import RotatingFileHandler
-
 
 class TestFarmWindowsService(win32serviceutil.ServiceFramework):
     _svc_name_ = "TestFarm"
@@ -169,13 +169,12 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
             except Exception as e:
                 logging.error(f"Error executing artifact install script: {e}")
                 overall_exit_code = -1
-
-            finally:
+            
+            try:
                 if os.path.exists(script_path):
-                    try:
-                        os.remove(script_path)
-                    except:
-                        break
+                    os.remove(script_path)
+            except:
+                break
 
         return overall_exit_code
 
