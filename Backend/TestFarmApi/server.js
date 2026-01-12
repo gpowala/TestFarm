@@ -592,7 +592,7 @@ app.get('/tests-run-results/:testsRunId', async (req, res) => {
         {
           model: Test,
           as: 'Test',
-          attributes: ['Name', 'RepositoryName', 'SuiteName', 'Path', 'Owner', 'Parent', 'Type']
+          attributes: ['Name', 'RepositoryName', 'SuiteName', 'Path', 'Owner', 'ParentTestId', 'Type']
         },
         {
           model: TestResultDiff,
@@ -612,7 +612,7 @@ app.get('/tests-run-results/:testsRunId', async (req, res) => {
       TestSuiteName: result.Test.SuiteName,
       TestPath: result.Test.Path,
       TestOwner: result.Test.Owner,
-      TestParent: result.Test.Parent,
+      TestParentTestId: result.Test.ParentTestId,
       TestType: result.Test.Type,
       Status: result.Status,
       ExecutionStartTimestamp: result.ExecutionStartTimestamp,

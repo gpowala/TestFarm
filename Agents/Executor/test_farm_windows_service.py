@@ -22,167 +22,9 @@ from testfarm_agents_utils import *
 from testfarm_benchmarks_utils import *
 
 from test_farm_tests import DiffPair, TestCase, BenchmarkCase
-from test_farm_api import get_artifact, get_next_job, get_scheduled_test, get_scheduled_benchmark, register_host, unregister_host, update_host_status, complete_test, complete_benchmark, upload_diff, upload_benchmark_results, upload_temp_dir_archive, upload_output, add_child_test_to_run, complete_child_test, Repository, MicroJob, TestRun, TestResult
+from test_farm_api import get_artifact, get_next_job, get_scheduled_test, get_scheduled_benchmark, register_host, unregister_host, update_host_status, complete_test, complete_benchmark, upload_diff, upload_benchmark_results, upload_temp_dir_archive, upload_output, Repository, MicroJob, TestRun, TestResult
 from test_farm_service_config import Config, GridConfig, TestFarmApiConfig
 from logging.handlers import RotatingFileHandler
-
-
-class ChildTestObserver:
-    POLL_INTERVAL = 0.5  # seconds between directory checks
-    
-    def __init__(self, work_dir: str, config: Config, test_run: TestRun, parent_result: TestResult):
-        self._work_dir = work_dir
-        self._config = config
-        self._test_run = test_run
-        self._parent_result = parent_result
-        
-        self._observed_dirs: Dict[str, dict] = {}  # dir_name -> {'test': Test, 'test_result': TestResult, 'completed': bool}
-        self._running = False
-        self._thread: Optional[threading.Thread] = None
-        self._completion_event = threading.Event()
-        self._lock = threading.Lock()
-    
-    def start(self):
-        self._running = True
-        self._thread = threading.Thread(target=self._observe_loop, daemon=True)
-        self._thread.start()
-        logging.info(f"ChildTestObserver started watching: {self._work_dir}")
-    
-    def stop(self):
-        self._running = False
-        self._completion_event.set()
-        logging.info("ChildTestObserver stopping...")
-    
-    def wait_for_completion(self, timeout: Optional[float] = None):
-        self._completion_event.wait(timeout=timeout)
-        if self._thread and self._thread.is_alive():
-            self._thread.join(timeout=5.0)
-        logging.info("ChildTestObserver completed")
-    
-    def _observe_loop(self):
-        try:
-            while self._running:
-                # First, scan for new child tests and process completions
-                # to ensure we never miss any child directories
-                self._scan_for_child_tests()
-                self._check_child_test_completions()
-                
-                # Then check if main test has completed
-                self._check_for_main_test_completion()
-                
-                # If main test completed, do one final scan to catch any last-moment child tests
-                if not self._running:
-                    logging.info("Performing final child test scan before stopping...")
-                    self._scan_for_child_tests()
-                    self._check_child_test_completions()
-                    break
-                
-                time.sleep(self.POLL_INTERVAL)
-        except Exception as e:
-            logging.error(f"ChildTestObserver error: {e}")
-        finally:
-            self._completion_event.set()
-    
-    def _check_for_main_test_completion(self):
-        """Check if the main test has finished (passed.testfarm or failed.testfarm in work_dir)."""
-        passed_file = os.path.join(self._work_dir, "passed.testfarm")
-        failed_file = os.path.join(self._work_dir, "failed.testfarm")
-        
-        if os.path.exists(passed_file) or os.path.exists(failed_file):
-            logging.info("Main test completion detected, stopping child test observer")
-            self._running = False
-    
-    def _scan_for_child_tests(self):
-        """Scan for new TEST.* directories and register them as child tests."""
-        if not os.path.exists(self._work_dir):
-            return
-        
-        try:
-            for entry in os.scandir(self._work_dir):
-                if entry.is_dir() and entry.name.startswith("TEST."):
-                    with self._lock:
-                        if entry.name not in self._observed_dirs:
-                            self._register_child_test(entry.name)
-        except Exception as e:
-            logging.error(f"Error scanning for child tests: {e}")
-    
-    def _register_child_test(self, dir_name: str):
-        """Register a new child test directory."""
-        # Extract test name by trimming "TEST." prefix
-        child_test_name = dir_name[5:]  # Remove "TEST." prefix
-        
-        logging.info(f"Registering child test: {child_test_name} from directory: {dir_name}")
-        
-        try:
-            result = add_child_test_to_run(
-                config=self._config,
-                test_run=self._test_run,
-                parent_result=self._parent_result,
-                child_test_case_name=child_test_name
-            )
-            
-            if result:
-                test, test_result = result
-                self._observed_dirs[dir_name] = {
-                    'test': test,
-                    'test_result': test_result,
-                    'completed': False
-                }
-                logging.info(f"Child test registered: {child_test_name} (TestResult ID: {test_result.id})")
-            else:
-                logging.warning(f"Failed to register child test: {child_test_name}")
-        except Exception as e:
-            logging.error(f"Error registering child test {child_test_name}: {e}")
-    
-    def _check_child_test_completions(self):
-        """Check if any child tests have completed (status file appeared)."""
-        with self._lock:
-            for dir_name, info in self._observed_dirs.items():
-                if info['completed']:
-                    continue
-                
-                dir_path = os.path.join(self._work_dir, dir_name)
-                
-                # Check for status files
-                passed_file = os.path.join(dir_path, "passed.testfarm")
-                failed_file = os.path.join(dir_path, "failed.testfarm")
-                result_file = os.path.join(dir_path, "result.testfarm")
-                
-                status = None
-                if os.path.exists(passed_file):
-                    status = "passed"
-                elif os.path.exists(failed_file):
-                    status = "failed"
-                
-                if status:
-                    self._complete_child_test(dir_name, info, status, result_file)
-    
-    def _complete_child_test(self, dir_name: str, info: dict, status: str, result_file: str):
-        """Complete a child test and upload its output."""
-        child_test_name = dir_name[5:]  # Remove "TEST." prefix
-        test_result = info['test_result']
-        
-        logging.info(f"Completing child test: {child_test_name} with status: {status}")
-        
-        try:
-            # Complete the child test
-            complete_child_test(
-                config=self._config,
-                test_result_id=test_result.id,
-                status=status
-            )
-            
-            # Upload result.testfarm if it exists
-            if os.path.exists(result_file):
-                upload_output(test_result, self._config, result_file)
-                logging.info(f"Uploaded output for child test: {child_test_name}")
-            else:
-                logging.warning(f"No result.testfarm found for child test: {child_test_name}")
-            
-            info['completed'] = True
-            logging.info(f"Child test completed: {child_test_name}")
-        except Exception as e:
-            logging.error(f"Error completing child test {child_test_name}: {e}")
 
 
 class TestFarmWindowsService(win32serviceutil.ServiceFramework):
@@ -420,22 +262,17 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                     logging.info(f"Executing test command: {expanded_test_command}")
 
                     if test_case.type == "unit_tests":
-                        # For unit tests, start the child test observer
-                        observer = ChildTestObserver(
-                            work_dir=expand_magic_variables("$__TF_WORK_DIR__"),
-                            config=self._config,
-                            test_run=test.test_run,
-                            parent_result=test
-                        )
-                        observer.start()
-                        
-                        try:
-                            self.execute_command(expanded_test_command, env, new_working_dir)
-                        finally:
-                            # Wait for observer to finish (it will stop when passed/failed.testfarm appears)
-                            observer.wait_for_completion()
-                    else:
-                        self.execute_command(expanded_test_command, env, new_working_dir)
+                        # For unit tests, create config file for child test reporting
+                        config_path = expand_magic_variables("$__TF_WORK_DIR__/tests_run_config.json")
+                        config_data = {
+                            "TestFarmApiBaseUrl": self._config.test_farm_api.base_url,
+                            "ParentTestResultId": test.id
+                        }
+                        with open(config_path, 'w', encoding='utf-8') as f:
+                            json.dump(config_data, f, indent=2)
+                        logging.info(f"Created TestsRunConfig.json at {config_path}")
+                    
+                    self.execute_command(expanded_test_command, env, new_working_dir)
                         
                     for post_step in test_case.post_steps:
                         expanded_post_step = expand_magic_variables(post_step)

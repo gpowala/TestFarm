@@ -29,8 +29,6 @@ __all__ = [
     'complete_benchmark',
     'upload_diff',
     'upload_benchmark_results',
-    'add_child_test_to_run',
-    'complete_child_test',
     'upload_output'
 ]
 
@@ -636,59 +634,6 @@ def upload_temp_dir_archive(test_result: TestResult, config: Config, archive_fil
     
     if not response.ok:
         raise RuntimeError(f"Failed to upload temp dir archive with status code: {response.status_code} and message: {response.reason}")
-
-def add_child_test_to_run(config: Config, test_run: TestRun, parent_result: TestResult, child_test_case_name: str) -> Optional[tuple[Test, TestResult]]:
-    url = urljoin(config.test_farm_api.base_url, "add-child-test-to-run")
-    
-    payload = {
-        "TestRunId": test_run.id,
-        "RepositoryName": test_run.repository_name,
-        "SuiteName": test_run.suite_name,
-        "Path": parent_result.test.path,
-        "Name": child_test_case_name,
-        "Owner": parent_result.test.owner,
-        "Parent": parent_result.test.name,
-        "Type": parent_result.test.type
-    }
-    
-    response = requests.post(
-        url=url,
-        json=payload,
-        timeout=config.test_farm_api.timeout
-    )
-    
-    if response.ok:
-        data = response.json()
-        test = Test.from_dict(data['Test'])
-        test_result = TestResult.from_dict(config, data['TestResult'])
-        return (test, test_result)
-    elif response.status_code == 409:
-        # TestResult already exists for this Test in the specified TestRun
-        data = response.json()
-        test = Test.from_dict(data['Test'])
-        test_result = TestResult.from_dict(config, data['TestResult'])
-        return (test, test_result)
-    else:
-        raise RuntimeError(f"Failed to add child test to run with status code: {response.status_code} and message: {response.reason}")
-
-def complete_child_test(config: Config, test_result_id: int, status: str) -> TestResult:
-    url = urljoin(config.test_farm_api.base_url, "complete-child-test")
-    
-    payload = {
-        "TestResultId": test_result_id,
-        "Status": status
-    }
-    
-    response = requests.post(
-        url=url,
-        json=payload,
-        timeout=config.test_farm_api.timeout
-    )
-    
-    if response.ok:
-        return TestResult.from_dict(config, response.json())
-    else:
-        raise RuntimeError(f"Failed to complete child test with status code: {response.status_code} and message: {response.reason}")
 
 def upload_output(test_result: TestResult, config: Config, output_file_path: Optional[str] = None):
     url = urljoin(config.test_farm_api.base_url, "upload-output")

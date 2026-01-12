@@ -8,3 +8,5 @@ __pycache__/
 *.secret
 /Utils/dist
 /Utils/testfarmutils.egg-info
+/Adapters/VSTestAdapter/VSTestAdapter.UnitTests/bin
+/Adapters/VSTestAdapter/VSTestAdapter/bin/Debug

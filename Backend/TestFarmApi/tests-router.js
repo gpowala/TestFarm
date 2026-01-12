@@ -149,14 +149,31 @@ router.post('/schedule-tests-run', async (req, res) => {
 router.post('/add-child-test-to-run', async (req, res) => {
   console.log('Adding child test to run:', req.body);
 
-  const { TestRunId, RepositoryName, SuiteName, Path, Name, Owner, Parent, Type } = req.body;
+  const { ParentTestResultId, Name } = req.body;
 
   try {
-    // Validate that the TestRun exists
-    const testsRun = await TestRun.findByPk(TestRunId);
-    if (!testsRun) {
-      return res.status(404).json({ error: 'TestRun not found' });
+    // Validate that the parent TestResult exists and get related data
+    const parentTestResult = await TestResult.findByPk(ParentTestResultId, {
+      include: [
+        { model: TestRun, as: 'TestRun' },
+        { model: Test, as: 'Test' }
+      ]
+    });
+
+    if (!parentTestResult) {
+      return res.status(404).json({ error: 'Parent TestResult not found' });
     }
+
+    const testsRun = parentTestResult.TestRun;
+    const parentTest = parentTestResult.Test;
+
+    // Derive all values from parent Test
+    const RepositoryName = parentTest.RepositoryName;
+    const SuiteName = parentTest.SuiteName;
+    const Path = parentTest.Path;
+    const Owner = parentTest.Owner;
+    const Type = parentTest.Type;
+    const ParentTestId = parentTest.Id;
 
     // Find or create the Test
     let test = await Test.findOne({
@@ -169,9 +186,9 @@ router.post('/add-child-test-to-run', async (req, res) => {
         SuiteName,
         Path,
         Name,
-        Owner: Owner || null,
-        Parent: Parent || null,
-        Type: Type || 'native',
+        Owner,
+        ParentTestId,
+        Type,
         CreationTimestamp: new Date()
       });
     }

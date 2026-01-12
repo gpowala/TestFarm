@@ -5,8 +5,8 @@ module.exports = {
     // Remove AtomicResults column from TestsResults table
     await queryInterface.removeColumn('TestsResults', 'AtomicResults');
 
-    // Add Parent column to Tests table
-    await queryInterface.addColumn('Tests', 'Parent', {
+    // Add ParentTestId column to Tests table
+    await queryInterface.addColumn('Tests', 'ParentTestId', {
       type: Sequelize.INTEGER,
       allowNull: true,
       defaultValue: null
@@ -27,8 +27,8 @@ module.exports = {
       allowNull: true
     });
 
-    // Remove Parent column from Tests table
-    await queryInterface.removeColumn('Tests', 'Parent');
+    // Remove ParentTestId column from Tests table
+    await queryInterface.removeColumn('Tests', 'ParentTestId');
 
     // Remove Type column from Tests table
     await queryInterface.removeColumn('Tests', 'Type');

@@ -327,7 +327,7 @@ const Test = sequelize.define('Test', {
     type: DataTypes.STRING,
     allowNull: true
   },
-  Parent: {
+  ParentTestId: {
     type: DataTypes.INTEGER,
     allowNull: true,
     defaultValue: null
