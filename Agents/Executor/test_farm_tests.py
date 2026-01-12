@@ -22,11 +22,11 @@ class TestCase:
     name: str
     description: str
     owner: str
-    type: str = "native"
     
     command: str
-    
     output: str
+    
+    type: str = "native"
     
     pre_steps: List[str] = None
     post_steps: List[str] = None
