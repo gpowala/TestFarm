@@ -166,13 +166,72 @@
           <button class="btn btn-secondary" [disabled]="!enableCancelButton()" (click)="cancelTestsRun()">
             Cancel Tests Run
           </button>
-          <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+          <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center;">
               <div style="flex: 1; min-width: 200px;">
                   <input type="text" id="dataSearch" placeholder="Search..."
                       [(ngModel)]="searchTerm"
                       (input)="onSearchChange($event)"
                       style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; transition: all 0.2s ease;">
+              </div>
+              <div style="position: relative;">
+                  <button (click)="toggleColumnSelector()"
+                          style="padding: 0.75rem 1rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">
 
+                      <svg width="16" height="16" fill="currentColor" stroke="none" viewBox="0 0 24 24">
+                        <path d="M 4 3 A 1.0001 1.0001 0 0 0 3 4 L 3 6 A 1.0001 1.0001 0 0 0 3.2402344 6.6503906 L 9 13.369141 L 9 19 A 1.0001 1.0001 0 0 0 9.5527344 19.894531 L 13.552734 21.894531 A 1.0001 1.0001 0 0 0 15 21 L 15 13.369141 L 20.759766 6.6503906 A 1.0001 1.0001 0 0 0 21 6 L 21 4 A 1.0001 1.0001 0 0 0 20 3 L 4 3 z M 5 5 L 19 5 L 19 5.6308594 L 13.240234 12.349609 A 1.0001 1.0001 0 0 0 13 13 L 13 19.382812 L 11 18.382812 L 11 13 A 1.0001 1.0001 0 0 0 10.759766 12.349609 L 5 5.6308594 L 5 5 z"></path>
+                      </svg>
+                      Columns
+                  </button>
+                  <div *ngIf="showColumnSelector"
+                       style="position: absolute; top: 100%; right: 0; margin-top: 0.5rem; background: white; border: 1px solid #e9ecef; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); min-width: 200px; z-index: 1000;">
+                      <div style="padding: 0.75rem; border-bottom: 1px solid #e9ecef; font-weight: 600; font-size: 0.875rem; color: #495057;">
+                          Select Columns
+                      </div>
+                      <div style="padding: 0.5rem;">
+                          <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer; transition: background-color 0.2s; border-radius: 4px;"
+                                 (mouseenter)="onLabelMouseEnter($event)"
+                                 (mouseleave)="onLabelMouseLeave($event)">
+                              <input type="checkbox" [(ngModel)]="columnVisibility.path" (change)="onColumnVisibilityChange()"
+                                     style="margin-right: 0.5rem; cursor: pointer;">
+                              <span style="font-size: 0.875rem;">Path</span>
+                          </label>
+                          <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer; transition: background-color 0.2s; border-radius: 4px;"
+                                 (mouseenter)="onLabelMouseEnter($event)"
+                                 (mouseleave)="onLabelMouseLeave($event)">
+                              <input type="checkbox" [(ngModel)]="columnVisibility.name" (change)="onColumnVisibilityChange()"
+                                     style="margin-right: 0.5rem; cursor: pointer;">
+                              <span style="font-size: 0.875rem;">Name</span>
+                          </label>
+                          <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer; transition: background-color 0.2s; border-radius: 4px;"
+                                 (mouseenter)="onLabelMouseEnter($event)"
+                                 (mouseleave)="onLabelMouseLeave($event)">
+                              <input type="checkbox" [(ngModel)]="columnVisibility.status" (change)="onColumnVisibilityChange()"
+                                     style="margin-right: 0.5rem; cursor: pointer;">
+                              <span style="font-size: 0.875rem;">Status</span>
+                          </label>
+                          <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer; transition: background-color 0.2s; border-radius: 4px;"
+                                 (mouseenter)="onLabelMouseEnter($event)"
+                                 (mouseleave)="onLabelMouseLeave($event)">
+                              <input type="checkbox" [(ngModel)]="columnVisibility.duration" (change)="onColumnVisibilityChange()"
+                                     style="margin-right: 0.5rem; cursor: pointer;">
+                              <span style="font-size: 0.875rem;">Duration</span>
+                          </label>
+                          <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer; transition: background-color 0.2s; border-radius: 4px;"
+                                 (mouseenter)="onLabelMouseEnter($event)"
+                                 (mouseleave)="onLabelMouseLeave($event)">
+                              <input type="checkbox" [(ngModel)]="columnVisibility.actions" (change)="onColumnVisibilityChange()"
+                                     style="margin-right: 0.5rem; cursor: pointer;">
+                              <span style="font-size: 0.875rem;">Actions</span>
+                          </label>
+                          <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer; transition: background-color 0.2s; border-radius: 4px;"
+                                 (mouseenter)="onLabelMouseEnter($event)"
+                                 (mouseleave)="onLabelMouseLeave($event)">
+                              <input type="checkbox" [(ngModel)]="columnVisibility.download" (change)="onColumnVisibilityChange()"
+                                     style="margin-right: 0.5rem; cursor: pointer;">
+                              <span style="font-size: 0.875rem;">Download</span>
+                          </label>
+                      </div>
+                  </div>
               </div>
           </div>
 
@@ -180,32 +239,33 @@
               <table id="testsRunsTable" style="width: 100%; border-collapse: collapse;">
                   <thead>
                       <tr style="background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%); border-bottom: 2px solid #e9ecef;">
-                          <th class="column-sortable fit-content" data-sort="path" style="text-align: left;"
+                          <th *ngIf="columnVisibility.path" class="column-sortable fit-content" data-sort="path" style="text-align: left;"
                           (click)="sortTable('path')">
                               Path
                               <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
                               </svg>
                           </th>
-                          <th class="column-sortable fit-content" data-sort="name" style="text-align: left;"
+                          <th *ngIf="columnVisibility.name" class="column-sortable fit-content" data-sort="name" style="text-align: left;"
                           (click)="sortTable('name')">
                               Name
                               <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
                               </svg>
                           </th>
-                          <th class="column-sortable fit-content" data-sort="status" style="text-align: center;"
+                          <th *ngIf="columnVisibility.status" class="column-sortable fit-content" data-sort="status" style="text-align: center;"
                           (click)="sortTable('status')">
                               Status
                               <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
                               </svg>
                           </th>
-                          <th class="column fit-content" style="text-align: center;">
+                          <th *ngIf="columnVisibility.duration" class="column fit-content" style="text-align: center;">
                               Duration
                           </th>
-                          <th class="column fit-content" style="text-align: center;"></th>
-                          <th class="column fit-content" style="text-align: center;"></th>
+                          <th *ngIf="columnVisibility.actions" class="column fit-content" style="text-align: center;"></th>
+                          <th *ngIf="columnVisibility.download" class="column fit-content" style="text-align: center;"></th>
+                      </tr>
                   </thead>
                   <tbody>
                     <ng-container *ngFor="let row of filteredTestsRunResultsRows">
@@ -214,24 +274,24 @@
                         (mouseout)="onRowMouseOut(row, $event)"
                         (click)="markRowReviewed(row, $event)"
                         (dblclick)="removeRowFromReviewed(row, $event)">
-                        <td class="cell">
+                        <td *ngIf="columnVisibility.path" class="cell">
                           <div style="display: flex; padding: 0.5rem; justify-content: flex-start; align-items: center;">
                            {{row.result.TestPath}}
                           </div>
                         </td>
-                        <td class="cell">
+                        <td *ngIf="columnVisibility.name" class="cell">
                           <div style="display: flex; padding: 0.5rem; justify-content: flex-start; align-items: center;">
                            {{row.result.TestName}}
                           </div>
                         </td>
-                        <td class="cell">
+                        <td *ngIf="columnVisibility.status" class="cell">
                           <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
 
                             <span class="test-status status-{{ row.result.Status }}">{{ row.result.Status }}</span>
 
                           </div>
                         </td>
-                        <td class="cell">
+                        <td *ngIf="columnVisibility.duration" class="cell">
                           <div style="padding: 1rem; color: #6c757d; font-family: monospace; font-size: medium;">
 
                             {{calculateExecutionTime(row.result)}}
@@ -239,7 +299,7 @@
                           </div>
                         </td>
 
-                        <td class="cell">
+                        <td *ngIf="columnVisibility.actions" class="cell">
                           <div style="display: flex; gap: 5px; justify-content: center; align-items: center; width: 1%; min-width: fit-content; white-space: nowrap; font-family: monospace;">
                             <button mat-button color="primary" (click)="row.showDetails = !row.showDetails">
                                 {{ row.showDetails ? 'details ▲' : 'details ▼' }}
@@ -253,7 +313,7 @@
                           </div>
                         </td>
 
-                        <td class="cell">
+                        <td *ngIf="columnVisibility.download" class="cell">
                           <div style="display: flex; gap: 10px; justify-content: center; align-items: center; width: 1%; min-width: fit-content; white-space: nowrap;">
                             <a class="row-action-link" data-tooltip="Hide" (click)="downloadTempDirArchive(row.result.Id)">
                               <svg xmlns="http://www.w3.org/2000/svg" class="" fill="currentColor" stroke="none" x="0px" y="0px" width="22" height="22" viewBox="0 0 24 24">

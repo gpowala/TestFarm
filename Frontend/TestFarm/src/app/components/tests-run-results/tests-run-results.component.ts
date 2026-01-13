@@ -47,6 +47,17 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
   statusChart: Chart | null = null;
   private viewInitialized = false;
 
+  showColumnSelector: boolean = false;
+  columnVisibility = {
+    path: true,
+    name: true,
+    status: true,
+    duration: true,
+    actions: true,
+    download: true
+  };
+  private readonly COLUMN_VISIBILITY_KEY = 'testsRunResults_columnVisibility';
+
   // Confirmation dialog properties
   showConfirmationDialog: boolean = false;
   confirmationMessage: string = '';
@@ -57,6 +68,7 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
     this.testsRunId = this.route.snapshot.paramMap.get('testsRunId');
     console.log('Fetched testsRunId:', this.testsRunId);
 
+    this.loadColumnVisibilityPreferences();
     this.fetchTestsRunDetailsData();
     this.fetchTestsRunResultsData();
   }
@@ -79,12 +91,42 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
     }
   }
 
+  private unpackResults(results: TestsRunResultDescription[]): TestsRunResultDescription[] | null {
+      if (!results || results.length === 0) {
+        return null;
+      }
+
+      try {
+        for (let result of results) {
+          if (result.ExecutionOutput) {
+            let compressedOutput = result.ExecutionOutput;
+
+            const binaryString = atob(compressedOutput);
+
+            // Convert binary string to Uint8Array
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+
+            result.ExecutionOutput = pako.ungzip(bytes, { to: 'string' }) as string;
+          }
+        }
+
+        return results;
+      } catch (error) {
+        console.error('Error processing benchmark measurements:', error);
+        return null;
+      }
+    }
+
   private fetchTestsRunResultsData() {
     if (this.testsRunId) {
       this.testsApiHttpClientService.getAllTestsRunResultsData(this.testsRunId).pipe(
         tap({
           next: (data: TestsRunResultDescription[]) => {
-            this.testsRunResults = data;
+            this.testsRunResults = this.unpackResults(data) || [];
             this.testsRunResultsRows = data.map(result => new TestsRunResultDescriptionRow(result));
             this.filteredTestsRunResultsRows = [...this.testsRunResultsRows];
           }
@@ -514,5 +556,56 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
   dismissConfirmation(): void {
     this.showConfirmationDialog = false;
     this.confirmationMessage = '';
+  }
+
+  toggleColumnSelector(): void {
+    this.showColumnSelector = !this.showColumnSelector;
+  }
+
+  toggleColumn(column: keyof typeof this.columnVisibility): void {
+    this.columnVisibility[column] = !this.columnVisibility[column];
+    this.saveColumnVisibilityPreferences();
+  }
+
+  onLabelMouseEnter(event: Event): void {
+    const target = event.currentTarget as HTMLElement;
+    if (target) {
+      target.style.backgroundColor = '#f8f9fa';
+    }
+  }
+
+  onLabelMouseLeave(event: Event): void {
+    const target = event.currentTarget as HTMLElement;
+    if (target) {
+      target.style.backgroundColor = 'transparent';
+    }
+  }
+
+  onColumnVisibilityChange(): void {
+    this.saveColumnVisibilityPreferences();
+  }
+
+  isAnyColumnVisible(): boolean {
+    return Object.values(this.columnVisibility).some(visible => visible);
+  }
+
+  private loadColumnVisibilityPreferences(): void {
+    try {
+      const saved = localStorage.getItem(this.COLUMN_VISIBILITY_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        this.columnVisibility = { ...this.columnVisibility, ...parsed };
+      }
+    } catch (error) {
+      console.error('Error loading column visibility preferences:', error);
+    }
+  }
+
+  private saveColumnVisibilityPreferences(): void {
+    try {
+      localStorage.setItem(this.COLUMN_VISIBILITY_KEY, JSON.stringify(this.columnVisibility));
+    } catch (error) {
+      console.error('Error saving column visibility preferences:', error);
+    }
   }
 }
