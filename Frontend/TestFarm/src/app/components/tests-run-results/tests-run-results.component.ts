@@ -52,6 +52,7 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
     path: true,
     name: true,
     status: true,
+    progress: true,
     duration: true,
     actions: true,
     download: true
@@ -466,6 +467,24 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
     const minutes = Math.floor((duration / (1000 * 60)) % 60);
 
     return `${minutes}m ${seconds}s`;
+  }
+
+  calculateDiffProgress(result: TestsRunResultDescription): { percentage: number; passed: number; total: number } {
+    if (!result.Diffs || result.Diffs.length === 0) {
+      return { percentage: 0, passed: 0, total: 0 };
+    }
+
+    const total = result.Diffs.length;
+    const passed = result.Diffs.filter(diff => diff.Status === 'passed' || diff.Status === 'pass').length;
+    const percentage = Math.round((passed / total) * 100);
+
+    return { percentage, passed, total };
+  }
+
+  getProgressGradient(percentage: number): string {
+    // Creates a gradient from red (0%) through yellow (50%) to green (100%)
+    // The indicator position is based on the percentage
+    return `linear-gradient(to right, #ff6b6b 0%, #ffd93d 50%, #6bcf6b 100%)`;
   }
 
 
