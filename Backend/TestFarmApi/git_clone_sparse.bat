@@ -15,19 +15,25 @@ cd %TARGET_DIR%
 git sparse-checkout init --cone
 git sparse-checkout set --no-cone
 
-:: Find files with the specified extension
+:: Find files with the specified extension and add in batches of 10
+set FILE_COUNT=0
+set FILE_LIST=
+
 for /f "delims=" %%F in ('git ls-tree -r --name-only HEAD ^| findstr "%EXTENSION%"') do (
+    set /a FILE_COUNT+=1
     set FILE_LIST=!FILE_LIST! %%F
+    
+    if !FILE_COUNT! geq 10 (
+        git sparse-checkout add !FILE_LIST!
+        set FILE_LIST=
+        set FILE_COUNT=0
+    )
 )
 
-:: Check if any files were found
-if "%FILE_LIST%"=="" (
-    echo No files with extension .%EXTENSION% found.
-    exit /b 1
+:: Add any remaining files
+if not "!FILE_LIST!"=="" (
+    git sparse-checkout add !FILE_LIST!
 )
-
-:: Add found files to sparse checkout
-git sparse-checkout set %FILE_LIST%
 
 :: Checkout only the specified files
 git checkout
