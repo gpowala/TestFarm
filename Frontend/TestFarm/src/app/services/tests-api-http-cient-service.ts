@@ -8,6 +8,7 @@ import { environment } from 'src/environments/environment';
 import { TestHistoryResult } from 'src/app/models/test-history-result.description';
 import { TestsRunResultDiffDescription } from '../models/tests-run-result-diff-description';
 import { TestsRunDetailsDescription } from '../models/tests-run-details-description';
+import { TestStatisticsResponse } from '../models/test-statistics';
 
 @Injectable({
     providedIn: 'root'
@@ -48,5 +49,9 @@ export class TestsApiHttpClientService {
 
     cancelTestsRun(testsRunId: string) {
         return this.http.get<{ message: string }>(`${environment.baseApiUrl}/cancel-tests-run/${testsRunId}`);
+    }
+
+    getTestStatistics(testId: number): Observable<TestStatisticsResponse> {
+        return this.http.get<TestStatisticsResponse>(`${environment.baseApiUrl}/test/${testId}/statistics`);
     }
 }

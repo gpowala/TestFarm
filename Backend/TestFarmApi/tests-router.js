@@ -771,4 +771,115 @@ router.get('/diff/:id', async (req, res) => {
   }
 });
 
+// Get test run statistics for a specific test - useful for charting pass/fail diffs over time
+router.get('/test/:testId/statistics', async (req, res) => {
+  const { testId } = req.params;
+
+  try {
+    // Find the test
+    const test = await Test.findByPk(testId);
+
+    if (!test) {
+      return res.status(404).json({ message: 'Test not found' });
+    }
+
+    // Calculate date 3 months ago
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+    // Get all test results for this test with associated test run and diffs (limited to last 3 months)
+    const testResults = await TestResult.findAll({
+      where: { TestId: testId },
+      include: [
+        {
+          model: TestRun,
+          as: 'TestRun',
+          attributes: ['Id', 'Name', 'GridName', 'OverallCreationTimestamp', 'OverallStatus', 'Artifacts', 'RepositoryName', 'SuiteName'],
+          where: {
+            OverallCreationTimestamp: {
+              [Sequelize.Op.gte]: threeMonthsAgo
+            }
+          }
+        },
+        {
+          model: TestResultDiff,
+          as: 'TestsResultsDiffs',
+          attributes: ['Id', 'Name', 'Status']
+        }
+      ],
+      order: [[{ model: TestRun, as: 'TestRun' }, 'OverallCreationTimestamp', 'ASC']]
+    });
+
+    // Build statistics for each test run
+    const statistics = await Promise.all(testResults.map(async (testResult) => {
+      const diffs = testResult.TestsResultsDiffs || [];
+      const passingDiffs = diffs.filter(d => d.Status === 'passed').length;
+      const failingDiffs = diffs.filter(d => d.Status === 'failed').length;
+      const totalDiffs = diffs.length;
+
+      // Parse artifacts to get artifact details
+      const artifacts = testResult.TestRun.Artifacts || [];
+      const artifactDetails = await Promise.all(artifacts.map(async (artifactEntry) => {
+        const artifact = await Artifact.findByPk(artifactEntry.Id || artifactEntry.id || artifactEntry);
+        if (artifact) {
+          return {
+            id: artifact.Id,
+            buildId: artifact.BuildId,
+            buildName: artifact.BuildName,
+            repository: artifact.Repository,
+            branch: artifact.Branch,
+            revision: artifact.Revision
+          };
+        }
+        return { id: artifactEntry.Id || artifactEntry.id || artifactEntry, error: 'Artifact not found' };
+      }));
+
+      return {
+        testResultId: testResult.Id,
+        testResultStatus: testResult.Status,
+        executionStartTimestamp: testResult.ExecutionStartTimestamp,
+        executionEndTimestamp: testResult.ExecutionEndTimestamp,
+        testRun: {
+          id: testResult.TestRun.Id,
+          name: testResult.TestRun.Name,
+          gridName: testResult.TestRun.GridName,
+          repositoryName: testResult.TestRun.RepositoryName,
+          suiteName: testResult.TestRun.SuiteName,
+          overallStatus: testResult.TestRun.OverallStatus,
+          timestamp: testResult.TestRun.OverallCreationTimestamp
+        },
+        artifacts: artifactDetails,
+        diffStatistics: {
+          total: totalDiffs,
+          passing: passingDiffs,
+          failing: failingDiffs,
+          passingPercentage: totalDiffs > 0 ? Math.round((passingDiffs / totalDiffs) * 100) : null
+        },
+        diffs: diffs.map(d => ({
+          id: d.Id,
+          name: d.Name,
+          status: d.Status
+        }))
+      };
+    }));
+
+    res.status(200).json({
+      test: {
+        id: test.Id,
+        name: test.Name,
+        path: test.Path,
+        repositoryName: test.RepositoryName,
+        suiteName: test.SuiteName,
+        owner: test.Owner,
+        type: test.Type
+      },
+      totalRuns: statistics.length,
+      statistics: statistics
+    });
+  } catch (error) {
+    console.error('Error retrieving test statistics:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
 module.exports = router;

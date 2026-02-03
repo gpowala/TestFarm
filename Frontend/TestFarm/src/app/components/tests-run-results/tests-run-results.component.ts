@@ -63,6 +63,11 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
   showConfirmationDialog: boolean = false;
   confirmationMessage: string = '';
 
+  // Statistics dialog properties
+  showStatisticsDialog: boolean = false;
+  selectedTestIdForStatistics: number | null = null;
+  selectedTestNameForStatistics: string = '';
+
   constructor(private route: ActivatedRoute, private testsApiHttpClientService: TestsApiHttpClientService) {}
 
   ngOnInit() {
@@ -575,6 +580,19 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
   dismissConfirmation(): void {
     this.showConfirmationDialog = false;
     this.confirmationMessage = '';
+  }
+
+  openStatisticsDialog(testId: number, testName: string, event: MouseEvent): void {
+    event.stopPropagation();
+    this.selectedTestIdForStatistics = testId;
+    this.selectedTestNameForStatistics = testName;
+    this.showStatisticsDialog = true;
+  }
+
+  closeStatisticsDialog(): void {
+    this.showStatisticsDialog = false;
+    this.selectedTestIdForStatistics = null;
+    this.selectedTestNameForStatistics = '';
   }
 
   toggleColumnSelector(): void {
