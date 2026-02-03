@@ -593,17 +593,22 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                     <title>File Differences [Gold File: {gold_file} vs New File: {new_file}]</title>
                     <style>
                         body {{ font-family: Arial, sans-serif; margin: 20px; }}
-                        table {{ width: 100%; border: 1px solid #ddd; }}
-                        th, td {{ padding: 2px; font-family: monospace; white-space: pre; }}
+                        table {{ width: 100%; border: 1px solid #ddd; border-collapse: collapse; }}
+                        th, td {{ padding: 2px; font-family: monospace; white-space: pre; vertical-align: top; }}
                         th {{ background-color: #f4f4f4; }}
                         .added {{ background-color: #d4fcbc; }} /* Green */
                         .removed {{ background-color: #ffdddd; }} /* Red */
                         .context {{ background-color: #f8f8f8; }} /* Gray */
+                        .char-added {{ background-color: #acf2bd; font-weight: bold; }} /* Darker green for char highlight */
+                        .char-removed {{ background-color: #fdb8c0; font-weight: bold; }} /* Darker red for char highlight */
                         .view-buttons {{ margin-bottom: 15px; }}
                         .view-buttons button {{ padding: 8px 15px; margin-right: 10px; cursor: pointer; }}
+                        .view-buttons label {{ margin-left: 20px; cursor: pointer; }}
                         .active-view {{ background-color: #007bff; color: white; border: none; }}
                         .inactive-view {{ background-color: #f8f8f8; border: 1px solid #ddd; }}
                         .hidden {{ display: none; }}
+                        .side-by-side-table td {{ width: 50%; }}
+                        .highlight-off .char-added, .highlight-off .char-removed {{ background-color: inherit; font-weight: normal; }}
                     </style>
                     <script>
                         function switchView(viewName) {{
@@ -627,52 +632,89 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                                 document.getElementById('side-by-side-btn').classList.remove('active-view');
                             }}
                         }}
+                        
+                        function toggleHighlight() {{
+                            var checkbox = document.getElementById('highlight-checkbox');
+                            var sideBySideView = document.getElementById('side-by-side-view');
+                            var unifiedView = document.getElementById('unified-view');
+                            
+                            if (checkbox.checked) {{
+                                sideBySideView.classList.remove('highlight-off');
+                                unifiedView.classList.remove('highlight-off');
+                            }} else {{
+                                sideBySideView.classList.add('highlight-off');
+                                unifiedView.classList.add('highlight-off');
+                            }}
+                        }}
                     </script>
                 </head>
                 <body>
                     <h2>File Difference Report</h2>
                     <div class="view-buttons">
-                        <button id="side-by-side-btn" class="active-view" onclick="switchView('side-by-side-view')">Side by Side View</button>
+                        <button id="side-by-side-btn" class="active-view" onclick="switchView('side-by-side-view')">Side By Side View</button>
                         <button id="unified-btn" class="inactive-view" onclick="switchView('unified-view')">Unified View</button>
+                        <label><input type="checkbox" id="highlight-checkbox" checked onchange="toggleHighlight()"> Highlight Changes</label>
                     </div>
                     
                     <div id="side-by-side-view">
-                        <table>
+                        <table class="side-by-side-table">
                             <tr><th>Gold File: {gold_file}</th><th>New File: {new_file}</th></tr>
         """
         
-        # Process lines for side-by-side view
+        # Process lines for side-by-side view - pair removed and added lines together
         line_size_limit = 5000
 
-        left_side = []
-        right_side = []
-
+        rows = []
         identical_lines = []
+        removed_lines = []
+        added_lines = []
+        
+        def flush_changes():
+            nonlocal removed_lines, added_lines
+            # Pair removed and added lines side by side
+            max_len = max(len(removed_lines), len(added_lines))
+            for i in range(max_len):
+                left_line = removed_lines[i] if i < len(removed_lines) else None
+                right_line = added_lines[i] if i < len(added_lines) else None
+                
+                # Calculate character-level diff if both lines exist
+                if left_line is not None and right_line is not None:
+                    left_html, right_html = self.highlight_char_diff(left_line, right_line)
+                    rows.append((f'<td class="removed">- {left_html}</td>', f'<td class="added">+ {right_html}</td>'))
+                elif left_line is not None:
+                    rows.append((f'<td class="removed">- {self.escape_html(left_line)}</td>', '<td></td>'))
+                else:
+                    rows.append(('<td></td>', f'<td class="added">+ {self.escape_html(right_line)}</td>'))
+            
+            removed_lines = []
+            added_lines = []
         
         for line in diff_lines:
             if line.startswith('-'):
-                self.append_identical_lines(left_side, right_side, identical_lines)
-
-                left_side.append(f'<td class="removed">- {line[1:].rstrip()}</td>')
-                right_side.append('<td></td>')
+                self.append_identical_lines_to_rows(rows, identical_lines)
+                removed_lines.append(line[1:].rstrip())
             elif line.startswith('+'):
-                self.append_identical_lines(left_side, right_side, identical_lines)
-
-                left_side.append('<td></td>')
-                right_side.append(f'<td class="added">+ {line[1:].rstrip()}</td>')
+                self.append_identical_lines_to_rows(rows, identical_lines)
+                added_lines.append(line[1:].rstrip())
             else:
+                # Context line - flush any pending changes first
+                if removed_lines or added_lines:
+                    flush_changes()
                 identical_lines.append(line)
 
             line_size_limit = line_size_limit - 1
             if line_size_limit <= 0:
-                left_side.append(f'<td class="context">... diff content is limited to {5000} ...</td>')
-                right_side.append(f'<td class="context">... diff content is limited to {5000} ...</td>')
+                rows.append((f'<td class="context">... diff content is limited to {5000} ...</td>', 
+                            f'<td class="context">... diff content is limited to {5000} ...</td>'))
                 break
-
-        self.append_identical_lines(left_side, right_side, identical_lines)
+        
+        # Flush any remaining changes
+        if removed_lines or added_lines:
+            flush_changes()
+        self.append_identical_lines_to_rows(rows, identical_lines)
 
         # Add side-by-side rows
-        for left, right in zip(left_side, right_side):
+        for left, right in rows:
             html_content += f"<tr>{left}{right}</tr>\n"
 
         # Close the side-by-side table and start unified view
@@ -685,14 +727,42 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                             <tr><th>Unified Diff View</th></tr>
         """
         
-        # Process lines for unified view
+        # Process lines for unified view with character highlighting
+        removed_buffer = []
+        added_buffer = []
+        
+        def flush_unified_changes():
+            nonlocal removed_buffer, added_buffer, html_content
+            max_len = max(len(removed_buffer), len(added_buffer))
+            for i in range(max_len):
+                left_line = removed_buffer[i] if i < len(removed_buffer) else None
+                right_line = added_buffer[i] if i < len(added_buffer) else None
+                
+                if left_line is not None and right_line is not None:
+                    left_html, right_html = self.highlight_char_diff(left_line, right_line)
+                    html_content += f'<tr><td class="removed">- {left_html}</td></tr>\n'
+                    html_content += f'<tr><td class="added">+ {right_html}</td></tr>\n'
+                elif left_line is not None:
+                    html_content += f'<tr><td class="removed">- {self.escape_html(left_line)}</td></tr>\n'
+                else:
+                    html_content += f'<tr><td class="added">+ {self.escape_html(right_line)}</td></tr>\n'
+            
+            removed_buffer = []
+            added_buffer = []
+        
         for line in diff_lines:
             if line.startswith('-'):
-                html_content += f'<tr><td class="removed">- {line[1:].rstrip()}</td></tr>\n'
+                removed_buffer.append(line[1:].rstrip())
             elif line.startswith('+'):
-                html_content += f'<tr><td class="added">+ {line[1:].rstrip()}</td></tr>\n'
+                added_buffer.append(line[1:].rstrip())
             else:
-                html_content += f'<tr><td class="context">{line}</td></tr>\n'
+                if removed_buffer or added_buffer:
+                    flush_unified_changes()
+                html_content += f'<tr><td class="context">{self.escape_html(line)}</td></tr>\n'
+        
+        # Flush any remaining changes
+        if removed_buffer or added_buffer:
+            flush_unified_changes()
 
         # Close the unified table and finish the HTML
         html_content += """
@@ -704,22 +774,52 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
         with open(report_file, 'w', encoding='utf-8', errors='replace') as f:
             f.write(html_content)
-
-    def append_identical_lines(self, left_side, right_side, identical_lines):
+    
+    def escape_html(self, text: str) -> str:
+        """Escape HTML special characters."""
+        return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+    
+    def highlight_char_diff(self, old_line: str, new_line: str) -> tuple:
+        """Generate HTML with character-level highlighting for changed portions."""
+        import difflib as char_difflib
+        
+        matcher = char_difflib.SequenceMatcher(None, old_line, new_line)
+        old_html = []
+        new_html = []
+        
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            old_segment = self.escape_html(old_line[i1:i2])
+            new_segment = self.escape_html(new_line[j1:j2])
+            
+            if tag == 'equal':
+                old_html.append(old_segment)
+                new_html.append(new_segment)
+            elif tag == 'replace':
+                old_html.append(f'<span class="char-removed">{old_segment}</span>')
+                new_html.append(f'<span class="char-added">{new_segment}</span>')
+            elif tag == 'delete':
+                old_html.append(f'<span class="char-removed">{old_segment}</span>')
+            elif tag == 'insert':
+                new_html.append(f'<span class="char-added">{new_segment}</span>')
+        
+        return ''.join(old_html), ''.join(new_html)
+    
+    def append_identical_lines_to_rows(self, rows: list, identical_lines: list):
+        """Append identical lines to rows list for side-by-side view."""
         if len(identical_lines) > 0 and len(identical_lines) < 10:
             for line in identical_lines:
-                left_side.append(f'<td class="context">{line}</td>')
-                right_side.append(f'<td class="context">{line}</td>')
+                escaped = self.escape_html(line)
+                rows.append((f'<td class="context">{escaped}</td>', f'<td class="context">{escaped}</td>'))
         elif len(identical_lines) >= 10:
             for i in range(5):
-                left_side.append(f'<td class="context">{identical_lines[i]}</td>')
-                right_side.append(f'<td class="context">{identical_lines[i]}</td>')
-                    
-            left_side.append(f'<td class="context">... {len(identical_lines) - 10} more identical lines ...</td>')
-            right_side.append(f'<td class="context">... {len(identical_lines) - 10} more identical lines ...</td>')
-                    
+                escaped = self.escape_html(identical_lines[i])
+                rows.append((f'<td class="context">{escaped}</td>', f'<td class="context">{escaped}</td>'))
+            
+            rows.append((f'<td class="context">... {len(identical_lines) - 10} more identical lines ...</td>',
+                        f'<td class="context">... {len(identical_lines) - 10} more identical lines ...</td>'))
+            
             for i in range(len(identical_lines) - 5, len(identical_lines)):
-                left_side.append(f'<td class="context">{identical_lines[i]}</td>')
-                right_side.append(f'<td class="context">{identical_lines[i]}</td>')
-
+                escaped = self.escape_html(identical_lines[i])
+                rows.append((f'<td class="context">{escaped}</td>', f'<td class="context">{escaped}</td>'))
+        
         identical_lines.clear()
