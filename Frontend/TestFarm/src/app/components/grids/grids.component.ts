@@ -1,29 +1,34 @@
-import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
-import { MatAccordion } from '@angular/material/expansion';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { GridsApiHttpClientService } from 'src/app/services/grids-api-http-cient-service';
 import { GridDescription } from '../../models/grid-description';
+import { HostDescription } from '../../models/host-description';
+import { catchError, of, tap } from 'rxjs';
+
+class GridDescriptionRow {
+  expanded: boolean = false;
+
+  constructor(public grid: GridDescription) {}
+}
 
 @Component({
   selector: 'app-grids',
   templateUrl: './grids.component.html',
-  styleUrls: ['./grids.component.css'],
-  providers: [GridsApiHttpClientService]
+  styleUrls: ['./grids.component.css']
 })
-export class GridsComponent implements OnInit, OnDestroy{
-  @ViewChild(MatAccordion) accordion!: MatAccordion;
+export class GridsComponent implements OnInit, OnDestroy {
+  private intervalRefreshHandler: any;
+  public autoRefreshOn: boolean = true;
 
-  private intervalRefreshHandler: NodeJS.Timer | undefined;
-  public autoRefreshOn: boolean;
+  grids: GridDescription[] = [];
+  gridsRows: GridDescriptionRow[] = [];
+  filteredGridsRows: GridDescriptionRow[] = [];
+  sortDirection: { [key: string]: 'asc' | 'desc' } = {};
+  searchTerm: string = '';
 
-  public gridsDescription: GridDescription[];
-
-  constructor(private gridsApiHttpClientService: GridsApiHttpClientService) {
-    this.gridsDescription = [];
-    this.autoRefreshOn = false;
-  }
+  constructor(private gridsApiHttpClientService: GridsApiHttpClientService) {}
 
   ngOnInit(): void {
-    this.refreshGridsDescription();
+    this.fetchGrids();
     this.turnOnAutoRefresh();
   }
 
@@ -33,60 +38,159 @@ export class GridsComponent implements OnInit, OnDestroy{
 
   turnOnAutoRefresh(): void {
     this.autoRefreshOn = true;
-    this.intervalRefreshHandler = setInterval(() => this.refreshGridsDescription(), 10000);
+    this.intervalRefreshHandler = setInterval(() => this.fetchGrids(), 10000);
   }
 
   turnOffAutoRefresh(): void {
-    clearInterval(this.intervalRefreshHandler);
+    if (this.intervalRefreshHandler) {
+      clearInterval(this.intervalRefreshHandler);
+    }
     this.autoRefreshOn = false;
   }
 
-  refreshGridsDescription(): void {
-    this.gridsApiHttpClientService.getAllGridsData().subscribe((data: GridDescription[]) => {
-      this.gridsDescription = data.map(grid => {
-        let modifiedGrid = grid;
+  fetchGrids(): void {
+    this.gridsApiHttpClientService.getAllGridsData().pipe(
+      tap({
+        next: (data: GridDescription[]) => {
+          this.grids = data;
+          // Preserve expanded state when refreshing
+          const expandedGridIds = this.gridsRows
+            .filter(r => r.expanded)
+            .map(r => r.grid.Id);
 
-        modifiedGrid.CreationTimestamp = this.formatDate(new Date(grid.CreationTimestamp));
-        modifiedGrid.LastUpdateTimestamp = this.formatDate(new Date(grid.LastUpdateTimestamp));
+          this.gridsRows = data.map(grid => {
+            const row = new GridDescriptionRow(grid);
+            row.expanded = expandedGridIds.includes(grid.Id);
+            return row;
+          });
+          this.applyFilter();
+          this.resetSortIndicators();
+        }
+      }),
+      catchError((error: any) => {
+        console.error('Error fetching grids data:', error);
+        return of([]);
+      })
+    ).subscribe();
+  }
 
-        modifiedGrid.Hosts.map(host => {
-          let modifiedHost = host;
+  applyFilter(): void {
+    if (!this.searchTerm) {
+      this.filteredGridsRows = [...this.gridsRows];
+    } else {
+      const term = this.searchTerm.toLowerCase();
+      this.filteredGridsRows = this.gridsRows.filter(row =>
+        row.grid.Name.toLowerCase().includes(term) ||
+        row.grid.Hosts.some(host => host.Hostname.toLowerCase().includes(term))
+      );
+    }
+  }
 
-          modifiedHost.CreationTimestamp = this.formatDate(new Date(host.CreationTimestamp));
-          modifiedHost.LastUpdateTimestamp = this.formatDate(new Date(host.LastUpdateTimestamp));
+  onSearchChange(event: Event): void {
+    this.applyFilter();
+  }
 
-          return modifiedHost;
-        })
+  toggleExpand(row: GridDescriptionRow, event: MouseEvent): void {
+    event.stopPropagation();
+    row.expanded = !row.expanded;
+  }
 
-        return modifiedGrid;
-      });
+  sortTable(column: string): void {
+    const isCurrentSort = this.sortDirection[column];
+    const direction: 'asc' | 'desc' = isCurrentSort === 'asc' ? 'desc' : 'asc';
+    this.sortDirection = { [column]: direction };
+
+    this.filteredGridsRows.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (column) {
+        case 'id':
+          aValue = a.grid.Id;
+          bValue = b.grid.Id;
+          break;
+        case 'name':
+          aValue = a.grid.Name;
+          bValue = b.grid.Name;
+          break;
+        case 'hosts':
+          aValue = a.grid.Hosts.length;
+          bValue = b.grid.Hosts.length;
+          break;
+        case 'created':
+          aValue = new Date(a.grid.CreationTimestamp).getTime();
+          bValue = new Date(b.grid.CreationTimestamp).getTime();
+          break;
+        case 'updated':
+          aValue = new Date(a.grid.LastUpdateTimestamp).getTime();
+          bValue = new Date(b.grid.LastUpdateTimestamp).getTime();
+          break;
+        default:
+          aValue = '';
+          bValue = '';
+      }
+
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
+      if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    this.updateSortIndicators(column, direction);
+  }
+
+  updateSortIndicators(column: string, direction: 'asc' | 'desc'): void {
+    const headers = document.querySelectorAll('.column-sortable');
+    headers.forEach((header) => {
+      const svg = header.querySelector('svg');
+      if (svg) {
+        svg.style.opacity = '0.5';
+      }
+    });
+
+    const activeHeader = document.querySelector(`[data-sort="${column}"]`);
+    if (activeHeader) {
+      const svg = activeHeader.querySelector('svg');
+      if (svg) {
+        svg.style.opacity = '1';
+        svg.style.transform = direction === 'desc' ? 'rotate(180deg)' : 'rotate(0deg)';
+      }
+    }
+  }
+
+  resetSortIndicators(): void {
+    const headers = document.querySelectorAll('.column-sortable');
+    headers.forEach((header) => {
+      const svg = header.querySelector('svg');
+      if (svg) {
+        svg.style.opacity = '0.5';
+        svg.style.transform = 'rotate(0deg)';
+      }
     });
   }
 
-  formatDate(date: Date): string {
-    const ensureLeadingZero = (value: number): string => {
-      if (value < 10)
-        return `0${value}`;
-      else
-        return `${value}`;
-    };
-
-    return `${ensureLeadingZero(date.getDate())}/${ensureLeadingZero(date.getMonth() + 1)}/${ensureLeadingZero(date.getFullYear())} ${ensureLeadingZero(date.getHours())}:${ensureLeadingZero(date.getMinutes())}:${ensureLeadingZero(date.getSeconds())}`;
-  }
-
   isRecentUpdate(timestamp: string): boolean {
-    // Parse the timestamp in DD/MM/YYYY HH:MM:SS format
-    const [datePart, timePart] = timestamp.split(' ');
-    const [day, month, year] = datePart.split('/').map(Number);
-    const [hours, minutes, seconds] = timePart.split(':').map(Number);
-    const updateTime = new Date(year, month - 1, day, hours, minutes, seconds);
-
+    const updateTime = new Date(timestamp);
     const currentTime = new Date();
-
     const differenceInMs = currentTime.getTime() - updateTime.getTime();
     const differenceInMinutes = differenceInMs / (1000 * 60);
-
-    // Return true if the update is less than 5 minutes old
     return differenceInMinutes < 5;
+  }
+
+  getGridStatus(grid: GridDescription): string {
+    if (grid.Hosts.length === 0) return 'empty';
+    const allOnline = grid.Hosts.every(host => this.isRecentUpdate(host.LastUpdateTimestamp));
+    const someOnline = grid.Hosts.some(host => this.isRecentUpdate(host.LastUpdateTimestamp));
+    if (allOnline) return 'online';
+    if (someOnline) return 'partial';
+    return 'offline';
+  }
+
+  getHostStatus(host: HostDescription): string {
+    return this.isRecentUpdate(host.LastUpdateTimestamp) ? 'online' : 'offline';
   }
 }
