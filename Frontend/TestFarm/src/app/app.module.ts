@@ -35,6 +35,8 @@ import { AddArtifactDialogComponent } from './components/builds/add-artifact-dia
 import { BenchmarksRunsComponent } from './components/benchmarks-runs/benchmarks-runs.component';
 import { EditArtifactDefinitionDialogComponent } from './components/builds/edit-artifact-definition-dialog/edit-artifact-definition-dialog.component';
 import { TestStatisticsDialogComponent } from './components/tests-run-results/test-statistics-dialog/test-statistics-dialog.component';
+import { AddRepositoryDialogComponent } from './components/repositories/add-repository-dialog/add-repository-dialog.component';
+import { EditRepositoryDialogComponent } from './components/repositories/edit-repository-dialog/edit-repository-dialog.component';
 
 @NgModule({  declarations: [
     AppComponent,
@@ -54,7 +56,9 @@ import { TestStatisticsDialogComponent } from './components/tests-run-results/te
     AddArtifactDialogComponent,
     EditArtifactDefinitionDialogComponent,
     AddArtifactDefinitionDialogComponent,
-    TestStatisticsDialogComponent
+    TestStatisticsDialogComponent,
+    AddRepositoryDialogComponent,
+    EditRepositoryDialogComponent
   ],
   imports: [
     BrowserModule,

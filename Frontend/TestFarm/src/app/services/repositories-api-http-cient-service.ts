@@ -14,12 +14,28 @@ export class RepositoriesApiHttpClientService {
       return this.http.get<RepositoryDescription[]>(`${environment.baseApiUrl}/repositories`);
     }
 
-    addRepository(repositoryName: string, repositoryUrl: string, repositoryUser: string, repositoryToken: string) {
+    getRepositoryByName(name: string) {
+      return this.http.get<RepositoryDescription[]>(`${environment.baseApiUrl}/repositories`, {
+        params: { name }
+      });
+    }
+
+    addRepository(name: string, url: string, user: string, token: string) {
       return this.http.post<RepositoryDescription>(`${environment.baseApiUrl}/add-repository`, {
-        name: repositoryName,
-        url: repositoryUrl,
-        user: repositoryUser,
-        token: repositoryToken
+        name,
+        url,
+        user,
+        token
+      });
+    }
+
+    updateRepository(id: number, name: string, url: string, user: string, token: string) {
+      return this.http.put<RepositoryDescription>(`${environment.baseApiUrl}/update-repository`, {
+        id,
+        name,
+        url,
+        user,
+        token
       });
     }
 

@@ -1,57 +1,145 @@
-<div class="repositories-container">
-    <div class="repositories-header">
-        Repositories
-    </div>
-    <div class="repositories-content">
-      <div class="add-repository-form">
-        <div class="form-fields-container">
-            <div class="form-field">
-                <label>Repository Name</label>
-                <input type="text" [(ngModel)]="repositoryName">
-            </div>
-            <div class="form-field">
-                <label>Repository URL</label>
-                <input type="text" [(ngModel)]="repositoryUrl">
-            </div>
-            <div class="form-field">
-                <label>User</label>
-                <input type="text" [(ngModel)]="repositoryUser">
-            </div>
-            <div class="form-field">
-                <label>PAT (Token)</label>
-                <input type="password" [(ngModel)]="repositoryToken">
-            </div>
-            <button mat-raised-button color="primary" (click)="addRepository()">
-                Add Repository
-            </button>
-        </div>
+<div>
+  <div class="breadcrumb-island">
+      <nav class="breadcrumb">
+          <div class="breadcrumb-item">
+              <a href="#">TestFarm</a>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="breadcrumb-separator" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+          </svg>
+          <div class="breadcrumb-item active">
+              Repositories
+          </div>
+      </nav>
+  </div>
+  <div class="islands-grid">
+      <div class="island island-large">
+          <button class="btn btn-primary" (click)="addRepository()">
+            <svg width="16" height="16" fill="currentColor" stroke="none" viewBox="0 0 24 24">
+                <path d="M 12 2 C 6.4860328 2 2 6.4860368 2 12 C 2 17.513963 6.4860328 22 12 22 C 17.513967 22 22 17.513963 22 12 C 22 6.4860368 17.513967 2 12 2 z M 12 3.5 C 16.703308 3.5 20.5 7.2966955 20.5 12 C 20.5 16.703304 16.703308 20.5 12 20.5 C 7.2966924 20.5 3.5 16.703304 3.5 12 C 3.5 7.2966955 7.2966924 3.5 12 3.5 z M 11.988281 6.9902344 A 0.750075 0.750075 0 0 0 11.25 7.75 L 11.25 11.25 L 7.75 11.25 A 0.750075 0.750075 0 1 0 7.75 12.75 L 11.25 12.75 L 11.25 16.25 A 0.750075 0.750075 0 1 0 12.75 16.25 L 12.75 12.75 L 16.25 12.75 A 0.750075 0.750075 0 1 0 16.25 11.25 L 12.75 11.25 L 12.75 7.75 A 0.750075 0.750075 0 0 0 11.988281 6.9902344 z"></path>
+            </svg>
+            Add Repository
+          </button>
+          <button class="btn btn-secondary" [disabled]="selectedRepositoriesNumber !== 1" (click)="editRepository(getSelectedRow()?.repository!)">
+            <svg width="16" height="16" fill="currentColor" stroke="none" viewBox="0 0 24 24">
+                <path d="M 18.027344 2.0625 A 0.750075 0.750075 0 0 0 17.474609 2.28125 L 3.1953125 16.560547 A 0.750075 0.750075 0 0 0 2.9941406 16.925781 L 2.0683594 21.035156 A 0.750075 0.750075 0 0 0 2.9648438 21.931641 L 7.0742188 21.005859 A 0.750075 0.750075 0 0 0 7.4394531 20.804688 L 21.71875 6.5253906 A 0.750075 0.750075 0 0 0 21.931641 5.8984375 C 21.931641 5.8984375 21.757842 4.4961237 20.630859 3.3691406 C 19.503876 2.2421576 18.101562 2.0683594 18.101562 2.0683594 A 0.750075 0.750075 0 0 0 18.027344 2.0625 z M 18.177734 3.6992188 C 18.402665 3.7448027 18.944619 3.803994 19.570312 4.4296875 C 20.196006 5.055381 20.255198 5.5973355 20.300781 5.8222656 L 18.550781 7.5722656 L 16.427734 5.4492188 L 18.177734 3.6992188 z M 15.367188 6.5097656 L 17.490234 8.6328125 L 6.5332031 19.589844 L 3.7929688 20.208984 L 4.4101562 17.466797 L 15.367188 6.5097656 z"></path>
+            </svg>
+            Edit Repository
+          </button>
+          <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 200px;">
+                  <input type="text" id="dataSearch" placeholder="Search repositories..."
+                      [(ngModel)]="searchTerm"
+                      (input)="onSearchChange($event)"
+                      style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; transition: all 0.2s ease;">
+              </div>
+          </div>
+          <div style="overflow-x: auto; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); border-radius: 8px; border: 1px solid #e9ecef;">
+              <table id="repositoriesTable" style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                      <tr style="background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%); border-bottom: 2px solid #e9ecef; font-size: small;">
+                          <th class="column fit-content">
+                          </th>
+                          <th class="column-sortable fit-content" data-sort="id" (click)="sortTable('id')">
+                              Id
+                              <svg style="width: 12px; height: 12px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="column-sortable" data-sort="name" style="text-align: center;" (click)="sortTable('name')">
+                              Name
+                              <svg style="width: 12px; height: 12px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="column-sortable" data-sort="url" style="text-align: center;" (click)="sortTable('url')">
+                              URL
+                              <svg style="width: 12px; height: 12px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="column-sortable" data-sort="user" style="text-align: center;" (click)="sortTable('user')">
+                              User
+                              <svg style="width: 12px; height: 12px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="column-sortable fit-content" data-sort="status" style="text-align: center;" (click)="sortTable('status')">
+                              Status
+                              <svg style="width: 12px; height: 12px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                          </th>
+                          <th class="column fit-content">
+                              Actions
+                          </th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <tr *ngFor="let row of filteredRepositoriesRows" style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease; cursor: pointer;"
+                        (mouseover)="onRowMouseOver(row, $event)"
+                        (mouseout)="onRowMouseOut(row, $event)"
+                        (click)="markRowReviewed(row, $event)"
+                        (dblclick)="removeRowFromReviewed(row, $event)">
+                        <td class="cell">
+                          <input type="checkbox" style="margin: 0; transform: scale(1.2);" (change)="onSelectionChange(row, $event)" (click)="$event.stopPropagation()"/>
+                        </td>
+                        <td class="cell">
+                           {{row.repository.Id}}
+                        </td>
+                        <td class="cell">
+                          <span class="repo-name">{{row.repository.Name}}</span>
+                        </td>
+                        <td class="cell">
+                          <a [href]="row.repository.Url" target="_blank" class="row-link" (click)="$event.stopPropagation();">
+                            {{row.repository.Url}}
+                          </a>
+                        </td>
+                        <td class="cell" style="color: #6c757d;">
+                            {{row.repository.User}}
+                        </td>
+                        <td class="cell">
+                          <span class="test-status" [ngClass]="row.repository.IsActive ? 'status-passed' : 'status-failed'">
+                            {{ row.repository.IsActive ? 'Active' : 'Inactive' }}
+                          </span>
+                        </td>
+                        <td class="cell">
+                            <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+                                <a href="#" class="row-action-link" data-tooltip="Edit" (click)="editRepository(row.repository); $event.preventDefault(); $event.stopPropagation();">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none" x="0px" y="0px" width="22" height="22" viewBox="0 0 24 24">
+                                        <path d="M 18.027344 2.0625 A 0.750075 0.750075 0 0 0 17.474609 2.28125 L 3.1953125 16.560547 A 0.750075 0.750075 0 0 0 2.9941406 16.925781 L 2.0683594 21.035156 A 0.750075 0.750075 0 0 0 2.9648438 21.931641 L 7.0742188 21.005859 A 0.750075 0.750075 0 0 0 7.4394531 20.804688 L 21.71875 6.5253906 A 0.750075 0.750075 0 0 0 21.931641 5.8984375 C 21.931641 5.8984375 21.757842 4.4961237 20.630859 3.3691406 C 19.503876 2.2421576 18.101562 2.0683594 18.101562 2.0683594 A 0.750075 0.750075 0 0 0 18.027344 2.0625 z M 18.177734 3.6992188 C 18.402665 3.7448027 18.944619 3.803994 19.570312 4.4296875 C 20.196006 5.055381 20.255198 5.5973355 20.300781 5.8222656 L 18.550781 7.5722656 L 16.427734 5.4492188 L 18.177734 3.6992188 z M 15.367188 6.5097656 L 17.490234 8.6328125 L 6.5332031 19.589844 L 3.7929688 20.208984 L 4.4101562 17.466797 L 15.367188 6.5097656 z"></path>
+                                    </svg>
+                                </a>
+                                <a href="#" class="row-action-link" data-tooltip="Remove" (click)="removeRepository(row.repository.Id, $event); $event.preventDefault();">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none" x="0px" y="0px" width="22" height="22" viewBox="0 0 24 24">
+                                        <path d="M 10 2 L 9 3 L 4 3 L 4 5 L 5 5 L 5 20 C 5 20.522222 5.1913289 21.05461 5.5683594 21.431641 C 5.9453899 21.808671 6.4777778 22 7 22 L 17 22 C 17.522222 22 18.05461 21.808671 18.431641 21.431641 C 18.808671 21.05461 19 20.522222 19 20 L 19 5 L 20 5 L 20 3 L 15 3 L 14 2 L 10 2 z M 7 5 L 17 5 L 17 20 L 7 20 L 7 5 z M 9 7 L 9 18 L 11 18 L 11 7 L 9 7 z M 13 7 L 13 18 L 15 18 L 15 7 L 13 7 z"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                  </tbody>
+              </table>
+          </div>
+          <div id="noResults" *ngIf="filteredRepositoriesRows.length === 0" style="text-align: center; padding: 2rem; color: #6c757d;">
+              <svg style="width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.467.881-6.077 2.33l-.853-.894A9.96 9.96 0 0112 13.5a9.96 9.96 0 016.93 2.936l-.853.894z"></path>
+              </svg>
+              <div>{{ searchTerm ? 'No repositories match your search criteria' : 'No repositories found' }}</div>
+          </div>
       </div>
-      <table class="repositories-table" style="width: 100%;">
-          <thead>
-              <tr>
-                  <th style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">ID</th>
-                  <th style="white-space: nowrap; padding: 5px; text-align: center;">Name</th>
-                  <th style="white-space: nowrap; padding: 5px;">URL</th>
-                  <th style="white-space: nowrap; padding: 5px;">User</th>
-                  <th style="white-space: nowrap; padding: 5px;">Actions</th>
-              </tr>
-          </thead>
-          <tbody>
-              <tr *ngFor="let repo of repositories"
-                  class="repository-item"
-                  (mouseover)="onMouseOver($event)"
-                  (mouseout)="onMouseOut($event)" style="transition: background-color 0.3s;">
-                  <td style="width: 1%; white-space: nowrap; padding: 5px; text-align: left;">{{repo.Id}}</td>
-                  <td style="white-space: nowrap; padding: 5px; text-align: center;">{{repo.Name}}</td>
-                  <td style="white-space: nowrap; padding: 5px; text-align: center;"><a href="{{repo.Url}}">{{repo.Url}}</a></td>
-                  <td style="white-space: nowrap; padding: 5px; text-align: center;">{{repo.User}}</td>
-                  <td style="white-space: nowrap; padding: 5px; text-align: center;">
-                      <button mat-button color="primary" (click)="removeRepository(repo.Id)">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                  </td>
-              </tr>
-          </tbody>
-      </table>
-    </div>
+  </div>
 </div>
+
+<app-add-repository-dialog
+  *ngIf="showAddRepositoryDialog"
+  (repositoryAdded)="repositoryAdded($event)"
+  (repositoryDialogClosed)="repositoryDialogClosed()">
+</app-add-repository-dialog>
+
+<app-edit-repository-dialog
+  *ngIf="showEditRepositoryDialog"
+  [repository]="repositoryToEdit"
+  (repositoryChanged)="repositoryChanged($event)"
+  (editRepositoryDialogClosed)="editRepositoryDialogClosed()">
+</app-edit-repository-dialog>

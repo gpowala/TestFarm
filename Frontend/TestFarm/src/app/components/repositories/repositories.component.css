@@ -1,67 +1,109 @@
-.repositories-container {
-  margin: 0 10px 0 10px
+.row-checked-and-active {
+  background: linear-gradient(315deg, rgba(108, 123, 138, 0.15) 0%, rgba(108, 123, 138, 0.10) 100%);
 }
 
-.repositories-header {
-  margin: 20px 0 20px 0;
-  font-size: x-large;
-  color: rgb(70,78,178);
+.row-checked {
+  background: linear-gradient(315deg, rgba(108, 123, 138, 0.06) 0%, rgba(108, 123, 138, 0.03) 100%);
+}
 
+.row-active {
+  background: linear-gradient(315deg, rgba(108, 123, 138, 0.10) 0%, rgba(108, 123, 138, 0.06) 100%);
+}
+
+.row-inactive {
+  background: 'transparent'
+}
+
+.row-checked-and-active-hovering {
+  background: linear-gradient(315deg, rgba(108, 123, 138, 0.20) 0%, rgba(108, 123, 138, 0.15) 100%);
+}
+
+.row-checked-hovering {
+  background: linear-gradient(315deg, rgba(108, 123, 138, 0.10) 0%, rgba(108, 123, 138, 0.06) 100%);
+}
+
+.row-active-hovering {
+  background: linear-gradient(180deg, rgba(108, 123, 138, 0.15) 0%, rgba(108, 123, 138, 0.10) 100%);
+}
+
+.row-inactive-hovering {
+  background: linear-gradient(180deg, rgba(213, 94, 0, 0.005) 0%, rgba(213, 94, 0, 0.03) 100%);
+}
+
+.cell {
+  padding: 0.5rem;
+  font-weight: 500;
+  color: #2c3e50;
+  text-align: center;
+}
+
+.repo-name {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.row-link {
+  text-decoration: none;
+  color: #d55e00;
+}
+
+.row-link:hover {
   text-decoration: underline;
-  text-decoration-color: rgb(255,75,130);
-  text-decoration-thickness: 3px;
 }
 
-.add-repository-form {
-  margin-top: 20px;
+.action-item {
+  display: inline-block;
+  margin: 0 10px;
 }
 
-.form-fields-container {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  flex-wrap: nowrap;
-  margin: 10px 0 10px 0;
+.row-action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: #6c757d;
+  text-decoration: none;
+  transition: all 0.3s ease;
 }
 
-.form-field {
-  flex: 1;
-  min-width: 0;
+.row-action-link:hover {
+  color: #d55e00;
 }
 
-.form-field label {
-  display: block;
-  font-size: 11px;
-  color: #666;
-  margin-bottom: 2px;
-  padding-left: 4px;
+.column {
+  padding: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  position: relative;
+  text-align: center;
 }
 
-.form-field input {
-  height: 36px;
-  width: 100%;
-  padding: 0 12px;
-  border: 1px solid #ccc;
-  border-radius: 2px;
-  font-size: 14px;
-  box-sizing: border-box;
+.column-sortable {
+  padding: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  position: relative;
+  text-align: center;
 }
 
-.mat-mdc-button {
-  min-width: 0px !important;
+.column-sortable:hover {
+  color: #d55e00;
+  box-shadow: inset 0 -3px 0 rgba(213, 94, 0, 0.3);
 }
 
-button[mat-raised-button] {
-  height: 36px;
-  padding: 0 16px;
-  align-self: flex-end;
-  box-shadow: none;
+.column.fit-content {
+  white-space: nowrap;
+  width: 1%;
 }
 
-button[mat-raised-button]:active {
-  box-shadow: none !important;
-}
-
-.mat-mdc-button>.mat-icon {
-  margin-right: 0;
+.column-sortable.fit-content {
+  white-space: nowrap;
+  width: 1%;
 }
