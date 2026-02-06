@@ -49,3 +49,24 @@ ul {
     font-family: 'Righteous', cursive;
     padding: 0 40px 0 0;
 } */
+
+.user-link {
+  position: relative;
+}
+
+.login-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  background: #28a745;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 6px rgba(40, 167, 69, 0.6);
+}
+
+.main-content.full-width {
+  margin-left: 0;
+  padding-left: 2rem;
+}

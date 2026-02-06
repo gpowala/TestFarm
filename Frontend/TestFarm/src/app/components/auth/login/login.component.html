@@ -1,0 +1,59 @@
+<div class="auth-page">
+  <div class="auth-container">
+    <div class="auth-header">
+      <h2 class="auth-title">Welcome Back</h2>
+      <p class="auth-subtitle">Sign in to TestFarm</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+      <!-- Error Message -->
+      <div class="error-banner" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Username Field -->
+      <div class="form-field">
+        <label class="form-label" for="username">Username <span class="required">*</span></label>
+        <input
+          id="username"
+          type="text"
+          class="form-input"
+          [class.form-input-error]="isFieldInvalid('username')"
+          formControlName="username"
+          placeholder="Enter your username">
+        <div class="form-error" *ngIf="isFieldInvalid('username')">
+          {{ getFieldError('username') }}
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-field">
+        <label class="form-label" for="password">Password <span class="required">*</span></label>
+        <input
+          id="password"
+          type="password"
+          class="form-input"
+          [class.form-input-error]="isFieldInvalid('password')"
+          formControlName="password"
+          placeholder="Enter your password">
+        <div class="form-error" *ngIf="isFieldInvalid('password')">
+          {{ getFieldError('password') }}
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        class="btn btn-primary btn-auth"
+        [disabled]="loginForm.invalid || isLoading">
+        <span *ngIf="!isLoading">Sign In</span>
+        <span *ngIf="isLoading">Signing In...</span>
+      </button>
+
+      <!-- Register Link -->
+      <div class="auth-footer">
+        <p>Don't have an account? <a (click)="goToRegister()" class="auth-link">Register here</a></p>
+      </div>
+    </form>
+  </div>
+</div>

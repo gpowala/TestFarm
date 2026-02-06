@@ -1,6 +1,7 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const { appSettings } = require('./appsettings');
 const { BuildStatus } = require('azure-devops-node-api/interfaces/BuildInterfaces');
+const bcrypt = require('bcrypt');
 
 let sequelize = new Sequelize({
     dialect: 'mssql',
@@ -635,6 +636,49 @@ BenchmarkResult.belongsTo(BenchmarksRun, { foreignKey: 'BenchmarksRunId', as: 'B
 Benchmark.hasMany(BenchmarkResult, { foreignKey: 'BenchmarkId', as: 'BenchmarkResult' });
 BenchmarkResult.belongsTo(Benchmark, { foreignKey: 'BenchmarkId', as: 'Benchmark' });
 
+const User = sequelize.define('User', {
+  Id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+    allowNull: false
+  },
+  Username: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  Email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  PasswordHash: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  EmailConfirmed: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  EmailConfirmationToken: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  CreationTimestamp: {
+    type: DataTypes.DATE,
+    allowNull: false
+  }
+}, {
+  tableName: 'Users',
+  timestamps: false
+});
+
+User.prototype.validatePassword = async function(password) {
+  return await bcrypt.compare(password, this.PasswordHash);
+};
+
 module.exports = {
   ArtifactDefinition,
   Artifact,
@@ -650,5 +694,6 @@ module.exports = {
   BenchmarksRun,
   Benchmark,
   BenchmarkResult,
+  User,
   sequelize
 };

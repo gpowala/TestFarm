@@ -14,7 +14,7 @@
 </div>
 
 <router-outlet></router-outlet> -->
-  <nav class="sidebar" id="sidebar">
+  <nav class="sidebar" id="sidebar" *ngIf="showNav">
       <div class="nav-menu">
           <div class="nav-menu-main">
               <ul style="list-style: none; margin: 0; padding: 0;">
@@ -62,6 +62,24 @@
           </div>
           <div class="nav-menu-bottom">
               <ul style="list-style: none; margin: 0; padding: 0;">
+                <!-- User Icon / Login Status -->
+                <li class="nav-item" *ngIf="currentUser">
+                    <button class="nav-link user-link" (click)="openUserProfile()" [attr.data-tooltip]="currentUser.username">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="currentColor" viewBox="0 0 24 24" width="22" height="22">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                        </svg>
+                        <span class="nav-text">{{ currentUser.username }}</span>
+                        <span class="login-indicator"></span>
+                    </button>
+                </li>
+                <li class="nav-item" *ngIf="!currentUser">
+                    <button class="nav-link" (click)="goToLogin()" data-tooltip="Login">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="currentColor" viewBox="0 0 24 24" width="22" height="22">
+                            <path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/>
+                        </svg>
+                        <span class="nav-text">Login</span>
+                    </button>
+                </li>
                 <li class="nav-item">
                       <a href="#" class="nav-link" data-tooltip="Help">
                           <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="currentColor" stroke="none" x="0px" y="0px" width="22" height="22" viewBox="0 0 24 24">
@@ -81,7 +99,14 @@
           </div>
       </div>
   </nav>
-  <main class="main-content">
+  <main class="main-content" [class.full-width]="!showNav">
     <router-outlet></router-outlet>
   </main>
+
+  <!-- User Profile Dialog -->
+  <app-user-profile 
+    *ngIf="showUserProfile && currentUser" 
+    [user]="currentUser" 
+    (close)="closeUserProfile()">
+  </app-user-profile>
 </div>

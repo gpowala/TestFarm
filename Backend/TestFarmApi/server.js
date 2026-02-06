@@ -1,12 +1,14 @@
 const { appSettings } = require('./appsettings');
 
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const { Sequelize } = require('sequelize');
-const { sequelize, MicroJobsQueue, Grid, Host, TestRun, Test, TestResult, TestResultDiff, Repository, BenchmarksRun, BenchmarkResult, Benchmark, Artifact } = require('./database');
+const { sequelize, MicroJobsQueue, Grid, Host, TestRun, Test, TestResult, TestResultDiff, Repository, BenchmarksRun, BenchmarkResult, Benchmark, Artifact, User } = require('./database');
 const gridsRouter = require('./grids-router');
 const repositoriesRouter = require('./reporitories-router');
 const testsRunsRouter = require('./tests-router');
 const artifactsRouter = require('./artifacts-router');
+const authRouter = require('./auth-router');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const cors = require('cors');
@@ -14,7 +16,11 @@ const app = express();
 const port = 3000;
 
 app.use(express.json());
-app.use(cors());
+app.use(cookieParser());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
@@ -28,7 +34,7 @@ const swaggerOptions = {
       description: 'API for managing test farm',
     },
   },
-  apis: ['./grids-router.js', './server.js']
+  apis: ['./grids-router.js', './server.js', './auth-router.js']
 };
 
 const { parseBehaveTestsResults, parseSpecFlowTestsResults, unescapeXmlString } = require('./examples/results-parsers');
@@ -1036,6 +1042,7 @@ app.use('/', gridsRouter);
 app.use('/', repositoriesRouter);
 app.use('/', testsRunsRouter);
 app.use('/', artifactsRouter);
+app.use('/api/auth', authRouter);
 
 app.listen(port, async () => {
   sequelize.verbose_sync();

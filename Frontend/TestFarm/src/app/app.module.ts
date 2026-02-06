@@ -37,6 +37,10 @@ import { EditArtifactDefinitionDialogComponent } from './components/builds/edit-
 import { TestStatisticsDialogComponent } from './components/tests-run-results/test-statistics-dialog/test-statistics-dialog.component';
 import { AddRepositoryDialogComponent } from './components/repositories/add-repository-dialog/add-repository-dialog.component';
 import { EditRepositoryDialogComponent } from './components/repositories/edit-repository-dialog/edit-repository-dialog.component';
+import { LoginComponent } from './components/auth/login/login.component';
+import { RegisterComponent } from './components/auth/register/register.component';
+import { ConfirmEmailComponent } from './components/auth/confirm-email/confirm-email.component';
+import { UserProfileComponent } from './components/user-profile/user-profile.component';
 
 @NgModule({  declarations: [
     AppComponent,
@@ -58,7 +62,11 @@ import { EditRepositoryDialogComponent } from './components/repositories/edit-re
     AddArtifactDefinitionDialogComponent,
     TestStatisticsDialogComponent,
     AddRepositoryDialogComponent,
-    EditRepositoryDialogComponent
+    EditRepositoryDialogComponent,
+    LoginComponent,
+    RegisterComponent,
+    ConfirmEmailComponent,
+    UserProfileComponent
   ],
   imports: [
     BrowserModule,

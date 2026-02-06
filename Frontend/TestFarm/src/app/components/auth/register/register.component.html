@@ -1,0 +1,94 @@
+<div class="auth-page">
+  <div class="auth-container">
+    <div class="auth-header">
+      <h2 class="auth-title">Create Account</h2>
+      <p class="auth-subtitle">Register for TestFarm</p>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
+      <!-- Success Message -->
+      <div class="success-banner" *ngIf="successMessage">
+        {{ successMessage }}
+      </div>
+
+      <!-- Error Message -->
+      <div class="error-banner" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Username Field -->
+      <div class="form-field">
+        <label class="form-label" for="username">Username <span class="required">*</span></label>
+        <input
+          id="username"
+          type="text"
+          class="form-input"
+          [class.form-input-error]="isFieldInvalid('username')"
+          formControlName="username"
+          placeholder="Choose a username">
+        <div class="form-error" *ngIf="isFieldInvalid('username')">
+          {{ getFieldError('username') }}
+        </div>
+      </div>
+
+      <!-- Email Field -->
+      <div class="form-field">
+        <label class="form-label" for="email">Email <span class="required">*</span></label>
+        <input
+          id="email"
+          type="email"
+          class="form-input"
+          [class.form-input-error]="isFieldInvalid('email')"
+          formControlName="email"
+          placeholder="Enter your email">
+        <div class="form-error" *ngIf="isFieldInvalid('email')">
+          {{ getFieldError('email') }}
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-field">
+        <label class="form-label" for="password">Password <span class="required">*</span></label>
+        <input
+          id="password"
+          type="password"
+          class="form-input"
+          [class.form-input-error]="isFieldInvalid('password')"
+          formControlName="password"
+          placeholder="Choose a password">
+        <div class="form-error" *ngIf="isFieldInvalid('password')">
+          {{ getFieldError('password') }}
+        </div>
+      </div>
+
+      <!-- Confirm Password Field -->
+      <div class="form-field">
+        <label class="form-label" for="confirmPassword">Confirm Password <span class="required">*</span></label>
+        <input
+          id="confirmPassword"
+          type="password"
+          class="form-input"
+          [class.form-input-error]="isFieldInvalid('confirmPassword')"
+          formControlName="confirmPassword"
+          placeholder="Confirm your password">
+        <div class="form-error" *ngIf="isFieldInvalid('confirmPassword')">
+          {{ getFieldError('confirmPassword') }}
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        class="btn btn-primary btn-auth"
+        [disabled]="registerForm.invalid || isLoading">
+        <span *ngIf="!isLoading">Create Account</span>
+        <span *ngIf="isLoading">Creating Account...</span>
+      </button>
+
+      <!-- Login Link -->
+      <div class="auth-footer">
+        <p>Already have an account? <a (click)="goToLogin()" class="auth-link">Sign in here</a></p>
+      </div>
+    </form>
+  </div>
+</div>
