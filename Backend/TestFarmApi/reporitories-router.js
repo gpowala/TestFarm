@@ -1,6 +1,63 @@
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 const { sequelize, Grid, Host, Repository } = require('./database');
+const { appSettings } = require('./appsettings');
 const express = require('express');
 const router = express.Router();
+
+cloneSparseRepository = (repository, localRepositoryDir) => {
+  if (!fs.existsSync(localRepositoryDir))
+    fs.mkdirSync(localRepositoryDir, { recursive: true });
+
+  let connectionString = `https://${repository.User}:${repository.Token}@${repository.Url.replace(/^https?:\/\//, '')}`;
+  execSync(`git_clone_sparse.bat "${connectionString}" "${localRepositoryDir}" "testfarm"`, { stdio: 'pipe' });
+}
+
+requireFileExists = (filePath) => {
+  if (!fs.existsSync(filePath))
+    throw Error(`${filePath} file not found in repository`);
+}
+
+requireRepositoryExists = (repository) => {
+  if (repository == null)
+    throw Error('Repository does not exist');
+}
+
+findTestConfigFiles = (rootDir, currentDir = rootDir, results = []) => {
+  const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const entryPath = path.join(currentDir, entry.name);
+    if (entry.isDirectory()) {
+      findTestConfigFiles(rootDir, entryPath, results);
+    } else if (entry.isFile() && entry.name === 'test.testfarm') {
+      results.push(entryPath);
+    }
+  }
+
+  return results;
+}
+
+findFilesByName = (rootDir, fileName, currentDir = rootDir, results = []) => {
+  const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const entryPath = path.join(currentDir, entry.name);
+    if (entry.isDirectory()) {
+      findFilesByName(rootDir, fileName, entryPath, results);
+    } else if (entry.isFile() && entry.name === fileName) {
+      results.push(entryPath);
+    }
+  }
+
+  return results;
+}
+
+findTestsRootDirs = (rootDir) => {
+  const rootFiles = findFilesByName(rootDir, 'tests.testfarm');
+  return rootFiles.map(filePath => path.dirname(filePath));
+}
 
 /**
  * @swagger
@@ -188,6 +245,55 @@ router.post('/add-repository', async (req, res) => {
     } catch (error) {
       console.error('Error fetching repositories:', error);
       res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
+  router.get('/repository-tests', async (req, res) => {
+    const { name } = req.query;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Repository name is required' });
+    }
+
+    const localRepositoryDir = `${appSettings.storage.repositories}/${name}`;
+
+    try {
+      let repository = await Repository.findOne({ where: { Name: name } });
+      requireRepositoryExists(repository);
+
+      cloneSparseRepository(repository, localRepositoryDir);
+
+      const testsRootDirs = findTestsRootDirs(localRepositoryDir);
+      if (testsRootDirs.length === 0) {
+        throw Error('tests.testfarm file not found in repository');
+      }
+
+      const testsRootDir = testsRootDirs.sort()[0];
+      const testConfigFiles = findTestConfigFiles(localRepositoryDir);
+      const tests = [];
+
+      for (const testConfigPath of testConfigFiles) {
+        const testConfig = JSON.parse(fs.readFileSync(testConfigPath, 'utf8'));
+        const relativePath = path
+          .relative(testsRootDir, path.dirname(testConfigPath))
+          .replace(/\\/g, '/');
+
+        tests.push({
+          name: testConfig.name,
+          description: testConfig.description,
+          owner: testConfig.owner,
+          type: testConfig.type || 'native',
+          relativePath: relativePath
+        });
+      }
+
+      res.status(200).json({ repositoryName: name, tests });
+    } catch (error) {
+      console.error('Error fetching repository tests:', error);
+      res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    } finally {
+      if (fs.existsSync(localRepositoryDir))
+        fs.rmdirSync(localRepositoryDir, { recursive: true });
     }
   });
   

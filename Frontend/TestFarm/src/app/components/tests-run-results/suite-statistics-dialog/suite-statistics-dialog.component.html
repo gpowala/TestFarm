@@ -1,0 +1,169 @@
+<div class="dialog-overlay" (click)="onClose()">
+  <div class="dialog-container dialog-large" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h2 class="dialog-title">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem; vertical-align: middle;">
+          <path d="M 20.5 2 A 1.5 1.5 0 0 0 19.029297 3.7910156 L 12.587891 8.6230469 A 1.5 1.5 0 0 0 12 8.5 A 1.5 1.5 0 0 0 11.046875 8.8417969 L 4.9960938 6.5722656 A 1.5 1.5 0 0 0 3.5 5 A 1.5 1.5 0 0 0 3.5 8 A 1.5 1.5 0 0 0 4.140625 7.8535156 L 10.521484 10.248047 A 1.5 1.5 0 0 0 12 11.5 A 1.5 1.5 0 0 0 13.490234 9.8203125 L 20.021484 4.921875 A 1.5 1.5 0 0 0 20.5 5 A 1.5 1.5 0 0 0 20.5 2 z M 18 9 C 17.180203 9 16.5 9.6802029 16.5 10.5 L 16.5 19.5 C 16.5 20.319797 17.180203 21 18 21 L 20.5 21 C 21.319797 21 22 20.319797 22 19.5 L 22 10.5 C 22 9.6802029 21.319797 9 20.5 9 L 18 9 z M 18 10.5 L 20.5 10.5 L 20.5 19.5 L 18 19.5 L 18 10.5 z M 4 12 C 3.1802029 12 2.5 12.680203 2.5 13.5 L 2.5 19.5 C 2.5 20.319797 3.1802029 21 4 21 L 6.5 21 C 7.3197971 21 8 20.319797 8 19.5 L 8 13.5 C 8 12.680203 7.3197971 12 6.5 12 L 4 12 z M 4 13.5 L 6.5 13.5 L 6.5 19.5 L 4 19.5 L 4 13.5 z M 11 14 C 10.180203 14 9.5 14.680203 9.5 15.5 L 9.5 19.5 C 9.5 20.319797 10.180203 21 11 21 L 13.5 21 C 14.319797 21 15 20.319797 15 19.5 L 15 15.5 C 15 14.680203 14.319797 14 13.5 14 L 11 14 z M 11 15.5 L 13.5 15.5 L 13.5 19.5 L 11 19.5 L 11 15.5 z"></path>
+        </svg>
+        Suite Statistics
+      </h2>
+      <button class="close-btn" (click)="onClose()" type="button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="dialog-content">
+      <!-- Suite Info - At Top -->
+      <div class="suite-info-section suite-info-top">
+        <div class="info-row">
+          <div class="info-item">
+            <span class="info-label">Repository:</span>
+            <span class="info-value">{{ repositoryName }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Suite:</span>
+            <span class="info-value">{{ suiteName }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading statistics...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="errorMessage && !isLoading" class="error-container">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#dc3545" viewBox="0 0 16 16">
+          <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+        </svg>
+        <p>{{ errorMessage }}</p>
+        <button class="btn btn-primary btn-modal" (click)="fetchStatistics()">Retry</button>
+      </div>
+
+      <!-- Content -->
+      <div *ngIf="!isLoading && !errorMessage && statisticsData">
+        <!-- Summary Cards -->
+        <div class="stats-summary">
+          <div class="stat-card">
+            <div class="stat-value">{{ statisticsData.totalRuns }}</div>
+            <div class="stat-label">Total Runs</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" [ngClass]="{
+              'text-success': getLatestTestProgress() >= 80,
+              'text-warning': getLatestTestProgress() >= 50 && getLatestTestProgress() < 80,
+              'text-danger': getLatestTestProgress() < 50
+            }">{{ getLatestTestProgress() }}%</div>
+            <div class="stat-label">Latest Tests Pass</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" [ngClass]="{
+              'text-success': getLatestDiffProgress() >= 80,
+              'text-warning': getLatestDiffProgress() >= 50 && getLatestDiffProgress() < 80,
+              'text-danger': getLatestDiffProgress() < 50
+            }">{{ getLatestDiffProgress() }}%</div>
+            <div class="stat-label">Latest Diffs Pass</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">
+              <span *ngIf="getTrendDirection() === 'up'" class="trend-up">↑</span>
+              <span *ngIf="getTrendDirection() === 'down'" class="trend-down">↓</span>
+              <span *ngIf="getTrendDirection() === 'stable'" class="trend-stable">→</span>
+            </div>
+            <div class="stat-label">Trend</div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-container">
+          <div class="filter-group">
+            <label class="filter-label">Chart Type</label>
+            <select class="filter-select" [(ngModel)]="chartType" (change)="onChartTypeChange()">
+              <option value="line">Line Chart</option>
+              <option value="bar">Bar Chart</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Date Range</label>
+            <select class="filter-select" [(ngModel)]="dateRange" (change)="onDateRangeChange()">
+              <option value="all">All Time</option>
+              <option value="week">Last Week</option>
+              <option value="month">Last Month</option>
+              <option value="3months">Last 3 Months</option>
+            </select>
+          </div>
+
+          <!-- Artifact Filter Dropdown -->
+          <div class="filter-group artifact-filter-group" *ngIf="artifactFilterOptions.length > 1">
+            <label class="filter-label">Artifact Filter</label>
+            <div class="artifact-filter-dropdown">
+              <button class="filter-select artifact-filter-btn" (click)="toggleArtifactFilter()">
+                {{ getSelectedArtifactCount() }} of {{ artifactFilterOptions.length }} selected
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 0.5rem;">
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
+              </button>
+              <div class="artifact-filter-panel" *ngIf="showArtifactFilter">
+                <div class="artifact-filter-actions">
+                  <button class="filter-action-btn" (click)="selectAllArtifacts()">Select All</button>
+                  <button class="filter-action-btn" (click)="deselectAllArtifacts()">Deselect All</button>
+                </div>
+                <div class="artifact-filter-options">
+                  <label class="artifact-checkbox-label" *ngFor="let option of artifactFilterOptions">
+                    <input type="checkbox" [(ngModel)]="option.selected" (change)="onArtifactFilterChange()">
+                    <span class="artifact-checkbox-text">{{ option.label }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-group filter-checkboxes">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="showTestPassingLine" (change)="onFilterChange()">
+              <span class="checkbox-text tests-passing">Tests Pass</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="showTestFailingLine" (change)="onFilterChange()">
+              <span class="checkbox-text tests-failing">Tests Fail</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="showDiffPassingLine" (change)="onFilterChange()">
+              <span class="checkbox-text diffs-passing">Diffs Pass</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="showDiffFailingLine" (change)="onFilterChange()">
+              <span class="checkbox-text diffs-failing">Diffs Fail</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Chart Container -->
+        <div class="chart-container">
+          <canvas #progressChart></canvas>
+        </div>
+
+        <!-- No Data Message -->
+        <div *ngIf="statisticsData.statistics.length === 0" class="no-data-container">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#6c757d" viewBox="0 0 16 16">
+            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+            <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+          </svg>
+          <p>No statistics data available for this suite.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-actions">
+      <button class="btn btn-secondary btn-modal" (click)="onClose()">
+        Close
+      </button>
+    </div>
+  </div>
+</div>

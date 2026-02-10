@@ -52,7 +52,14 @@
       </div>
       <div class="test-item">
         <span class="test-name">Suite</span>
-        <span style="color: #6c757d; font-size: 0.875rem;">{{ testsRunDetails?.SuiteName }}</span>
+        <span style="color: #6c757d; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem;">
+          {{ testsRunDetails?.SuiteName }}
+          <a class="row-action-link" data-tooltip="View Suite Statistics" (click)="openSuiteStatisticsDialog($event)" style="cursor: pointer; display: inline-flex;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none" width="18" height="18" viewBox="0 0 24 24">
+              <path d="M 20.5 2 A 1.5 1.5 0 0 0 19.029297 3.7910156 L 12.587891 8.6230469 A 1.5 1.5 0 0 0 12 8.5 A 1.5 1.5 0 0 0 11.046875 8.8417969 L 4.9960938 6.5722656 A 1.5 1.5 0 0 0 3.5 5 A 1.5 1.5 0 0 0 3.5 8 A 1.5 1.5 0 0 0 4.140625 7.8535156 L 10.521484 10.248047 A 1.5 1.5 0 0 0 12 11.5 A 1.5 1.5 0 0 0 13.490234 9.8203125 L 20.021484 4.921875 A 1.5 1.5 0 0 0 20.5 5 A 1.5 1.5 0 0 0 20.5 2 z M 18 9 C 17.180203 9 16.5 9.6802029 16.5 10.5 L 16.5 19.5 C 16.5 20.319797 17.180203 21 18 21 L 20.5 21 C 21.319797 21 22 20.319797 22 19.5 L 22 10.5 C 22 9.6802029 21.319797 9 20.5 9 L 18 9 z M 18 10.5 L 20.5 10.5 L 20.5 19.5 L 18 19.5 L 18 10.5 z M 4 12 C 3.1802029 12 2.5 12.680203 2.5 13.5 L 2.5 19.5 C 2.5 20.319797 3.1802029 21 4 21 L 6.5 21 C 7.3197971 21 8 20.319797 8 19.5 L 8 13.5 C 8 12.680203 7.3197971 12 6.5 12 L 4 12 z M 4 13.5 L 6.5 13.5 L 6.5 19.5 L 4 19.5 L 4 13.5 z M 11 14 C 10.180203 14 9.5 14.680203 9.5 15.5 L 9.5 19.5 C 9.5 20.319797 10.180203 21 11 21 L 13.5 21 C 14.319797 21 15 20.319797 15 19.5 L 15 15.5 C 15 14.680203 14.319797 14 13.5 14 L 11 14 z M 11 15.5 L 13.5 15.5 L 13.5 19.5 L 11 19.5 L 11 15.5 z"></path>
+            </svg>
+          </a>
+        </span>
       </div>
       <div class="test-item">
         <span class="test-name">Grid</span>
@@ -562,3 +569,11 @@
   [testName]="selectedTestNameForStatistics"
   (dialogClosed)="closeStatisticsDialog()">
 </app-test-statistics-dialog>
+
+<!-- Suite Statistics Dialog -->
+<app-suite-statistics-dialog
+  *ngIf="showSuiteStatisticsDialog && testsRunDetails"
+  [repositoryName]="testsRunDetails.RepositoryName"
+  [suiteName]="testsRunDetails.SuiteName"
+  (dialogClosed)="closeSuiteStatisticsDialog()">
+</app-suite-statistics-dialog>

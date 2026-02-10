@@ -68,6 +68,9 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
   selectedTestIdForStatistics: number | null = null;
   selectedTestNameForStatistics: string = '';
 
+  // Suite Statistics dialog properties
+  showSuiteStatisticsDialog: boolean = false;
+
   constructor(private route: ActivatedRoute, private testsApiHttpClientService: TestsApiHttpClientService) {}
 
   ngOnInit() {
@@ -593,6 +596,15 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
     this.showStatisticsDialog = false;
     this.selectedTestIdForStatistics = null;
     this.selectedTestNameForStatistics = '';
+  }
+
+  openSuiteStatisticsDialog(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showSuiteStatisticsDialog = true;
+  }
+
+  closeSuiteStatisticsDialog(): void {
+    this.showSuiteStatisticsDialog = false;
   }
 
   toggleColumnSelector(): void {

@@ -35,6 +35,7 @@ import { AddArtifactDialogComponent } from './components/builds/add-artifact-dia
 import { BenchmarksRunsComponent } from './components/benchmarks-runs/benchmarks-runs.component';
 import { EditArtifactDefinitionDialogComponent } from './components/builds/edit-artifact-definition-dialog/edit-artifact-definition-dialog.component';
 import { TestStatisticsDialogComponent } from './components/tests-run-results/test-statistics-dialog/test-statistics-dialog.component';
+import { SuiteStatisticsDialogComponent } from './components/tests-run-results/suite-statistics-dialog/suite-statistics-dialog.component';
 import { AddRepositoryDialogComponent } from './components/repositories/add-repository-dialog/add-repository-dialog.component';
 import { EditRepositoryDialogComponent } from './components/repositories/edit-repository-dialog/edit-repository-dialog.component';
 import { LoginComponent } from './components/auth/login/login.component';
@@ -61,6 +62,7 @@ import { UserProfileComponent } from './components/user-profile/user-profile.com
     EditArtifactDefinitionDialogComponent,
     AddArtifactDefinitionDialogComponent,
     TestStatisticsDialogComponent,
+    SuiteStatisticsDialogComponent,
     AddRepositoryDialogComponent,
     EditRepositoryDialogComponent,
     LoginComponent,

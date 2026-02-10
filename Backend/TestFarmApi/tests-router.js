@@ -882,4 +882,120 @@ router.get('/test/:testId/statistics', async (req, res) => {
   }
 });
 
+// Get suite-level statistics for test runs - aggregates test and diff pass/fail counts per run
+router.get('/suite/statistics', async (req, res) => {
+  const { repositoryName, suiteName } = req.query;
+
+  try {
+    // Calculate date 3 months ago
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+    // Get all test runs for this suite within the last 3 months
+    const testRuns = await TestRun.findAll({
+      where: {
+        RepositoryName: repositoryName,
+        SuiteName: suiteName,
+        OverallCreationTimestamp: {
+          [Sequelize.Op.gte]: threeMonthsAgo
+        }
+      },
+      include: [
+        {
+          model: TestResult,
+          as: 'TestResults',
+          include: [
+            {
+              model: TestResultDiff,
+              as: 'TestsResultsDiffs',
+              attributes: ['Id', 'Status']
+            }
+          ]
+        }
+      ],
+      order: [['OverallCreationTimestamp', 'ASC']]
+    });
+
+    if (testRuns.length === 0) {
+      return res.status(404).json({ message: 'No test runs found for this suite' });
+    }
+
+    // Build statistics for each test run
+    const statistics = await Promise.all(testRuns.map(async (testRun) => {
+      const testResults = testRun.TestResults || [];
+
+      // Test-level aggregation
+      const totalTests = testResults.length;
+      const passedTests = testResults.filter(tr => tr.Status === 'passed').length;
+      const failedTests = testResults.filter(tr => tr.Status === 'failed').length;
+      const queuedTests = testResults.filter(tr => tr.Status === 'queued').length;
+      const runningTests = testResults.filter(tr => tr.Status === 'running').length;
+
+      // Diff-level aggregation across all test results in this run
+      let totalDiffs = 0;
+      let passingDiffs = 0;
+      let failingDiffs = 0;
+
+      testResults.forEach(tr => {
+        const diffs = tr.TestsResultsDiffs || [];
+        totalDiffs += diffs.length;
+        passingDiffs += diffs.filter(d => d.Status === 'passed').length;
+        failingDiffs += diffs.filter(d => d.Status === 'failed').length;
+      });
+
+      // Parse artifacts to get artifact details
+      const artifacts = testRun.Artifacts || [];
+      const artifactDetails = await Promise.all(artifacts.map(async (artifactEntry) => {
+        const artifact = await Artifact.findByPk(artifactEntry.Id || artifactEntry.id || artifactEntry);
+        if (artifact) {
+          return {
+            id: artifact.Id,
+            buildId: artifact.BuildId,
+            buildName: artifact.BuildName,
+            repository: artifact.Repository,
+            branch: artifact.Branch,
+            revision: artifact.Revision
+          };
+        }
+        return { id: artifactEntry.Id || artifactEntry.id || artifactEntry, error: 'Artifact not found' };
+      }));
+
+      return {
+        testRun: {
+          id: testRun.Id,
+          name: testRun.Name,
+          gridName: testRun.GridName,
+          overallStatus: testRun.OverallStatus,
+          timestamp: testRun.OverallCreationTimestamp
+        },
+        artifacts: artifactDetails,
+        testStatistics: {
+          total: totalTests,
+          passed: passedTests,
+          failed: failedTests,
+          queued: queuedTests,
+          running: runningTests,
+          passedPercentage: totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : null
+        },
+        diffStatistics: {
+          total: totalDiffs,
+          passing: passingDiffs,
+          failing: failingDiffs,
+          passingPercentage: totalDiffs > 0 ? Math.round((passingDiffs / totalDiffs) * 100) : null
+        }
+      };
+    }));
+
+    res.status(200).json({
+      repositoryName,
+      suiteName,
+      totalRuns: statistics.length,
+      statistics
+    });
+  } catch (error) {
+    console.error('Error retrieving suite statistics:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
 module.exports = router;

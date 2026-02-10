@@ -9,6 +9,7 @@ import { TestHistoryResult } from 'src/app/models/test-history-result.descriptio
 import { TestsRunResultDiffDescription } from '../models/tests-run-result-diff-description';
 import { TestsRunDetailsDescription } from '../models/tests-run-details-description';
 import { TestStatisticsResponse } from '../models/test-statistics';
+import { SuiteStatisticsResponse } from '../models/suite-statistics';
 
 @Injectable({
     providedIn: 'root'
@@ -53,5 +54,14 @@ export class TestsApiHttpClientService {
 
     getTestStatistics(testId: number): Observable<TestStatisticsResponse> {
         return this.http.get<TestStatisticsResponse>(`${environment.baseApiUrl}/test/${testId}/statistics`);
+    }
+
+    getSuiteStatistics(repositoryName: string, suiteName: string): Observable<SuiteStatisticsResponse> {
+        return this.http.get<SuiteStatisticsResponse>(`${environment.baseApiUrl}/suite/statistics`, {
+            params: {
+                repositoryName: repositoryName,
+                suiteName: suiteName
+            }
+        });
     }
 }
