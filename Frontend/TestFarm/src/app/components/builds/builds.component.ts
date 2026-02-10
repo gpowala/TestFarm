@@ -19,7 +19,10 @@ class ArtifactDefinitionRow {
 @Component({
   selector: 'app-builds',
   templateUrl: './builds.component.html',
-  styleUrls: ['./builds.component.css']
+  styleUrls: ['./builds.component.css'],
+  host: {
+    '(document:click)': 'onDocumentClick($event)'
+  }
 })
 export class BuildsComponent implements OnInit {
   artifacts: ArtifactDefinition[] = [];
@@ -36,6 +39,8 @@ export class BuildsComponent implements OnInit {
   searchTerm: string = '';
 
   selectedArtifactsNumber: number = 0;
+
+  activeMenuRow: ArtifactDefinitionRow | null = null;
 
   constructor(
     private artifactsApiHttpClientService: ArtifactsApiHttpClientService
@@ -321,5 +326,40 @@ export class BuildsComponent implements OnInit {
         console.error('Error fetching artifacts data:', error);
       }
     );
+  }
+
+  toggleActionMenu(row: ArtifactDefinitionRow, event: MouseEvent): void {
+    event.stopPropagation();
+    this.activeMenuRow = this.activeMenuRow === row ? null : row;
+  }
+
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.action-menu-container')) {
+      this.activeMenuRow = null;
+    }
+  }
+
+  onMenuAction(action: string, row: ArtifactDefinitionRow, event: MouseEvent): void {
+    event.stopPropagation();
+    this.activeMenuRow = null;
+
+    switch (action) {
+      case 'notes':
+        console.log('Notes action for:', row.artifact.Name);
+        break;
+      case 'links':
+        console.log('Links action for:', row.artifact.Name);
+        break;
+      case 'hide':
+        console.log('Hide action for:', row.artifact.Name);
+        break;
+      case 'edit':
+        this.editArtifactDefinition(row.artifact);
+        break;
+      case 'remove':
+        this.removeArtifact(row.artifact.Id);
+        break;
+    }
   }
 }
