@@ -275,6 +275,7 @@ const TestRun = sequelize.define('TestsRuns', {
   },
   TeamsNotificationUrl: {
     type: DataTypes.STRING,
+    maxLength: 1000,
     allowNull: true
   },
   OverallCreationTimestamp: {
