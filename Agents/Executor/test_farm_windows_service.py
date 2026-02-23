@@ -260,8 +260,8 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                     expanded_test_command = expand_magic_variables(test_case.command)    
                     logging.info(f"Executing test command: {expanded_test_command}")
 
-                    if test_case.type == "unit_tests":
-                        # For unit tests, create config file for child test reporting
+                    if test_case.type in ["unit_tests", "playwright_dotnet"]:
+                        # For unit tests and Playwright tests, create config file for child test reporting
                         config_path = expand_magic_variables("$__TF_WORK_DIR__/tests_run_config.json")
                         config_data = {
                             "TestFarmApiBaseUrl": self._config.test_farm_api.base_url,

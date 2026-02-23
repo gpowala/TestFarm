@@ -1,0 +1,8 @@
+{
+  "logging": {
+    "TestFarmTestLogger.TestFarmLogger": {
+      "friendlyName": "TestFarmLogger",
+      "uri": "logger://TestFarmLogger"
+    }
+  }
+}

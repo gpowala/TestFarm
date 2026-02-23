@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>DotnetTestAdapter</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestFarmTestLogger\TestFarmTestLogger.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+
+  <Target Name="CopyTestFarmLogger" AfterTargets="Build">
+    <PropertyGroup>
+      <LoggerSourceDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\TestFarmTestLogger\bin\$(Configuration)\net10.0'))</LoggerSourceDir>
+      <LoggerTargetDir>$(OutputPath)TestFarmLogger</LoggerTargetDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <LoggerFiles Include="$(LoggerSourceDir)\**\*.*" />
+    </ItemGroup>
+    <MakeDir Directories="$(LoggerTargetDir)" />
+    <Copy SourceFiles="@(LoggerFiles)" DestinationFolder="$(LoggerTargetDir)\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

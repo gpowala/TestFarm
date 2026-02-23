@@ -1,0 +1,4 @@
+{
+     "TestFarmApiBaseUrl": "https://testfarm.example.com/api",
+     "ParentTestResultId": 123
+}
