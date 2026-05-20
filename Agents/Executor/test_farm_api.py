@@ -6,8 +6,47 @@ from urllib.parse import urljoin
 import socket
 import psutil
 import os
+import time
+import logging
 
 from test_farm_service_config import Config
+
+logger = logging.getLogger(__name__)
+
+
+class RetryingHttpClient:
+    _MAX_RETRY_TIME = 300  # 5 minutes
+    _INITIAL_DELAY = 2     # seconds
+    _MAX_DELAY = 60        # cap individual delay at 60 seconds
+
+    @staticmethod
+    def request(method, url, **kwargs):
+        """Make an HTTP request with exponential backoff retry on transient failures."""
+        start_time = time.time()
+        delay = RetryingHttpClient._INITIAL_DELAY
+
+        while True:
+            try:
+                response = method(url, **kwargs)
+                if response.status_code >= 500:
+                    elapsed = time.time() - start_time
+                    if elapsed + delay > RetryingHttpClient._MAX_RETRY_TIME:
+                        return response
+                    logger.warning(f"Server error {response.status_code} from {url}, retrying in {delay}s...")
+                    time.sleep(delay)
+                    delay = min(delay * 2, RetryingHttpClient._MAX_DELAY)
+                    continue
+                return response
+            except (requests.ConnectionError, requests.Timeout) as e:
+                elapsed = time.time() - start_time
+                remaining = RetryingHttpClient._MAX_RETRY_TIME - elapsed
+                if remaining <= 0:
+                    raise
+                delay = min(delay, remaining)
+                logger.warning(f"Request to {url} failed ({type(e).__name__}), retrying in {delay:.1f}s...")
+                time.sleep(delay)
+                delay = min(delay * 2, RetryingHttpClient._MAX_DELAY)
+
 
 __all__ = [
     'ArtifactDefinition',
@@ -420,8 +459,9 @@ class BenchmarkResult:
         )
 
 def get_artifact(config: Config, artifact_id: int) -> Optional[Artifact]:
-    response = requests.get(
-        url=urljoin(config.test_farm_api.base_url, "artifact"),
+    response = RetryingHttpClient.request(
+        requests.get,
+        urljoin(config.test_farm_api.base_url, "artifact"),
         params={'id': artifact_id},
         timeout=config.test_farm_api.timeout
     )
@@ -432,28 +472,31 @@ def get_artifact(config: Config, artifact_id: int) -> Optional[Artifact]:
         return None
 
 def get_next_job(config: Config) -> Optional[MicroJob]:
-    response = requests.get(
-        url = urljoin(config.test_farm_api.base_url, "get-next-job"),
-        params = {'GridName': config.grid.name},
-        timeout = config.test_farm_api.timeout
+    response = RetryingHttpClient.request(
+        requests.get,
+        urljoin(config.test_farm_api.base_url, "get-next-job"),
+        params={'GridName': config.grid.name},
+        timeout=config.test_farm_api.timeout
     )
 
     return MicroJob.from_dict(response.json()) if response.ok else None
 
 def get_scheduled_test(config: Config, job: MicroJob) -> Optional[TestResult]:
-    response = requests.get(
-        url = urljoin(config.test_farm_api.base_url, "get-scheduled-test"),
-        params = {'TestResultId': job.result_id},
-        timeout = config.test_farm_api.timeout
+    response = RetryingHttpClient.request(
+        requests.get,
+        urljoin(config.test_farm_api.base_url, "get-scheduled-test"),
+        params={'TestResultId': job.result_id},
+        timeout=config.test_farm_api.timeout
     )
     
     return TestResult.from_dict(config, response.json()) if response.ok else None
 
 def get_scheduled_benchmark(config: Config, job: MicroJob) -> Optional[BenchmarkResult]:
-    response = requests.get(
-        url = urljoin(config.test_farm_api.base_url, "get-scheduled-benchmark"),
-        params = {'BenchmarkResultId': job.result_id},
-        timeout = config.test_farm_api.timeout
+    response = RetryingHttpClient.request(
+        requests.get,
+        urljoin(config.test_farm_api.base_url, "get-scheduled-benchmark"),
+        params={'BenchmarkResultId': job.result_id},
+        timeout=config.test_farm_api.timeout
     )
 
     return BenchmarkResult.from_dict(config, response.json()) if response.ok else None
@@ -475,8 +518,9 @@ def register_host(config: Config) -> Host:
     system_info = get_system_info(config)
     payload = { "GridName": config.grid.name, **system_info }
 
-    response = requests.post(
-        url=url,
+    response = RetryingHttpClient.request(
+        requests.post,
+        url,
         json=payload,
         timeout=config.test_farm_api.timeout
     )
@@ -490,8 +534,9 @@ def register_host(config: Config) -> Host:
 def unregister_host(host: Host, config: Config):
     url = urljoin(config.test_farm_api.base_url, "unregister-host")
 
-    response = requests.get(
-        url=url,
+    response = RetryingHttpClient.request(
+        requests.get,
+        url,
         params={"Id": host.id},
         timeout=config.test_farm_api.timeout
     )
@@ -503,8 +548,9 @@ def update_host_status(status: str, host: Host, config: Config):
     url = urljoin(config.test_farm_api.base_url, "update-host-status")
     payload = { "Id": host.id, "Status": status }
 
-    response = requests.post(
-        url=url,
+    response = RetryingHttpClient.request(
+        requests.post,
+        url,
         json=payload,
         timeout=config.test_farm_api.timeout
     )
@@ -520,8 +566,9 @@ def complete_test(test_result: TestResult, status: str, config: Config):
         "Status": status
     }
     
-    response = requests.post(
-        url=url,
+    response = RetryingHttpClient.request(
+        requests.post,
+        url,
         json=payload,
         timeout=config.test_farm_api.timeout
     )
@@ -536,8 +583,9 @@ def complete_benchmark(benchmark_result: BenchmarkResult, config: Config):
         "BenchmarkResultId": benchmark_result.id
     }
     
-    response = requests.post(
-        url=url,
+    response = RetryingHttpClient.request(
+        requests.post,
+        url,
         json=payload,
         timeout=config.test_farm_api.timeout
     )
@@ -561,8 +609,9 @@ def upload_benchmark_results(benchmark_result: BenchmarkResult, config: Config, 
                       'application/octet-stream')
         }
     
-    response = requests.post(
-        url=url,
+    response = RetryingHttpClient.request(
+        requests.post,
+        url,
         data=form_data,
         files=files,
         timeout=config.test_farm_api.timeout
@@ -592,8 +641,9 @@ def upload_diff(test_result: TestResult, name: str, status: str, config: Config,
                       'application/octet-stream')
         }
     
-    response = requests.post(
-        url=url,
+    response = RetryingHttpClient.request(
+        requests.post,
+        url,
         data=form_data,
         files=files,
         timeout=config.test_farm_api.timeout
@@ -621,8 +671,9 @@ def upload_temp_dir_archive(test_result: TestResult, config: Config, archive_fil
                       'application/octet-stream')
         }
     
-    response = requests.post(
-        url=url,
+    response = RetryingHttpClient.request(
+        requests.post,
+        url,
         data=form_data,
         files=files,
         timeout=config.test_farm_api.timeout
@@ -650,8 +701,9 @@ def upload_output(test_result: TestResult, config: Config, output_file_path: Opt
                       'application/octet-stream')
         }
     
-    response = requests.post(
-        url=url,
+    response = RetryingHttpClient.request(
+        requests.post,
+        url,
         data=form_data,
         files=files,
         timeout=config.test_farm_api.timeout
