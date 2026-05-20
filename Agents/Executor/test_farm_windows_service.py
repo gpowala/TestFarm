@@ -4,12 +4,15 @@ from git import Repo
 import requests
 from datetime import datetime
 from dataclasses import dataclass
+from enum import Enum
 from typing import Optional, List, Dict, Set
 from urllib.parse import urljoin
 import time
 import threading
 import win32serviceutil
 import win32event
+import win32job
+import win32api
 import logging
 import sys
 import subprocess
@@ -26,6 +29,21 @@ from test_farm_tests import TestCase, BenchmarkCase
 from test_farm_api import get_next_job, get_scheduled_test, get_scheduled_benchmark, register_host, unregister_host, update_host_status, complete_test, complete_benchmark, upload_diff, upload_benchmark_results, upload_temp_dir_archive, upload_output, Repository
 from test_farm_service_config import Config
 from logging.handlers import RotatingFileHandler
+
+class CommandStatus(Enum):
+    SUCCESS = "success"
+    ERROR = "error"
+
+    def to_string(self) -> str:
+        return self.value
+
+@dataclass
+class CommandResult:
+    status: CommandStatus
+    exit_code: int
+    stdout: str
+    stderr: str
+    leftover_processes: List[int]  # PIDs of child processes that were still running and got terminated
 
 class TestFarmWindowsService(win32serviceutil.ServiceFramework):
     _svc_name_ = "TestFarm"
@@ -255,7 +273,11 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                         expanded_pre_step = expand_magic_variables(pre_step)
                         logging.info(f"Executing pre-step: {expanded_pre_step}")
 
-                        self.execute_command(expanded_pre_step, env, new_working_dir)
+                        result = self.execute_command(expanded_pre_step, env, new_working_dir)
+                        if result.status != CommandStatus.SUCCESS:
+                            self.archive_and_upload_temp_dir(test)
+                            complete_test(test, "error", self._config)
+                            raise RuntimeError(f"Pre-step failed! Exit code: {result.exit_code}\nstdout: {result.stdout}\nstderr: {result.stderr}")
 
                     expanded_test_command = expand_magic_variables(test_case.command)    
                     logging.info(f"Executing test command: {expanded_test_command}")
@@ -271,13 +293,21 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                             json.dump(config_data, f, indent=2)
                         logging.info(f"Created TestsRunConfig.json at {config_path}")
                     
-                    self.execute_command(expanded_test_command, env, new_working_dir)
+                    result = self.execute_command(expanded_test_command, env, new_working_dir)
+                    if result.status != CommandStatus.SUCCESS:
+                        self.archive_and_upload_temp_dir(test)
+                        complete_test(test, "error", self._config)
+                        raise RuntimeError(f"Test command failed! Exit code: {result.exit_code}\nstdout: {result.stdout}\nstderr: {result.stderr}")
                         
                     for post_step in test_case.post_steps:
                         expanded_post_step = expand_magic_variables(post_step)
                         logging.info(f"Executing post-step: {expanded_post_step}")
 
-                        self.execute_command(expanded_post_step, env, new_working_dir)
+                        result = self.execute_command(expanded_post_step, env, new_working_dir)
+                        if result.status != CommandStatus.SUCCESS:
+                            self.archive_and_upload_temp_dir(test)
+                            complete_test(test, "error", self._config)
+                            raise RuntimeError(f"Post-step failed! Exit code: {result.exit_code}\nstdout: {result.stdout}\nstderr: {result.stderr}")
 
                     upload_output(test, self._config, expand_magic_variables(test_case.output))
 
@@ -315,23 +345,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                             logging.info(f"No differences found in {diff.gold} vs {diff.new}")
                             upload_diff(test, diff_name, "passed", self._config)
 
-                    # Archive temp directory contents
-                    temp_dir = expand_magic_variables("$__TF_WORK_DIR__")
-                    archive_path = expand_magic_variables(f"$__TF_TEMP_DIR__/result_temp_archive.7z")
-                    logging.info(f"Archiving contents of {temp_dir} to {archive_path}")
-                    
-                    try:
-                        with py7zr.SevenZipFile(archive_path, mode='w') as archive:
-                            for root, dirs, files in os.walk(temp_dir):
-                                for file in files:
-                                    file_path = os.path.join(root, file)
-                                    archive_name = os.path.relpath(file_path, temp_dir)
-                                    archive.write(file_path, archive_name)
-
-                        upload_temp_dir_archive(test, self._config, archive_path)
-                        logging.info(f"Successfully created archive at {archive_path} and uploaded")
-                    except Exception as e:
-                        logging.error(f"Failed to create or upload archive: {e}")
+                    self.archive_and_upload_temp_dir(test)
 
                     if test_passed:
                         logging.info("Test PASSED! Publishing results...")
@@ -397,7 +411,9 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                         expanded_pre_step = expand_magic_variables(pre_bench_step)
                         logging.info(f"Executing pre-bench-step: {expanded_pre_step}")
 
-                        self.execute_command(expanded_pre_step, env, new_working_dir)
+                        result = self.execute_command(expanded_pre_step, env, new_working_dir)
+                        if result.status != CommandStatus.SUCCESS:
+                            raise RuntimeError(f"Pre-bench-step failed! Exit code: {result.exit_code}\nstdout: {result.stdout}\nstderr: {result.stderr}")
 
                     for iteration in range(benchmark_case.iterations):
                         logging.info(f"Starting iteration {iteration + 1} of {benchmark_case.iterations}")
@@ -406,18 +422,24 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                             expanded_pre_iter_step = expand_magic_variables(pre_iter_step)
                             logging.info(f"Executing pre-iter-step: {expanded_pre_iter_step}")
 
-                            self.execute_command(expanded_pre_iter_step, env, new_working_dir)
+                            result = self.execute_command(expanded_pre_iter_step, env, new_working_dir)
+                            if result.status != CommandStatus.SUCCESS:
+                                raise RuntimeError(f"Pre-iter-step failed! Exit code: {result.exit_code}\nstdout: {result.stdout}\nstderr: {result.stderr}")
 
                         expanded_benchmark_command = expand_magic_variables(benchmark_case.command)
                         logging.info(f"Executing test command: {expanded_benchmark_command}")
 
-                        self.execute_command(expanded_benchmark_command, env, new_working_dir)
+                        result = self.execute_command(expanded_benchmark_command, env, new_working_dir)
+                        if result.status != CommandStatus.SUCCESS:
+                            raise RuntimeError(f"Benchmark command failed! Exit code: {result.exit_code}\nstdout: {result.stdout}\nstderr: {result.stderr}")
 
                         for post_iter_step in benchmark_case.post_iter_steps:
                             expanded_post_iter_step = expand_magic_variables(post_iter_step)
                             logging.info(f"Executing post-iter-step: {expanded_post_iter_step}")
 
-                            self.execute_command(expanded_post_iter_step, env, new_working_dir)
+                            result = self.execute_command(expanded_post_iter_step, env, new_working_dir)
+                            if result.status != CommandStatus.SUCCESS:
+                                raise RuntimeError(f"Post-iter-step failed! Exit code: {result.exit_code}\nstdout: {result.stdout}\nstderr: {result.stderr}")
 
                         logging.info(f"Iteration {iteration + 1} of {benchmark_case.iterations} completed")
 
@@ -427,7 +449,9 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                         expanded_post_step = expand_magic_variables(post_bench_step)
                         logging.info(f"Executing post-bench-step: {expanded_post_step}")
 
-                        self.execute_command(expanded_post_step, env, new_working_dir)
+                        result = self.execute_command(expanded_post_step, env, new_working_dir)
+                        if result.status != CommandStatus.SUCCESS:
+                            raise RuntimeError(f"Post-bench-step failed! Exit code: {result.exit_code}\nstdout: {result.stdout}\nstderr: {result.stderr}")
 
                     logging.info("Benchmark finished! Publishing results...")
 
@@ -507,6 +531,24 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
         
         logging.info("TestFarm service has stopped.")
 
+    def archive_and_upload_temp_dir(self, test):
+        temp_dir = expand_magic_variables("$__TF_WORK_DIR__")
+        archive_path = expand_magic_variables(f"$__TF_TEMP_DIR__/result_temp_archive.7z")
+        logging.info(f"Archiving contents of {temp_dir} to {archive_path}")
+
+        try:
+            with py7zr.SevenZipFile(archive_path, mode='w') as archive:
+                for root, dirs, files in os.walk(temp_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        archive_name = os.path.relpath(file_path, temp_dir)
+                        archive.write(file_path, archive_name)
+
+            upload_temp_dir_archive(test, self._config, archive_path)
+            logging.info(f"Successfully created archive at {archive_path} and uploaded")
+        except Exception as e:
+            logging.error(f"Failed to create or upload archive: {e}")
+
     def cleanup_temp_dir(self):
         temp_dir = expand_magic_variables("$__TF_WORK_DIR__")
         logging.info(f"Cleaning up temp directory: {temp_dir}")
@@ -523,18 +565,84 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
         except Exception as e:
             logging.error(f"Failed to create temp directory: {e}")
     
-    def execute_command(self, command: str, env: str, cwd: str) -> None:
+    def execute_command(self, command: str, env: dict, cwd: str) -> CommandResult:
+        job = None
+        process_handle = None
         try:
-            subprocess.run(command, shell=True, check=True, 
-                          env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Command execution failed! Exit code: {e.returncode}\n"
-                         f"stdout: {e.stdout.decode('utf-8', errors='replace')}\n"
-                         f"stderr: {e.stderr.decode('utf-8', errors='replace')}")
+            # Create a Windows Job Object to group the process and all its children
+            job = win32job.CreateJobObject(None, "")
+
+            # Configure job to terminate all child processes when the job is closed
+            job_info = win32job.QueryInformationJobObject(job, win32job.JobObjectExtendedLimitInformation)
+            job_info['BasicLimitInformation']['LimitFlags'] |= win32job.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+            win32job.SetInformationJobObject(job, win32job.JobObjectExtendedLimitInformation, job_info)
+
+            # Start the process
+            process = subprocess.Popen(
+                command, shell=True, env=env, cwd=cwd,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+
+            # Assign process to the job object so all children are tracked
+            try:
+                process_handle = win32api.OpenProcess(
+                    0x0100 | 0x0001,  # PROCESS_SET_QUOTA | PROCESS_TERMINATE
+                    False, process.pid
+                )
+                win32job.AssignProcessToJobObject(job, process_handle)
+            except Exception as e:
+                logging.warning(f"Failed to assign process to job object: {e}")
+
+            # Wait for process to complete and collect output
+            stdout, stderr = process.communicate()
+            exit_code = process.returncode
+
+            stdout_str = stdout.decode('utf-8', errors='replace') if stdout else ""
+            stderr_str = stderr.decode('utf-8', errors='replace') if stderr else ""
+
+            # Query and terminate any leftover child processes still in the job
+            leftover_pids = self._terminate_job_processes(job, process.pid)
+
+            if exit_code != 0:
+                return CommandResult(CommandStatus.ERROR, exit_code, "", f"Non-zero exit code! Code: {exit_code}", leftover_pids)
+            else:
+                return CommandResult(CommandStatus.SUCCESS, 0, "", "", leftover_pids)
+            
         except FileNotFoundError:
-            raise RuntimeError(f"Command not found or could not be executed!")
+            leftover_pids = self._terminate_job_processes(job)
+            return CommandResult(CommandStatus.ERROR, -1, "", "Command not found or could not be executed!", leftover_pids)
+        
         except Exception as e:
-            raise RuntimeError(f"Command execution failed! Details: {e}")
+            leftover_pids = self._terminate_job_processes(job)
+            return CommandResult(CommandStatus.ERROR, -1, "", f"Command execution failed! Details: {e}", leftover_pids)
+        
+        finally:
+            if job:
+                try:
+                    win32api.CloseHandle(job)
+                except:
+                    pass
+
+            if process_handle:
+                try:
+                    win32api.CloseHandle(process_handle)
+                except:
+                    pass
+
+    def _terminate_job_processes(self, job, exclude_pid: int = None) -> List[int]:
+        """Query remaining processes in the job, terminate them, and return their PIDs."""
+        leftover_pids = []
+        if not job:
+            return leftover_pids
+        try:
+            pids = win32job.QueryInformationJobObject(job, win32job.JobObjectBasicProcessIdList)
+            leftover_pids = [pid for pid in pids if pid != exclude_pid]
+            if leftover_pids:
+                logging.warning(f"Terminating {len(leftover_pids)} leftover process(es): {leftover_pids}")
+            win32job.TerminateJobObject(job, 1)
+        except:
+            pass
+        return leftover_pids
         
     def read_execution_output(self, test_case: TestCase) -> str:
         output_file_path = expand_magic_variables(test_case.output)
