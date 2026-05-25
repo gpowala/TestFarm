@@ -127,8 +127,9 @@ router.post('/schedule-tests-run', async (req, res) => {
     });
 
     let queuedCount = 0;
+    const failedRegistrations = [];
 
-    requestedTestsPaths.forEach(async (testPath) => {
+    await Promise.all(requestedTestsPaths.map(async (testPath) => {
       try {
         const testConfigPath = `${localRepositoryDir}/${testPath}/test.testfarm`;
         requireFileExists(testConfigPath);
@@ -145,15 +146,16 @@ router.post('/schedule-tests-run', async (req, res) => {
       }
       catch (error) {
         console.error(`Failed to register test: ${error}`);
+        failedRegistrations.push({ path: testPath, error: error.message });
       }
-    });
+    }));
 
-      if (queuedCount === 0) {
-        await testsRun.destroy();
-        return res.status(500).json({ error: 'Failed to queue any tests for the scheduled run' });
-      }
+    if (queuedCount === 0) {
+      await testsRun.destroy();
+      return res.status(500).json({ error: 'Failed to queue any tests for the scheduled run', failedRegistrations });
+    }
 
-    res.status(201).json(testsRun);
+    res.status(201).json({ ...testsRun.toJSON(), failedRegistrations });
   } catch (error) {
     res.status(500).json({ error: `Internal Server Error: ${error}` });
   } finally {
