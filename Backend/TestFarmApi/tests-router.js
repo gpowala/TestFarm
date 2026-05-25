@@ -59,6 +59,8 @@ router.post('/schedule-benchmarks-run', async (req, res) => {
       OverallStatus: 'queued'
     });
 
+    let queuedCount = 0;
+
     requestedBenchmarksPaths.forEach(async (benchmarkPath) => {
       try {
         const benchmarkConfigPath = `${localRepositoryDir}/${benchmarkPath}/benchmark.testfarm`;
@@ -72,12 +74,18 @@ router.post('/schedule-benchmarks-run', async (req, res) => {
         let result = await BenchmarkResult.create({ BenchmarksRunId: benchmarksRun.Id, BenchmarkId: benchmark.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null, Results: null });
 
         await MicroJobsQueue.create({ Type: 'bench', Status: 'queued', GridName: GridName, RunId: benchmarksRun.Id, ResultId: result.Id });
+        queuedCount++;
       }
       catch (error) {
         // TODO: Should be in single transaction together with benchmarks run creation, if errors happen anywhere, we can't leave state inconsistent
         console.error(`Failed to register benchmark: ${error}`);
       }
     });
+
+    if (queuedCount === 0) {
+      await benchmarksRun.destroy();
+      return res.status(500).json({ error: 'Failed to queue any benchmarks for the scheduled run' });
+    }
 
     res.status(201).json(benchmarksRun);
   } catch (error) {
@@ -118,6 +126,8 @@ router.post('/schedule-tests-run', async (req, res) => {
       OverallStatus: 'queued'
     });
 
+    let queuedCount = 0;
+
     requestedTestsPaths.forEach(async (testPath) => {
       try {
         const testConfigPath = `${localRepositoryDir}/${testPath}/test.testfarm`;
@@ -131,11 +141,17 @@ router.post('/schedule-tests-run', async (req, res) => {
         let result = await TestResult.create({ TestRunId: testsRun.Id, TestId: test.Id, Status: 'queued', ExecutionStartTimestamp: null, ExecutionEndTimestamp: null, ExecutionOutput: null });
 
         await MicroJobsQueue.create({ Type: 'test', Status: 'queued', GridName: GridName, RunId: testsRun.Id, ResultId: result.Id });
+        queuedCount++;
       }
       catch (error) {
         console.error(`Failed to register test: ${error}`);
       }
     });
+
+      if (queuedCount === 0) {
+        await testsRun.destroy();
+        return res.status(500).json({ error: 'Failed to queue any tests for the scheduled run' });
+      }
 
     res.status(201).json(testsRun);
   } catch (error) {
