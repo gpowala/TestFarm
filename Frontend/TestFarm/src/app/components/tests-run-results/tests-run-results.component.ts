@@ -9,18 +9,31 @@ import { TestsRunResultDiffDescription } from 'src/app/models/tests-run-result-d
 import { TestsRunDetailsDescription } from 'src/app/models/tests-run-details-description';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { Artifact } from 'src/app/models/artifact';
+import { AuthService } from 'src/app/services/auth.service';
+import { RebaselineProgressEvent } from 'src/app/models/rebaseline-progress-event';
 
 Chart.register(...registerables);
 
 class TestsRunResultDescriptionRow {
   active: boolean = false;
   checked: boolean = false;
+  selected: boolean = false;
 
   showDetails: boolean = false;
   showDiffs: boolean = false;
   showHistory: boolean = false;
 
   constructor(public result: TestsRunResultDescription) {}
+}
+
+type RebaselineItemStatus = 'pending' | 'running' | 'rebaselined' | 'passed' | 'nothing' | 'error';
+
+class RebaselineItemProgress {
+  status: RebaselineItemStatus = 'pending';
+  detail: string = '';
+  replacedCount: number = 0;
+
+  constructor(public testResultId: number, public testName: string) {}
 }
 
 @Component({
@@ -71,7 +84,24 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
   // Suite Statistics dialog properties
   showSuiteStatisticsDialog: boolean = false;
 
-  constructor(private route: ActivatedRoute, private testsApiHttpClientService: TestsApiHttpClientService) {}
+  // Actions dropdown (bulk actions above the table)
+  showActionsMenu: boolean = false;
+
+  // Rebaseline dialog / live progress
+  showRebaselineDialog: boolean = false;
+  rebaselineInProgress: boolean = false;
+  rebaselineFinished: boolean = false;
+  rebaselineItems: RebaselineItemProgress[] = [];
+  rebaselineStatusMessages: string[] = [];
+  rebaselineErrorMessage: string | null = null;
+  rebaselineSummary: string = '';
+  private rebaselineSubscription: any = null;
+
+  constructor(
+    private route: ActivatedRoute,
+    private testsApiHttpClientService: TestsApiHttpClientService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit() {
     this.testsRunId = this.route.snapshot.paramMap.get('testsRunId');
@@ -97,6 +127,10 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
   ngOnDestroy() {
     if (this.statusChart) {
       this.statusChart.destroy();
+    }
+    if (this.rebaselineSubscription) {
+      this.rebaselineSubscription.unsubscribe();
+      this.rebaselineSubscription = null;
     }
   }
 
@@ -605,6 +639,152 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
 
   closeSuiteStatisticsDialog(): void {
     this.showSuiteStatisticsDialog = false;
+  }
+
+  // --- Bulk selection ---------------------------------------------------------
+
+  onRowSelectionToggle(event: Event): void {
+    // Prevent the row click handler (mark-as-reviewed) from firing when using the checkbox.
+    event.stopPropagation();
+  }
+
+  get selectedRows(): TestsRunResultDescriptionRow[] {
+    return this.filteredTestsRunResultsRows.filter(row => row.selected);
+  }
+
+  get selectedCount(): number {
+    return this.selectedRows.length;
+  }
+
+  get allRowsSelected(): boolean {
+    return this.filteredTestsRunResultsRows.length > 0 &&
+           this.filteredTestsRunResultsRows.every(row => row.selected);
+  }
+
+  toggleSelectAll(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.filteredTestsRunResultsRows.forEach(row => row.selected = checked);
+  }
+
+  toggleActionsMenu(): void {
+    this.showActionsMenu = !this.showActionsMenu;
+  }
+
+  // --- Rebaseline -------------------------------------------------------------
+
+  startRebaseline(): void {
+    this.showActionsMenu = false;
+
+    const selected = this.selectedRows;
+    if (selected.length === 0) {
+      return;
+    }
+
+    const user = this.authService.getUser();
+    if (!user) {
+      this.rebaselineErrorMessage = 'You must be logged in to rebaseline.';
+      this.rebaselineFinished = true;
+      this.showRebaselineDialog = true;
+      return;
+    }
+
+    // Initialise the dialog with one entry per selected test.
+    this.rebaselineItems = selected.map(row => new RebaselineItemProgress(row.result.Id, row.result.TestName));
+    this.rebaselineStatusMessages = [];
+    this.rebaselineErrorMessage = null;
+    this.rebaselineSummary = '';
+    this.rebaselineFinished = false;
+    this.rebaselineInProgress = true;
+    this.showRebaselineDialog = true;
+
+    const testResultIds = selected.map(row => row.result.Id);
+
+    this.rebaselineSubscription = this.testsApiHttpClientService
+      .rebaseline(testResultIds, { Username: user.username, Email: user.email })
+      .subscribe({
+        next: (event: RebaselineProgressEvent) => this.handleRebaselineEvent(event),
+        error: (error: any) => {
+          console.error('Rebaseline stream error:', error);
+          this.rebaselineErrorMessage = error?.message || 'Rebaseline failed unexpectedly.';
+          this.rebaselineInProgress = false;
+          this.rebaselineFinished = true;
+        },
+        complete: () => {
+          this.rebaselineInProgress = false;
+          this.rebaselineFinished = true;
+        }
+      });
+  }
+
+  private findRebaselineItem(testResultId?: number): RebaselineItemProgress | undefined {
+    if (testResultId == null) { return undefined; }
+    return this.rebaselineItems.find(item => item.testResultId === testResultId);
+  }
+
+  private handleRebaselineEvent(event: RebaselineProgressEvent): void {
+    switch (event.type) {
+      case 'run-start':
+        this.rebaselineStatusMessages.push(`Rebaselining ${event.total} test(s) in ${event.repositoryName}...`);
+        break;
+      case 'clone':
+        if (event.message) { this.rebaselineStatusMessages.push(event.message); }
+        break;
+      case 'test-start': {
+        const item = this.findRebaselineItem(event.testResultId);
+        if (item) { item.status = 'running'; }
+        break;
+      }
+      case 'test-passed': {
+        const item = this.findRebaselineItem(event.testResultId);
+        if (item) {
+          item.status = 'passed';
+          item.detail = 'Test passed — nothing to do.';
+        }
+        break;
+      }
+      case 'test-rebaselined': {
+        const item = this.findRebaselineItem(event.testResultId);
+        if (item) {
+          item.status = 'rebaselined';
+          item.replacedCount = event.replacedCount || 0;
+          item.detail = `${item.replacedCount} gold file(s) updated.`;
+        }
+        break;
+      }
+      case 'test-nothing-to-rebaseline': {
+        const item = this.findRebaselineItem(event.testResultId);
+        if (item) {
+          item.status = 'nothing';
+          item.detail = event.reason || 'Failed, but nothing to rebaseline.';
+        }
+        break;
+      }
+      case 'diff-replaced':
+        // Individual file updates are summarised on the test row; no separate action needed.
+        break;
+      case 'commit':
+      case 'push':
+        if (event.message) { this.rebaselineStatusMessages.push(event.message); }
+        break;
+      case 'complete':
+        this.rebaselineSummary = event.message || 'Rebaseline complete.';
+        this.rebaselineStatusMessages.push(this.rebaselineSummary);
+        break;
+      case 'error':
+        this.rebaselineErrorMessage = event.message || 'Rebaseline failed.';
+        break;
+    }
+  }
+
+  closeRebaselineDialog(): void {
+    if (this.rebaselineInProgress) {
+      return; // don't allow closing mid-run
+    }
+    this.showRebaselineDialog = false;
+    if (this.rebaselineSubscription) {
+      this.rebaselineSubscription.unsubscribe();
+      this.rebaselineSubscription = null;
+    }
   }
 
   toggleColumnSelector(): void {

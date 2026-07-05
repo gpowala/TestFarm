@@ -372,3 +372,18 @@ button[mat-raised-button]:active {
   font-weight: 600;
   margin-top: 1px;
 }
+
+/* Rebaseline progress spinner */
+.rebaseline-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #cfd8dc;
+  border-top-color: #2196f3;
+  border-radius: 50%;
+  animation: rebaseline-spin 0.8s linear infinite;
+}
+
+@keyframes rebaseline-spin {
+  to { transform: rotate(360deg); }
+}

@@ -10,6 +10,7 @@ import { TestsRunResultDiffDescription } from '../models/tests-run-result-diff-d
 import { TestsRunDetailsDescription } from '../models/tests-run-details-description';
 import { TestStatisticsResponse } from '../models/test-statistics';
 import { SuiteStatisticsResponse } from '../models/suite-statistics';
+import { RebaselineProgressEvent } from '../models/rebaseline-progress-event';
 
 @Injectable({
     providedIn: 'root'
@@ -62,6 +63,66 @@ export class TestsApiHttpClientService {
                 repositoryName: repositoryName,
                 suiteName: suiteName
             }
+        });
+    }
+
+    // Rebaseline the given failed test results and stream live progress. The backend responds with
+    // newline-delimited JSON; we read the stream and emit each parsed event. HttpClient does not
+    // cleanly surface incremental text, so we use fetch + ReadableStream here.
+    rebaseline(testResultIds: number[], user: { Username: string; Email: string }): Observable<RebaselineProgressEvent> {
+        return new Observable<RebaselineProgressEvent>(observer => {
+            const controller = new AbortController();
+
+            fetch(`${environment.baseApiUrl}/rebaseline`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ TestResultIds: testResultIds, User: user }),
+                signal: controller.signal
+            }).then(async response => {
+                if (!response.ok || !response.body) {
+                    observer.error(new Error(`Rebaseline request failed (${response.status})`));
+                    return;
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                const emitLine = (line: string) => {
+                    const trimmed = line.trim();
+                    if (!trimmed) { return; }
+                    try {
+                        observer.next(JSON.parse(trimmed) as RebaselineProgressEvent);
+                    } catch (e) {
+                        console.error('Failed to parse rebaseline event:', trimmed, e);
+                    }
+                };
+
+                // eslint-disable-next-line no-constant-condition
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) { break; }
+                    buffer += decoder.decode(value, { stream: true });
+
+                    let newlineIndex: number;
+                    while ((newlineIndex = buffer.indexOf('\n')) >= 0) {
+                        emitLine(buffer.slice(0, newlineIndex));
+                        buffer = buffer.slice(newlineIndex + 1);
+                    }
+                }
+
+                emitLine(buffer);
+                observer.complete();
+            }).catch(err => {
+                if (err && err.name === 'AbortError') {
+                    observer.complete();
+                } else {
+                    observer.error(err);
+                }
+            });
+
+            return () => controller.abort();
         });
     }
 }

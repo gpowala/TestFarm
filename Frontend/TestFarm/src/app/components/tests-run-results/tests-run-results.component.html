@@ -181,6 +181,31 @@
                       style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; transition: all 0.2s ease;">
               </div>
               <div style="position: relative;">
+                  <button (click)="toggleActionsMenu()"
+                          style="padding: 0.75rem 1rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">
+                      <svg width="16" height="16" fill="currentColor" stroke="none" viewBox="0 0 24 24">
+                        <path d="M 12 2 C 6.4771525 2 2 6.4771525 2 12 C 2 17.522847 6.4771525 22 12 22 C 17.522847 22 22 17.522847 22 12 C 22 6.4771525 17.522847 2 12 2 z M 12 6 A 1.5 1.5 0 0 1 13.5 7.5 A 1.5 1.5 0 0 1 12 9 A 1.5 1.5 0 0 1 10.5 7.5 A 1.5 1.5 0 0 1 12 6 z M 12 10.5 A 1.5 1.5 0 0 1 13.5 12 A 1.5 1.5 0 0 1 12 13.5 A 1.5 1.5 0 0 1 10.5 12 A 1.5 1.5 0 0 1 12 10.5 z M 12 15 A 1.5 1.5 0 0 1 13.5 16.5 A 1.5 1.5 0 0 1 12 18 A 1.5 1.5 0 0 1 10.5 16.5 A 1.5 1.5 0 0 1 12 15 z"></path>
+                      </svg>
+                      Actions
+                      <span *ngIf="selectedCount > 0" style="background: #2196f3; color: white; border-radius: 10px; padding: 0 0.4rem; font-size: 0.75rem;">{{ selectedCount }}</span>
+                  </button>
+                  <div *ngIf="showActionsMenu"
+                       style="position: absolute; top: 100%; right: 0; margin-top: 0.5rem; background: white; border: 1px solid #e9ecef; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); min-width: 200px; z-index: 1000;">
+                      <div style="padding: 0.5rem;">
+                          <button (click)="startRebaseline()"
+                                  [disabled]="selectedCount === 0"
+                                  [style.cursor]="selectedCount === 0 ? 'not-allowed' : 'pointer'"
+                                  [style.opacity]="selectedCount === 0 ? '0.5' : '1'"
+                                  style="display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.6rem 0.75rem; border: none; background: transparent; text-align: left; font-size: 0.875rem; border-radius: 4px;">
+                              <svg width="16" height="16" fill="currentColor" stroke="none" viewBox="0 0 24 24">
+                                <path d="M 12 4 C 7.5817 4 4 7.5817 4 12 L 1.5 12 L 4.5 15.5 L 7.5 12 L 6 12 C 6 8.6863 8.6863 6 12 6 C 15.3137 6 18 8.6863 18 12 C 18 15.3137 15.3137 18 12 18 C 10.3431 18 8.8431 17.3284 7.7573 16.2426 L 6.3431 17.6569 C 7.7909 19.1046 9.7909 20 12 20 C 16.4183 20 20 16.4183 20 12 C 20 7.5817 16.4183 4 12 4 z"></path>
+                              </svg>
+                              Rebaseline selected
+                          </button>
+                      </div>
+                  </div>
+              </div>
+              <div style="position: relative;">
                   <button (click)="toggleColumnSelector()"
                           style="padding: 0.75rem 1rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">
 
@@ -253,6 +278,12 @@
               <table id="testsRunsTable" style="width: 100%; border-collapse: collapse;">
                   <thead>
                       <tr style="background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%); border-bottom: 2px solid #e9ecef;">
+                          <th class="column fit-content" style="text-align: center; width: 1%;">
+                              <input type="checkbox" title="Select all"
+                                     [checked]="allRowsSelected"
+                                     (change)="toggleSelectAll($event)"
+                                     style="cursor: pointer;">
+                          </th>
                           <th *ngIf="columnVisibility.path" class="column-sortable fit-content" data-sort="path" style="text-align: left;"
                           (click)="sortTable('path')">
                               Path
@@ -292,6 +323,12 @@
                         (mouseout)="onRowMouseOut(row, $event)"
                         (click)="markRowReviewed(row, $event)"
                         (dblclick)="removeRowFromReviewed(row, $event)">
+                        <td class="cell" style="text-align: center; width: 1%;">
+                          <input type="checkbox"
+                                 [(ngModel)]="row.selected"
+                                 (click)="onRowSelectionToggle($event)"
+                                 style="cursor: pointer;">
+                        </td>
                         <td *ngIf="columnVisibility.path" class="cell">
                           <div style="display: flex; padding: 0.5rem; justify-content: flex-start; align-items: center;">
                            {{row.result.TestPath}}
@@ -379,12 +416,12 @@
 
                     </tr>
                     <tr *ngIf="row.showDetails" class="expanded-details">
-                        <td colspan="8" class="execution-output" style="padding: 5px; text-align: left; font-family: monospace; background-color: #f0f0f0;">
+                        <td colspan="9" class="execution-output" style="padding: 5px; text-align: left; font-family: monospace; background-color: #f0f0f0;">
                             <div [innerHTML]="row.result.ExecutionOutput | consoleOutputToHtml"></div>
                         </td>
                     </tr>
                     <tr *ngIf="row.showDiffs" class="expanded-details">
-                      <td colspan="8" class="execution-output" style="padding: 5px; text-align: left; background-color: #f0f0f0;">
+                      <td colspan="9" class="execution-output" style="padding: 5px; text-align: left; background-color: #f0f0f0;">
                         <table class="runs-table" style="width: 100%;">
                           <thead>
                               <tr>
@@ -414,7 +451,7 @@
                       </td>
                   </tr>
                   <tr *ngIf="row.showHistory" class="expanded-history">
-                        <td colspan="8" class="test-history" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
+                        <td colspan="9" class="test-history" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
                             <app-test-history [testId]="row.result.TestId"></app-test-history>
                         </td>
                     </tr>
@@ -577,3 +614,74 @@
   [suiteName]="testsRunDetails.SuiteName"
   (dialogClosed)="closeSuiteStatisticsDialog()">
 </app-suite-statistics-dialog>
+
+<!-- Rebaseline Progress Dialog -->
+<div class="confirmation-overlay" *ngIf="showRebaselineDialog">
+  <div class="confirmation-dialog" (click)="$event.stopPropagation()" style="max-width: 640px; width: 90%;">
+    <div class="confirmation-header">
+      <h3>Rebaseline</h3>
+      <button class="close-button" (click)="closeRebaselineDialog()" [disabled]="rebaselineInProgress" aria-label="Close"
+              [style.opacity]="rebaselineInProgress ? '0.4' : '1'"
+              [style.cursor]="rebaselineInProgress ? 'not-allowed' : 'pointer'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="confirmation-body" style="display: block; text-align: left;">
+      <!-- Per-test progress list -->
+      <div style="max-height: 320px; overflow-y: auto; border: 1px solid #e9ecef; border-radius: 8px;">
+        <div *ngFor="let item of rebaselineItems"
+             style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.6rem 0.9rem; border-bottom: 1px solid #f5f5f5;">
+          <!-- Status icon -->
+          <span style="flex-shrink: 0; margin-top: 2px;">
+            <!-- running spinner -->
+            <span *ngIf="item.status === 'running' || item.status === 'pending'" class="rebaseline-spinner"></span>
+            <!-- rebaselined: green check -->
+            <svg *ngIf="item.status === 'rebaselined'" width="18" height="18" fill="#2e7d32" viewBox="0 0 16 16">
+              <path d="M13.485 1.929a1 1 0 0 1 0 1.414L6.5 10.328 2.515 6.343a1 1 0 1 1 1.414-1.414L6.5 7.5l5.571-5.571a1 1 0 0 1 1.414 0z"/>
+            </svg>
+            <!-- passed: grey check -->
+            <svg *ngIf="item.status === 'passed'" width="18" height="18" fill="#9e9e9e" viewBox="0 0 16 16">
+              <path d="M13.485 1.929a1 1 0 0 1 0 1.414L6.5 10.328 2.515 6.343a1 1 0 1 1 1.414-1.414L6.5 7.5l5.571-5.571a1 1 0 0 1 1.414 0z"/>
+            </svg>
+            <!-- nothing to rebaseline: amber info -->
+            <svg *ngIf="item.status === 'nothing'" width="18" height="18" fill="#f39c12" viewBox="0 0 16 16">
+              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+            </svg>
+            <!-- error: red cross -->
+            <svg *ngIf="item.status === 'error'" width="18" height="18" fill="#c0392b" viewBox="0 0 16 16">
+              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+            </svg>
+          </span>
+          <!-- Test name + detail -->
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 0.875rem; font-weight: 600; color: #343a40; word-break: break-word;">{{ item.testName }}</div>
+            <div *ngIf="item.detail" style="font-size: 0.8rem; color: #6c757d; word-break: break-word;">{{ item.detail }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overall status messages (clone / commit / push / complete) -->
+      <div *ngIf="rebaselineStatusMessages.length > 0"
+           style="margin-top: 1rem; font-family: monospace; font-size: 0.8rem; color: #495057; background: #f8f9fa; border-radius: 8px; padding: 0.6rem 0.9rem;">
+        <div *ngFor="let msg of rebaselineStatusMessages">{{ msg }}</div>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="rebaselineErrorMessage"
+           style="margin-top: 1rem; font-size: 0.85rem; color: #c0392b; background: #fdecea; border: 1px solid #f5c6cb; border-radius: 8px; padding: 0.6rem 0.9rem;">
+        {{ rebaselineErrorMessage }}
+      </div>
+    </div>
+
+    <div class="confirmation-actions" style="display: flex; justify-content: flex-end;">
+      <button class="btn btn-primary btn-modal" (click)="closeRebaselineDialog()" [disabled]="rebaselineInProgress"
+              [style.opacity]="rebaselineInProgress ? '0.5' : '1'"
+              [style.cursor]="rebaselineInProgress ? 'not-allowed' : 'pointer'">
+        {{ rebaselineInProgress ? 'Working…' : 'Close' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -8,6 +8,7 @@ const gridsRouter = require('./grids-router');
 const repositoriesRouter = require('./reporitories-router');
 const testsRunsRouter = require('./tests-router');
 const artifactsRouter = require('./artifacts-router');
+const rebaselineRouter = require('./rebaseline-router');
 const authRouter = require('./auth-router');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
@@ -1042,6 +1043,7 @@ app.use('/', gridsRouter);
 app.use('/', repositoriesRouter);
 app.use('/', testsRunsRouter);
 app.use('/', artifactsRouter);
+app.use('/', rebaselineRouter);
 app.use('/api/auth', authRouter);
 
 app.listen(port, async () => {

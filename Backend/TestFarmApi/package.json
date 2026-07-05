@@ -11,6 +11,7 @@
   "dependencies": {
     "@sequelize/mssql": "^7.0.0-alpha.41",
     "@sequelize/sqlite3": "^7.0.0-alpha.41",
+    "7zip-min": "^1.4.5",
     "axios": "^1.7.7",
     "azure-devops-node-api": "^14.0.2",
     "bcrypt": "^6.0.0",
