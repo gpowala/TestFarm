@@ -61,7 +61,7 @@ router.post('/schedule-benchmarks-run', async (req, res) => {
 
     let queuedCount = 0;
 
-    requestedBenchmarksPaths.forEach(async (benchmarkPath) => {
+    await Promise.all(requestedBenchmarksPaths.map(async (benchmarkPath) => {
       try {
         const benchmarkConfigPath = `${localRepositoryDir}/${benchmarkPath}/benchmark.testfarm`;
         requireFileExists(benchmarkConfigPath);
@@ -80,7 +80,7 @@ router.post('/schedule-benchmarks-run', async (req, res) => {
         // TODO: Should be in single transaction together with benchmarks run creation, if errors happen anywhere, we can't leave state inconsistent
         console.error(`Failed to register benchmark: ${error}`);
       }
-    });
+    }));
 
     if (queuedCount === 0) {
       await benchmarksRun.destroy();
