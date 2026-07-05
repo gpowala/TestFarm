@@ -18,6 +18,7 @@ import sys
 import subprocess
 import difflib
 import chardet
+import filecmp
 import sys
 import py7zr
 import shutil
@@ -331,6 +332,13 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
                             logging.info(f"New file {new_file} not found!")
                             continue
+                        
+                        if abs(os.path.getsize(gold_file) - os.path.getsize(new_file)) > 10 * 1024 * 1024:
+                            test_passed = False
+                            upload_diff(test, diff_name, "files differ in size more than 10MB", self._config)
+
+                            logging.info(f"Files {gold_file} and {new_file} differ in size more than 10MB!")
+                            continue
 
                         report_file = expand_magic_variables(f"$__TF_WORK_DIR__/{diff_name}.html")
                         self.generate_html_diff(gold_file, new_file, report_file, diff.encoding)
@@ -523,12 +531,26 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                     logging.info("Benchmark completed.")
                 else:
                     time.sleep(60)
+            except KeyboardInterrupt:
+                logging.info("KeyboardInterrupt received, shutting down...")
+                self._running = False
             except Exception as e:
                 logging.error(f"Error processing test: {e}")
             finally:
-                update_host_status("Waiting for tests...", self._host, self._config)
-                logging.info(f"Host {self._host.hostname} status set to \"Waiting for tests...\"")
+                if self._running:
+                    update_host_status("Waiting for tests...", self._host, self._config)
+                    logging.info(f"Host {self._host.hostname} status set to \"Waiting for tests...\"")
         
+        if self._host:
+            try:
+                update_host_status("Offline", self._host, self._config)
+                logging.info(f"Host {self._host.hostname} status set to \"Offline\"")
+                
+                unregister_host(self._host, self._config)
+                logging.info(f"Host {self._host.hostname} successfully unregistered")
+            except Exception as e:
+                logging.error(f"Error during host shutdown: {e}")
+
         logging.info("TestFarm service has stopped.")
 
     def archive_and_upload_temp_dir(self, test):
@@ -572,11 +594,6 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
             # Create a Windows Job Object to group the process and all its children
             job = win32job.CreateJobObject(None, "")
 
-            # Configure job to terminate all child processes when the job is closed
-            job_info = win32job.QueryInformationJobObject(job, win32job.JobObjectExtendedLimitInformation)
-            job_info['BasicLimitInformation']['LimitFlags'] |= win32job.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
-            win32job.SetInformationJobObject(job, win32job.JobObjectExtendedLimitInformation, job_info)
-
             # Start the process
             process = subprocess.Popen(
                 command, shell=True, env=env, cwd=cwd,
@@ -600,8 +617,11 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
             stdout_str = stdout.decode('utf-8', errors='replace') if stdout else ""
             stderr_str = stderr.decode('utf-8', errors='replace') if stderr else ""
 
-            # Query and terminate any leftover child processes still in the job
-            leftover_pids = self._terminate_job_processes(job, process.pid)
+            # Give child processes a grace period to exit naturally
+            time.sleep(2)
+
+            # Terminate any leftover child processes still in the job
+            leftover_pids = self._terminate_job_processes(job, exclude_pids={process.pid})
 
             if exit_code != 0:
                 return CommandResult(CommandStatus.ERROR, exit_code, "", f"Non-zero exit code! Code: {exit_code}", leftover_pids)
@@ -629,19 +649,37 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                 except:
                     pass
 
-    def _terminate_job_processes(self, job, exclude_pid: int = None) -> List[int]:
-        """Query remaining processes in the job, terminate them, and return their PIDs."""
+    def _terminate_job_processes(self, job, exclude_pids: Set[int] = None) -> List[int]:
+        """Query remaining processes in the job, terminate them individually, and return their PIDs."""
         leftover_pids = []
         if not job:
             return leftover_pids
+
+        service_pid = os.getpid()
+        safe_exclude = {service_pid}
+        if exclude_pids:
+            safe_exclude.update(exclude_pids)
+
         try:
-            pids = win32job.QueryInformationJobObject(job, win32job.JobObjectBasicProcessIdList)
-            leftover_pids = [pid for pid in pids if pid != exclude_pid]
+            all_pids = win32job.QueryInformationJobObject(job, win32job.JobObjectBasicProcessIdList)
+            logging.info(f"Job process list: {all_pids}, service PID: {service_pid}, excluded: {safe_exclude}")
+
+            leftover_pids = [pid for pid in all_pids if pid not in safe_exclude and pid != 0]
             if leftover_pids:
                 logging.warning(f"Terminating {len(leftover_pids)} leftover process(es): {leftover_pids}")
-            win32job.TerminateJobObject(job, 1)
-        except:
-            pass
+                for pid in leftover_pids:
+                    if pid == service_pid:
+                        logging.error(f"BUG: Attempted to terminate service PID {service_pid}, skipping!")
+                        continue
+                    try:
+                        handle = win32api.OpenProcess(1, False, pid)  # PROCESS_TERMINATE = 1
+                        win32api.TerminateProcess(handle, 1)
+                        win32api.CloseHandle(handle)
+                        logging.info(f"Successfully terminated leftover process {pid}")
+                    except Exception as e:
+                        logging.debug(f"Failed to terminate process {pid}: {e}")
+        except Exception as e:
+            logging.debug(f"Failed to query job processes: {e}")
         return leftover_pids
         
     def read_execution_output(self, test_case: TestCase) -> str:
@@ -679,21 +717,72 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
         return result['encoding'] if result['encoding'] else 'utf-8'  # Default to UTF-8 if unknown
 
     def generate_html_diff(self, gold_file: str, new_file: str, report_file: str, encoding: str):
-        # gold_encoding = self.detect_encoding(gold_file)
-        # new_encoding = self.detect_encoding(new_file)
-        
-        with open(gold_file, 'r', encoding=encoding, errors='replace') as f1, open(new_file, 'r', encoding=encoding, errors='replace') as f2:
-            gold_content = f1.readlines()
-            new_content = f2.readlines()
+        # Quick check: if files are byte-identical, skip diffing entirely
+        if filecmp.cmp(gold_file, new_file, shallow=False):
+            open(report_file, 'w').close()
+            return
 
-        differ = difflib.unified_diff(gold_content, new_content, fromfile=gold_file, tofile=new_file, lineterm='', n=10)
-        
-        diff_lines = list(differ)
-        diff_lines = [line for line in diff_lines if not line.startswith('---') and not line.startswith('+++')]
+        # Cap on diff OUTPUT lines (not input). We compare full files but stop
+        # collecting differences once we have enough for the report.
+        max_diff_lines = 50000
+        diff_lines = []
+        truncated = False
+
+        # Use git diff for efficient C-based comparison (handles 600K+ line files).
+        # Stream output line-by-line and stop early once cap is reached.
+        try:
+            process = subprocess.Popen(
+                ['git', 'diff', '--no-index', '--no-color', '--text', '--unified=10',
+                 '--', gold_file, new_file],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+
+            for raw_line in process.stdout:
+                line = raw_line.decode(encoding, errors='replace').rstrip('\n').rstrip('\r')
+                # Skip git diff metadata lines
+                if line.startswith('diff ') or line.startswith('index ') or \
+                   line.startswith('---') or line.startswith('+++'):
+                    continue
+                diff_lines.append(line)
+                if len(diff_lines) >= max_diff_lines:
+                    truncated = True
+                    break
+
+            process.stdout.close()
+            if process.stderr:
+                process.stderr.close()
+            process.kill()
+            process.wait()
+
+        except (FileNotFoundError, OSError):
+            # git not available - fall back to Python difflib.
+            # Use generator to cap output lines (SequenceMatcher still processes
+            # all input internally, but at least we limit memory for results).
+            logging.warning("git not available for diff, falling back to Python difflib (may be slow for large files)")
+            with open(gold_file, 'r', encoding=encoding, errors='replace') as f1, \
+                 open(new_file, 'r', encoding=encoding, errors='replace') as f2:
+                gold_content = f1.readlines()
+                new_content = f2.readlines()
+
+            differ = difflib.unified_diff(gold_content, new_content,
+                                          fromfile=gold_file, tofile=new_file,
+                                          lineterm='', n=10)
+            for line in differ:
+                if line.startswith('---') or line.startswith('+++'):
+                    continue
+                diff_lines.append(line)
+                if len(diff_lines) >= max_diff_lines:
+                    truncated = True
+                    break
+            del gold_content, new_content
 
         if not diff_lines:
             open(report_file, 'w').close()
             return
+
+        truncation_note = ''
+        if truncated:
+            truncation_note = f'<p style="color: #856404; background-color: #fff3cd; padding: 10px; border: 1px solid #ffeeba; border-radius: 4px;">Note: Diff output exceeded {max_diff_lines:,} line limit. Only the first {max_diff_lines:,} differences are shown.</p>'
 
         html_content = f"""
             <html>
@@ -758,6 +847,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                 </head>
                 <body>
                     <h2>File Difference Report</h2>
+                    {truncation_note}
                     <div class="view-buttons">
                         <button id="side-by-side-btn" class="active-view" onclick="switchView('side-by-side-view')">Side By Side View</button>
                         <button id="unified-btn" class="inactive-view" onclick="switchView('unified-view')">Unified View</button>
@@ -821,26 +911,29 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
             flush_changes()
         self.append_identical_lines_to_rows(rows, identical_lines)
 
-        # Add side-by-side rows
+        # Add side-by-side rows (use list + join to avoid O(n²) string concatenation)
+        sbs_parts = []
         for left, right in rows:
-            html_content += f"<tr>{left}{right}</tr>\n"
+            sbs_parts.append(f"<tr>{left}{right}</tr>\n")
+        html_content += ''.join(sbs_parts)
 
         # Close the side-by-side table and start unified view
-        html_content += """
+        unified_parts = []
+        unified_parts.append("""
                         </table>
                     </div>
                     
                     <div id="unified-view" class="hidden">
                         <table>
                             <tr><th>Unified Diff View</th></tr>
-        """
+        """)
         
         # Process lines for unified view with character highlighting
         removed_buffer = []
         added_buffer = []
         
         def flush_unified_changes():
-            nonlocal removed_buffer, added_buffer, html_content
+            nonlocal removed_buffer, added_buffer
             max_len = max(len(removed_buffer), len(added_buffer))
             for i in range(max_len):
                 left_line = removed_buffer[i] if i < len(removed_buffer) else None
@@ -848,12 +941,12 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                 
                 if left_line is not None and right_line is not None:
                     left_html, right_html = self.highlight_char_diff(left_line, right_line)
-                    html_content += f'<tr><td class="removed">- {left_html}</td></tr>\n'
-                    html_content += f'<tr><td class="added">+ {right_html}</td></tr>\n'
+                    unified_parts.append(f'<tr><td class="removed">- {left_html}</td></tr>\n')
+                    unified_parts.append(f'<tr><td class="added">+ {right_html}</td></tr>\n')
                 elif left_line is not None:
-                    html_content += f'<tr><td class="removed">- {self.escape_html(left_line)}</td></tr>\n'
+                    unified_parts.append(f'<tr><td class="removed">- {self.escape_html(left_line)}</td></tr>\n')
                 else:
-                    html_content += f'<tr><td class="added">+ {self.escape_html(right_line)}</td></tr>\n'
+                    unified_parts.append(f'<tr><td class="added">+ {self.escape_html(right_line)}</td></tr>\n')
             
             removed_buffer = []
             added_buffer = []
@@ -866,19 +959,20 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
             else:
                 if removed_buffer or added_buffer:
                     flush_unified_changes()
-                html_content += f'<tr><td class="context">{self.escape_html(line)}</td></tr>\n'
+                unified_parts.append(f'<tr><td class="context">{self.escape_html(line)}</td></tr>\n')
         
         # Flush any remaining changes
         if removed_buffer or added_buffer:
             flush_unified_changes()
 
         # Close the unified table and finish the HTML
-        html_content += """
+        unified_parts.append("""
                         </table>
                     </div>
                 </body>
             </html>
-        """
+        """)
+        html_content += ''.join(unified_parts)
 
         with open(report_file, 'w', encoding='utf-8', errors='replace') as f:
             f.write(html_content)
