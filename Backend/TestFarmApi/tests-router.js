@@ -961,6 +961,26 @@ router.get('/suite/statistics', async (req, res) => {
         failingDiffs += diffs.filter(d => d.Status === 'failed').length;
       });
 
+      // Run duration: earliest test start to latest test end. Left null while any test is still
+      // queued/running (the run has not finished yet), consistent with /tests-run-details.
+      const startMsValues = testResults
+        .filter(tr => tr.ExecutionStartTimestamp)
+        .map(tr => new Date(tr.ExecutionStartTimestamp).getTime());
+      const endMsValues = testResults
+        .filter(tr => tr.ExecutionEndTimestamp)
+        .map(tr => new Date(tr.ExecutionEndTimestamp).getTime());
+
+      let durationMs = null;
+      let startTimestamp = null;
+      let endTimestamp = null;
+      if (queuedTests === 0 && runningTests === 0 && startMsValues.length > 0 && endMsValues.length > 0) {
+        const minStartMs = Math.min(...startMsValues);
+        const maxEndMs = Math.max(...endMsValues);
+        durationMs = maxEndMs - minStartMs;
+        startTimestamp = new Date(minStartMs);
+        endTimestamp = new Date(maxEndMs);
+      }
+
       // Parse artifacts to get artifact details
       const artifacts = testRun.Artifacts || [];
       const artifactDetails = await Promise.all(artifacts.map(async (artifactEntry) => {
@@ -1000,6 +1020,11 @@ router.get('/suite/statistics', async (req, res) => {
           passing: passingDiffs,
           failing: failingDiffs,
           passingPercentage: totalDiffs > 0 ? Math.round((passingDiffs / totalDiffs) * 100) : null
+        },
+        durationStatistics: {
+          durationMs: durationMs,
+          startTimestamp: startTimestamp,
+          endTimestamp: endTimestamp
         }
       };
     }));

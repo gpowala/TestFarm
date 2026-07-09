@@ -70,6 +70,10 @@
             <div class="stat-label">Latest Diffs Pass</div>
           </div>
           <div class="stat-card">
+            <div class="stat-value">{{ getLatestDuration() }}</div>
+            <div class="stat-label">Latest Duration</div>
+          </div>
+          <div class="stat-card">
             <div class="stat-value">
               <span *ngIf="getTrendDirection() === 'up'" class="trend-up">↑</span>
               <span *ngIf="getTrendDirection() === 'down'" class="trend-down">↓</span>
@@ -144,9 +148,16 @@
           </div>
         </div>
 
-        <!-- Chart Container -->
+        <!-- Pass/Fail Trends Chart -->
+        <div class="chart-section-title">Pass / Fail Trends</div>
         <div class="chart-container">
           <canvas #progressChart></canvas>
+        </div>
+
+        <!-- Run Duration Chart -->
+        <div class="chart-section-title">Run Duration</div>
+        <div class="chart-container">
+          <canvas #durationChart></canvas>
         </div>
 
         <!-- No Data Message -->

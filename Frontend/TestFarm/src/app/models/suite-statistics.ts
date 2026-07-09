@@ -23,6 +23,12 @@ export interface SuiteDiffStatistics {
     passingPercentage: number | null;
 }
 
+export interface SuiteDurationStatistics {
+    durationMs: number | null;
+    startTimestamp: string | null;
+    endTimestamp: string | null;
+}
+
 export interface SuiteTestRunInfo {
     id: number;
     name: string;
@@ -36,6 +42,7 @@ export interface SuiteStatisticsEntry {
     artifacts: SuiteRunArtifact[];
     testStatistics: SuiteTestStatistics;
     diffStatistics: SuiteDiffStatistics;
+    durationStatistics?: SuiteDurationStatistics;
 }
 
 export interface SuiteStatisticsResponse {

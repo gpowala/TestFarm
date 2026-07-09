@@ -23,12 +23,14 @@ export class SuiteStatisticsDialogComponent implements OnInit, AfterViewInit, On
   @Output() dialogClosed = new EventEmitter<void>();
 
   @ViewChild('progressChart', { static: false }) progressChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('durationChart', { static: false }) durationChartRef!: ElementRef<HTMLCanvasElement>;
 
   statisticsData: SuiteStatisticsResponse | null = null;
   isLoading: boolean = true;
   errorMessage: string = '';
 
   progressChart: Chart | null = null;
+  durationChart: Chart | null = null;
 
   // Filter options
   chartType: 'line' | 'bar' = 'bar';
@@ -53,13 +55,16 @@ export class SuiteStatisticsDialogComponent implements OnInit, AfterViewInit, On
   ngAfterViewInit(): void {
     this.viewInitialized = true;
     if (this.statisticsData) {
-      setTimeout(() => this.createChart(), 0);
+      setTimeout(() => this.createCharts(), 0);
     }
   }
 
   ngOnDestroy(): void {
     if (this.progressChart) {
       this.progressChart.destroy();
+    }
+    if (this.durationChart) {
+      this.durationChart.destroy();
     }
   }
 
@@ -74,7 +79,7 @@ export class SuiteStatisticsDialogComponent implements OnInit, AfterViewInit, On
         this.isLoading = false;
 
         if (this.viewInitialized) {
-          setTimeout(() => this.createChart(), 0);
+          setTimeout(() => this.createCharts(), 0);
         }
       },
       (error: any) => {
@@ -112,17 +117,17 @@ export class SuiteStatisticsDialogComponent implements OnInit, AfterViewInit, On
   }
 
   onArtifactFilterChange(): void {
-    this.createChart();
+    this.createCharts();
   }
 
   selectAllArtifacts(): void {
     this.artifactFilterOptions.forEach(opt => opt.selected = true);
-    this.createChart();
+    this.createCharts();
   }
 
   deselectAllArtifacts(): void {
     this.artifactFilterOptions.forEach(opt => opt.selected = false);
-    this.createChart();
+    this.createCharts();
   }
 
   private getFilteredStatistics(): SuiteStatisticsEntry[] {
@@ -172,7 +177,12 @@ export class SuiteStatisticsDialogComponent implements OnInit, AfterViewInit, On
     return stats;
   }
 
-  private createChart(): void {
+  private createCharts(): void {
+    this.createProgressChart();
+    this.createDurationChart();
+  }
+
+  private createProgressChart(): void {
     if (!this.progressChartRef || !this.progressChartRef.nativeElement) {
       console.log('Canvas element not found');
       return;
@@ -344,16 +354,163 @@ export class SuiteStatisticsDialogComponent implements OnInit, AfterViewInit, On
     this.progressChart = new Chart(ctx, config);
   }
 
+  private createDurationChart(): void {
+    if (!this.durationChartRef || !this.durationChartRef.nativeElement) {
+      return;
+    }
+
+    const filteredStats = this.getFilteredStatistics();
+
+    if (this.durationChart) {
+      this.durationChart.destroy();
+      this.durationChart = null;
+    }
+
+    if (filteredStats.length === 0) {
+      return;
+    }
+
+    const ctx = this.durationChartRef.nativeElement;
+
+    const labels = filteredStats.map(s => {
+      const date = new Date(s.testRun.timestamp);
+      return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    });
+
+    // Plot minutes; null (unfinished runs) leaves a gap.
+    const durationMinutes = filteredStats.map(s => {
+      const ms = s.durationStatistics?.durationMs ?? null;
+      return ms != null ? Math.round((ms / 60000) * 100) / 100 : null;
+    });
+
+    const config: ChartConfiguration = {
+      type: this.chartType,
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Run Duration',
+          data: durationMinutes as any,
+          borderColor: '#673ab7',
+          backgroundColor: this.chartType === 'bar' ? 'rgba(103, 58, 183, 0.7)' : 'rgba(103, 58, 183, 0.1)',
+          fill: this.chartType === 'line',
+          tension: 0.3,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          spanGaps: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              padding: 15,
+              usePointStyle: true,
+              font: {
+                size: 12,
+                weight: 500
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            borderColor: '#ffffff',
+            borderWidth: 1,
+            cornerRadius: 8,
+            callbacks: {
+              label: (context) => {
+                const stat = filteredStats[context.dataIndex];
+                const ms = stat.durationStatistics?.durationMs ?? null;
+                return ms != null ? `Duration: ${this.formatDuration(ms)}` : 'Duration: N/A (not finished)';
+              },
+              afterBody: (context) => {
+                const stat = filteredStats[context[0].dataIndex];
+                const lines = [
+                  '',
+                  `Run: ${stat.testRun.name}`,
+                  `Status: ${stat.testRun.overallStatus}`
+                ];
+                if (stat.artifacts.length > 0) {
+                  lines.push(`Build: ${stat.artifacts[0].buildName}`);
+                }
+                return lines;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Minutes'
+            },
+            ticks: {
+              callback: (value) => value + 'm'
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
+          }
+        }
+      }
+    };
+
+    this.durationChart = new Chart(ctx, config);
+  }
+
+  formatDuration(ms: number | null): string {
+    if (ms == null) {
+      return 'N/A';
+    }
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${seconds}s`;
+    }
+    if (minutes > 0) {
+      return `${minutes}m ${seconds}s`;
+    }
+    return `${seconds}s`;
+  }
+
+  getLatestDuration(): string {
+    if (!this.statisticsData || this.statisticsData.statistics.length === 0) {
+      return 'N/A';
+    }
+    const sorted = [...this.statisticsData.statistics].sort((a, b) =>
+      new Date(b.testRun.timestamp).getTime() - new Date(a.testRun.timestamp).getTime()
+    );
+    return this.formatDuration(sorted[0].durationStatistics?.durationMs ?? null);
+  }
+
   onChartTypeChange(): void {
-    this.createChart();
+    this.createCharts();
   }
 
   onFilterChange(): void {
-    this.createChart();
+    this.createCharts();
   }
 
   onDateRangeChange(): void {
-    this.createChart();
+    this.createCharts();
   }
 
   onClose(): void {

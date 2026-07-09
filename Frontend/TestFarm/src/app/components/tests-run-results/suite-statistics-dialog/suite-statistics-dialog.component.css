@@ -275,6 +275,13 @@
   margin-bottom: 1.5rem;
 }
 
+.chart-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
 /* No Data Container */
 .no-data-container {
   display: flex;
