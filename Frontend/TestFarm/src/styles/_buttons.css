@@ -1,106 +1,69 @@
 /* ==========================================================================
-   Buttons — .btn base + primary / secondary / modal variants
+   Buttons — flat, styled exactly like the active sidebar nav item
+   (light steel-blue fill, accent text, no shadow).
    ========================================================================== */
 
 .btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
+  padding: 0.625rem 0.9rem;
+  border: 1px solid transparent;
   border-radius: 8px;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  position: relative;
-  overflow: hidden;
   margin-bottom: 1rem;
-  margin-right: 1rem;
+  margin-right: 0.75rem;
+  background: #e3edf6;
+  color: #0a4174;
 }
 
-.btn::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  transform: translate(-50%, -50%);
-  transition: width 1.2s, height 1.2s;
-  pointer-events: none;
+.btn:hover {
+  background: #dbe7f2;
 }
 
-.btn:hover::after {
-  width: 300px;
-  height: 300px;
+.btn:active {
+  background: #cddef0;
 }
 
-.btn-primary {
-  background: linear-gradient(315deg, #b04d00 0%, #d55e00 100%);
-  color: #ffffff;
-  border: 1px solid #d55e00;
-  box-shadow: 0 2px 4px rgba(213, 94, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    inset 1px 0 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
-    inset -1px 0 0 rgba(0, 0, 0, 0.1);
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(10, 65, 116, 0.25);
 }
 
-.btn-primary:hover {
-  background: linear-gradient(315deg, #9a4400 0%, #c15400 100%);
-  border-color: #c15400;
-  box-shadow: 0 4px 12px rgba(213, 94, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    inset 1px 0 0 rgba(255, 255, 255, 0.25),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
-    inset -1px 0 0 rgba(0, 0, 0, 0.15);
-}
-
+/* Primary and secondary share the active-nav look */
+.btn-primary,
 .btn-secondary {
-  background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%);
-  color: #d55e00;
-  border: 1px solid #d55e00;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 1px 0 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.05),
-    inset -1px 0 0 rgba(0, 0, 0, 0.05);
+  background: #e3edf6;
+  color: #0a4174;
+  border-color: transparent;
 }
 
+.btn-primary:hover,
 .btn-secondary:hover {
-  background: linear-gradient(315deg, #b04d00 0%, #d55e00 100%);
-  color: #ffffff;
-  box-shadow: 0 2px 4px rgba(213, 94, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    inset 1px 0 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
-    inset -1px 0 0 rgba(0, 0, 0, 0.1);
+  background: #dbe7f2;
 }
 
-.btn-secondary:disabled {
-  background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%);
-  color: #6c757d;
-  border: 1px solid #6c757d;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 1px 0 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.05),
-    inset -1px 0 0 rgba(0, 0, 0, 0.05);
+.btn-primary:active,
+.btn-secondary:active {
+  background: #cddef0;
 }
 
 .btn-modal {
   margin: 0rem !important;
 }
 
-.btn-primary:disabled {
-  background: linear-gradient(315deg, #6c757d 0%, #8a9096 100%);
-  border-color: #6c757d;
+.btn:disabled,
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  background: #eef1f3;
+  color: #9aa5b1;
+  border-color: transparent;
   cursor: not-allowed;
-  box-shadow: none;
   pointer-events: none;
-  opacity: 0.6;
-  box-shadow: none;
+  opacity: 0.7;
 }

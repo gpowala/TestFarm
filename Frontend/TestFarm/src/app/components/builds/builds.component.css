@@ -41,7 +41,7 @@
 
 .action-menu-trigger:hover {
   background: rgba(108, 123, 138, 0.1);
-  color: #d55e00;
+  color: #0a4174;
 }
 
 .action-menu {
@@ -94,7 +94,7 @@
 
 .action-menu-item:hover {
   background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%);
-  color: #d55e00;
+  color: #0a4174;
 }
 
 .action-menu-item app-icon {

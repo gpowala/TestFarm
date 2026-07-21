@@ -26,7 +26,7 @@ app-icon > svg {
 }
 
 .nav-link.active .nav-icon {
-  color: #d55e00;
+  color: #0a4174;
 }
 
 .sidebar.collapsed .nav-icon {
@@ -38,7 +38,7 @@ app-icon > svg {
   width: 24px;
   height: 24px;
   stroke-width: 2;
-  color: #d55e00;
+  color: #0a4174;
 }
 
 /* Breadcrumb separator chevron */

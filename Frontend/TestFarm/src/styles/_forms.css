@@ -95,7 +95,7 @@
 }
 
 .required {
-  color: #d55e00;
+  color: #0a4174;
 }
 
 .form-input, .form-textarea {
@@ -113,8 +113,8 @@
 
 .form-input:focus, .form-textarea:focus {
   outline: none;
-  border-color: #d55e00;
-  box-shadow: 0 0 0 3px rgba(213, 94, 0, 0.1);
+  border-color: #0a4174;
+  box-shadow: 0 0 0 3px rgba(10, 65, 116, 0.1);
   background: #ffffff;
 }
 

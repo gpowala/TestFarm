@@ -76,8 +76,8 @@
 }
 
 .column-sortable:hover {
-  color: #d55e00;
-  box-shadow: inset 0 -3px 0 rgba(213, 94, 0, 0.3);
+  color: #0a4174;
+  box-shadow: inset 0 -3px 0 rgba(10, 65, 116, 0.3);
 }
 
 /* Keep the header label centered even with a sort arrow. The arrow stays
@@ -119,7 +119,7 @@
 /* --- In-cell links -------------------------------------------------------- */
 .row-link {
   text-decoration: none;
-  color: #d55e00;
+  color: #0a4174;
 }
 
 .row-link:hover {
@@ -143,7 +143,7 @@
 }
 
 .row-action-link:hover {
-  color: #d55e00;
+  color: #0a4174;
 }
 
 /* --- Row selection / hover states ---------------------------------------- */
@@ -176,5 +176,5 @@
 }
 
 .row-inactive-hovering {
-  background: linear-gradient(180deg, rgba(213, 94, 0, 0.005) 0%, rgba(213, 94, 0, 0.03) 100%);
+  background: linear-gradient(180deg, rgba(10, 65, 116, 0.005) 0%, rgba(10, 65, 116, 0.03) 100%);
 }

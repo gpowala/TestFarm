@@ -14,12 +14,12 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(315deg, #b04d00 0%, #d55e00 100%);
+  background: linear-gradient(315deg, #083358 0%, #0a4174 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 12px rgba(213, 94, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(10, 65, 116, 0.3);
 }
 
 .user-avatar app-icon {
