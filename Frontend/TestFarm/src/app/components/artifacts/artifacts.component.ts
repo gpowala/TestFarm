@@ -22,7 +22,7 @@ class ArtifactRow {
   styleUrls: ['./artifacts.component.css']
 })
 export class ArtifactsComponent implements OnInit {
-  artifactDefinition!: ArtifactDefinition;
+  artifactDefinition?: ArtifactDefinition;
 
   artifacts: Artifact[] = [];
   artifactsRows: ArtifactRow[] = [];
@@ -36,6 +36,8 @@ export class ArtifactsComponent implements OnInit {
   sortDirection: { [key: string]: 'asc' | 'desc' } = {};
 
   searchTerm: string = '';
+
+  showAddArtifactDialog: boolean = false;
 
   constructor(private route: ActivatedRoute, private artifactsApiHttpClientService: ArtifactsApiHttpClientService) {}
   ngOnInit() {
@@ -244,5 +246,39 @@ export class ArtifactsComponent implements OnInit {
     }
 
     this.renderAllRows();
+  }
+
+  addArtifact() {
+    this.showAddArtifactDialog = true;
+  }
+
+  artifactAdded(result: any) {
+    this.showAddArtifactDialog = false;
+
+    this.artifactsApiHttpClientService.addArtifact(
+      result.ArtifactDefinitionId,
+      result.BuildId,
+      result.BuildName,
+      result.Repository,
+      result.Branch,
+      result.Revision,
+      result.WorkItemUrl,
+      result.BuildPageUrl,
+      result.Tags
+    ).subscribe(
+      (data: any) => {
+        if (this.artifactDefinition) {
+          this.loadArtifactsFromDefinition(this.artifactDefinition.Id);
+        }
+        console.log('Artifact added successfully:', data);
+      },
+      (error: any) => {
+        console.error('Error adding artifact:', error);
+      }
+    );
+  }
+
+  artifactDialogClosed() {
+    this.showAddArtifactDialog = false;
   }
 }

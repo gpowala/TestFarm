@@ -42,6 +42,7 @@ import { LoginComponent } from './components/auth/login/login.component';
 import { RegisterComponent } from './components/auth/register/register.component';
 import { ConfirmEmailComponent } from './components/auth/confirm-email/confirm-email.component';
 import { UserProfileComponent } from './components/user-profile/user-profile.component';
+import { IconComponent } from './components/shared/icon/icon.component';
 
 @NgModule({  declarations: [
     AppComponent,
@@ -68,7 +69,8 @@ import { UserProfileComponent } from './components/user-profile/user-profile.com
     LoginComponent,
     RegisterComponent,
     ConfirmEmailComponent,
-    UserProfileComponent
+    UserProfileComponent,
+    IconComponent
   ],
   imports: [
     BrowserModule,

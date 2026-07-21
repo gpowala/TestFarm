@@ -7,7 +7,6 @@ import { catchError, of, tap } from 'rxjs';
 class RepositoryRow {
   active: boolean = false;
   checked: boolean = false;
-  selected: boolean = false;
 
   constructor(public repository: RepositoryDescription) {}
 }
@@ -28,8 +27,6 @@ export class RepositoriesComponent implements OnInit {
 
   sortDirection: { [key: string]: 'asc' | 'desc' } = {};
   searchTerm: string = '';
-
-  selectedRepositoriesNumber: number = 0;
 
   constructor(private repositoriesApiHttpClientService: RepositoriesApiHttpClientService) {}
 
@@ -195,19 +192,6 @@ export class RepositoriesComponent implements OnInit {
       });
     }
     this.renderAllRows();
-  }
-
-  onSelectionChange(row: RepositoryRow, event: Event) {
-    row.selected = (event.target as HTMLInputElement).checked;
-    this.recalculateSelection();
-  }
-
-  recalculateSelection() {
-    this.selectedRepositoriesNumber = this.repositoriesRows.filter(row => row.selected).length;
-  }
-
-  getSelectedRow(): RepositoryRow | undefined {
-    return this.repositoriesRows.find(row => row.selected);
   }
 
   // Add Repository Dialog

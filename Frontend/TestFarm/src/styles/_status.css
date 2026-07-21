@@ -1,0 +1,90 @@
+/* ==========================================================================
+   Status — test result rows and status badges (passed / failed / running …)
+   ========================================================================== */
+
+/* Test Results */
+.test-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f5f5f5;
+  border-radius: 8px;
+  margin: 0 -1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  transition: all 0.2s ease;
+}
+
+.test-item:hover {
+  background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 1px 0 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05),
+    inset -1px 0 0 rgba(0, 0, 0, 0.05);
+  transform: translateX(2px);
+}
+
+.test-item:last-child {
+  border-bottom: none;
+}
+
+.test-name {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.test-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border: 1px solid;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 1px 0 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    inset -1px 0 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.test-status:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 1px 0 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+    inset -1px 0 0 rgba(0, 0, 0, 0.15);
+}
+
+.status-passed {
+  background: linear-gradient(315deg, #d1e7dd 0%, #e8f5e8 100%);
+  color: #2e7d32;
+  border-color: #4caf50;
+}
+
+.status-completed {
+  background: linear-gradient(315deg, #d1e7dd 0%, #e8f5e8 100%);
+  color: #2e7d32;
+  border-color: #4caf50;
+}
+
+.status-failed {
+  background: linear-gradient(315deg, #f5c2c7 0%, #ffebee 100%);
+  color: #c62828;
+  border-color: #f44336;
+}
+
+.status-running {
+  background: linear-gradient(315deg, #ffeaa7 0%, #fff3e0 100%);
+  color: #ef6c00;
+  border-color: #ff9800;
+}
+
+.status-queued {
+  background: linear-gradient(315deg, #e3eafc 0%, #f0f4ff 100%);
+  color: #1565c0;
+  border-color: #1976d2;
+}

@@ -4,14 +4,11 @@ import { RepositoryDescription } from '../../models/repository-description';
 import { ConfirmationMessageDescription } from '../../models/confirmation-message-description';
 import { ArtifactsApiHttpClientService } from 'src/app/services/artifacts-api-http-cient-service';
 import { ArtifactDefinition } from 'src/app/models/artifact-definition';
-import { SelectionModel } from '@angular/cdk/collections';
 import { catchError, of, tap } from 'rxjs';
 
 class ArtifactDefinitionRow {
   active: boolean = false;
   checked: boolean = false;
-
-  selected: boolean = false;
 
   constructor(public artifact: ArtifactDefinition) {}
 }
@@ -30,15 +27,12 @@ export class BuildsComponent implements OnInit {
   filteredArtifactsRows: ArtifactDefinitionRow[] = [];
 
   showAddArtifactDefinitionDialog: boolean = false;
-  showAddArtifactDialog: boolean = false;
 
   showEditArtifactDefinitionDialog: boolean = false;
   artifactDefinitionToEdit!: ArtifactDefinition | null;
 
   sortDirection: { [key: string]: 'asc' | 'desc' } = {};
   searchTerm: string = '';
-
-  selectedArtifactsNumber: number = 0;
 
   activeMenuRow: ArtifactDefinitionRow | null = null;
 
@@ -209,20 +203,6 @@ export class BuildsComponent implements OnInit {
     this.renderAllRows();
   }
 
-  onSelectionChange(row: ArtifactDefinitionRow, event: Event) {
-    row.selected = (event.target as HTMLInputElement).checked;
-    this.recalculatedSelection();
-    console.log(this.selectedArtifactsNumber);
-  }
-
-  recalculatedSelection() {
-    this.selectedArtifactsNumber = this.artifactsRows.filter(row => row.selected).length
-  }
-
-  getSelectedRow(): ArtifactDefinitionRow | undefined {
-    return this.artifactsRows.find(row => row.selected);
-  }
-
   addArtifactDefinition() {
     this.showAddArtifactDefinitionDialog = true;
   }
@@ -282,39 +262,6 @@ export class BuildsComponent implements OnInit {
   editArtifactDefinitionDialogClosed() {
     this.showEditArtifactDefinitionDialog = false;
     this.artifactDefinitionToEdit = null;
-  }
-
-  addArtifact() {
-    this.showAddArtifactDialog = true;
-  }
-
-  artifactAdded(result: any) {
-    this.showAddArtifactDefinitionDialog = false;
-
-    this.artifactsApiHttpClientService.addArtifact(
-      result.ArtifactDefinitionId,
-      result.BuildId,
-      result.BuildName,
-      result.Repository,
-      result.Branch,
-      result.Revision,
-      result.WorkItemUrl,
-      result.BuildPageUrl,
-      result.Tags
-
-    ).subscribe(
-      (data: ArtifactDefinition) => {
-        this.fetchArtifacts();
-        console.log('Artifact definition added successfully:', data);
-      },
-      (error: any) => {
-        console.error('Error adding artifact definition:', error);
-      }
-    );
-  }
-
-  artifactDialogClosed() {
-    this.showAddArtifactDialog = false;
   }
 
   removeArtifact(id: number) {

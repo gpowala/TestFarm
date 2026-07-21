@@ -1,73 +1,7 @@
-/* Cell styles */
-.cell {
-  padding: 0.5rem;
-  font-weight: 500;
-  color: #2c3e50;
-  text-align: center;
-}
-
-/* Links */
-.row-link {
-  text-decoration: none;
-  color: #d55e00;
-}
-
-.row-link:hover {
-  text-decoration: underline;
-}
-
-.row-action-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  color: #6c757d;
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-.row-action-link:hover {
-  color: #d55e00;
-}
-
-/* Column styles */
-.column {
-  padding: 1rem;
-  font-weight: 600;
-  color: #2c3e50;
-  cursor: pointer;
-  user-select: none;
-  transition: all 0.2s ease;
-  position: relative;
-  text-align: center;
-}
-
-.column-sortable {
-  padding: 1rem;
-  font-weight: 600;
-  color: #2c3e50;
-  cursor: pointer;
-  user-select: none;
-  transition: all 0.2s ease;
-  position: relative;
-  text-align: center;
-}
-
-.column-sortable:hover {
-  color: #d55e00;
-  box-shadow: inset 0 -3px 0 rgba(213, 94, 0, 0.3);
-}
-
-.column.fit-content {
-  white-space: nowrap;
-  width: 1%;
-}
-
-.column-sortable.fit-content {
-  white-space: nowrap;
-  width: 1%;
-}
+/* Shared table styling (.cell, .column, .column-sortable, .row-link,
+   .row-action-link, .fit-content) lives in src/styles/_tables.css.
+   Buttons (.btn, .btn-primary, .btn-secondary) live in src/styles/_buttons.css.
+   Page-unique styling below. */
 
 /* Grid name */
 .grid-name {
@@ -143,11 +77,11 @@
   color: #d55e00;
 }
 
-.expand-btn svg {
+.expand-btn app-icon {
   transition: transform 0.2s ease;
 }
 
-.expand-btn.expanded svg {
+.expand-btn.expanded app-icon {
   transform: rotate(90deg);
 }
 
@@ -232,42 +166,6 @@
 
 .hosts-row:hover {
   background: transparent !important;
-}
-
-/* Button styles */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-primary {
-  background: linear-gradient(315deg, #d55e00 0%, #e86f1a 100%);
-  color: white;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(315deg, #c55500 0%, #d55e00 100%);
-  box-shadow: 0 2px 8px rgba(213, 94, 0, 0.3);
-}
-
-.btn-secondary {
-  background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%);
-  color: #495057;
-  border: 1px solid #dee2e6;
-}
-
-.btn-secondary:hover {
-  background: linear-gradient(315deg, #e9ecef 0%, #f8f9fa 100%);
-  color: #d55e00;
-  border-color: #d55e00;
 }
 
 /* Refresh control */

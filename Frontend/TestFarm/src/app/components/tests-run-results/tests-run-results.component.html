@@ -4,15 +4,11 @@
           <div class="breadcrumb-item">
               <a href="/">TestFarm</a>
           </div>
-          <svg xmlns="http://www.w3.org/2000/svg" class="breadcrumb-separator" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
-          </svg>
+          <app-icon name="chevron-right" class="breadcrumb-separator"></app-icon>
           <div class="breadcrumb-item">
               <a routerLink="/runs">Tests Runs</a>
           </div>
-          <svg xmlns="http://www.w3.org/2000/svg" class="breadcrumb-separator" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
-          </svg>
+          <app-icon name="chevron-right" class="breadcrumb-separator"></app-icon>
           <div class="breadcrumb-item active">
               Tests Run Results
           </div>
@@ -22,9 +18,7 @@
     <div class="island">
       <div class="island-header">
           <h3 class="island-title">
-              <svg class="island-icon" fill="currentColor" stroke="none" viewBox="0 0 24 24">
-                  <path d="M 6.25 2 C 5.0162029 2 4 3.0162029 4 4.25 L 4 18.75 C 4 19.983797 5.0162029 21 6.25 21 L 11.75 21 A 0.750075 0.750075 0 1 0 11.75 19.5 L 6.25 19.5 C 5.8277971 19.5 5.5 19.172203 5.5 18.75 L 5.5 4.25 C 5.5 3.8277971 5.8277971 3.5 6.25 3.5 L 17.75 3.5 C 18.172203 3.5 18.5 3.8277971 18.5 4.25 L 18.5 10.75 A 0.750075 0.750075 0 1 0 20 10.75 L 20 4.25 C 20 3.0162029 18.983797 2 17.75 2 L 6.25 2 z M 8.75 6 A 0.750075 0.750075 0 1 0 8.75 7.5 L 15.25 7.5 A 0.750075 0.750075 0 1 0 15.25 6 L 8.75 6 z M 8.75 10.25 A 0.750075 0.750075 0 1 0 8.75 11.75 L 15.25 11.75 A 0.750075 0.750075 0 1 0 15.25 10.25 L 8.75 10.25 z M 19 13 C 17.729167 13 16.681074 13.503567 16.001953 14.267578 C 15.322832 15.03159 15 16.020833 15 17 C 15 17.900269 15.287566 18.800738 15.859375 19.535156 L 13.244141 22.695312 C 12.984141 23.015312 13.025703 23.485859 13.345703 23.755859 C 13.485703 23.865859 13.654219 23.925781 13.824219 23.925781 C 14.044219 23.925781 14.254297 23.834297 14.404297 23.654297 L 17.013672 20.501953 C 17.581016 20.80683 18.244478 21 19 21 C 20.270833 21 21.318926 20.496433 21.998047 19.732422 C 22.677168 18.96841 23 17.979167 23 17 C 23 16.020833 22.677168 15.03159 21.998047 14.267578 C 21.318926 13.503567 20.270833 13 19 13 z M 8.75 14.5 A 0.750075 0.750075 0 1 0 8.75 16 L 12.75 16 A 0.750075 0.750075 0 1 0 12.75 14.5 L 8.75 14.5 z M 19 14.5 C 19.895833 14.5 20.472741 14.808933 20.876953 15.263672 C 21.281165 15.71841 21.5 16.354167 21.5 17 C 21.5 17.645833 21.281165 18.28159 20.876953 18.736328 C 20.472741 19.191067 19.895833 19.5 19 19.5 C 18.104167 19.5 17.527259 19.191067 17.123047 18.736328 C 16.718835 18.28159 16.5 17.645833 16.5 17 C 16.5 16.354167 16.718835 15.71841 17.123047 15.263672 C 17.527259 14.808933 18.104167 14.5 19 14.5 z"></path>
-              </svg>
+              <app-icon name="file-edit" class="island-icon"></app-icon>
               Tests Run Details
           </h3>
       </div>
@@ -55,9 +49,7 @@
         <span style="color: #6c757d; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem;">
           {{ testsRunDetails?.SuiteName }}
           <a class="row-action-link" data-tooltip="View Suite Statistics" (click)="openSuiteStatisticsDialog($event)" style="cursor: pointer; display: inline-flex;">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none" width="18" height="18" viewBox="0 0 24 24">
-              <path d="M 20.5 2 A 1.5 1.5 0 0 0 19.029297 3.7910156 L 12.587891 8.6230469 A 1.5 1.5 0 0 0 12 8.5 A 1.5 1.5 0 0 0 11.046875 8.8417969 L 4.9960938 6.5722656 A 1.5 1.5 0 0 0 3.5 5 A 1.5 1.5 0 0 0 3.5 8 A 1.5 1.5 0 0 0 4.140625 7.8535156 L 10.521484 10.248047 A 1.5 1.5 0 0 0 12 11.5 A 1.5 1.5 0 0 0 13.490234 9.8203125 L 20.021484 4.921875 A 1.5 1.5 0 0 0 20.5 5 A 1.5 1.5 0 0 0 20.5 2 z M 18 9 C 17.180203 9 16.5 9.6802029 16.5 10.5 L 16.5 19.5 C 16.5 20.319797 17.180203 21 18 21 L 20.5 21 C 21.319797 21 22 20.319797 22 19.5 L 22 10.5 C 22 9.6802029 21.319797 9 20.5 9 L 18 9 z M 18 10.5 L 20.5 10.5 L 20.5 19.5 L 18 19.5 L 18 10.5 z M 4 12 C 3.1802029 12 2.5 12.680203 2.5 13.5 L 2.5 19.5 C 2.5 20.319797 3.1802029 21 4 21 L 6.5 21 C 7.3197971 21 8 20.319797 8 19.5 L 8 13.5 C 8 12.680203 7.3197971 12 6.5 12 L 4 12 z M 4 13.5 L 6.5 13.5 L 6.5 19.5 L 4 19.5 L 4 13.5 z M 11 14 C 10.180203 14 9.5 14.680203 9.5 15.5 L 9.5 19.5 C 9.5 20.319797 10.180203 21 11 21 L 13.5 21 C 14.319797 21 15 20.319797 15 19.5 L 15 15.5 C 15 14.680203 14.319797 14 13.5 14 L 11 14 z M 11 15.5 L 13.5 15.5 L 13.5 19.5 L 11 19.5 L 11 15.5 z"></path>
-            </svg>
+            <app-icon name="share" style="width:18px;height:18px;"></app-icon>
           </a>
         </span>
       </div>
@@ -70,9 +62,7 @@
     <div class="island">
       <div class="island-header">
           <h3 class="island-title">
-              <svg class="island-icon" fill="currentColor" stroke="none" viewBox="0 0 24 24">
-                  <path d="M 2.7382812 1.9902344 A 0.750075 0.750075 0 0 0 2 2.75 L 2 21.25 A 0.750075 0.750075 0 1 0 3.5 21.25 L 3.5 20 L 12 20 A 0.750075 0.750075 0 0 0 12.177734 19.978516 C 12.585834 21.150669 13.689792 22 15 22 C 16.309554 22 17.413663 21.151708 17.822266 19.980469 A 0.750075 0.750075 0 0 0 18 20 L 21.25 20 A 0.750075 0.750075 0 1 0 21.25 18.5 L 18 18.5 A 0.750075 0.750075 0 0 0 17.949219 18.501953 C 17.7102 17.085506 16.48425 16 15 16 C 13.51575 16 12.2898 17.085506 12.050781 18.501953 A 0.750075 0.750075 0 0 0 12 18.5 L 3.5 18.5 L 3.5 13 L 6 13 A 0.750075 0.750075 0 0 0 6.1777344 12.978516 C 6.5858344 14.150669 7.6897917 15 9 15 C 10.309554 15 11.413663 14.151708 11.822266 12.980469 A 0.750075 0.750075 0 0 0 12 13 L 21.25 13 A 0.750075 0.750075 0 1 0 21.25 11.5 L 12 11.5 A 0.750075 0.750075 0 0 0 11.949219 11.501953 C 11.7102 10.085506 10.48425 9 9 9 C 7.5157498 9 6.2898002 10.085506 6.0507812 11.501953 A 0.750075 0.750075 0 0 0 6 11.5 L 3.5 11.5 L 3.5 6 L 12 6 A 0.750075 0.750075 0 0 0 12.177734 5.9785156 C 12.585834 7.1506688 13.689792 8 15 8 C 16.309554 8 17.413663 7.1517083 17.822266 5.9804688 A 0.750075 0.750075 0 0 0 18 6 L 21.25 6 A 0.750075 0.750075 0 1 0 21.25 4.5 L 18 4.5 A 0.750075 0.750075 0 0 0 17.949219 4.5019531 C 17.7102 3.0855058 16.48425 2 15 2 C 13.51575 2 12.2898 3.0855058 12.050781 4.5019531 A 0.750075 0.750075 0 0 0 12 4.5 L 3.5 4.5 L 3.5 2.75 A 0.750075 0.750075 0 0 0 2.7382812 1.9902344 z M 15 3.5 C 15.827 3.5 16.5 4.173 16.5 5 C 16.5 5.827 15.827 6.5 15 6.5 C 14.173 6.5 13.5 5.827 13.5 5 C 13.5 4.173 14.173 3.5 15 3.5 z M 9 10.5 C 9.827 10.5 10.5 11.173 10.5 12 C 10.5 12.827 9.827 13.5 9 13.5 C 8.173 13.5 7.5 12.827 7.5 12 C 7.5 11.173 8.173 10.5 9 10.5 z M 15 17.5 C 15.827 17.5 16.5 18.173 16.5 19 C 16.5 19.827 15.827 20.5 15 20.5 C 14.173 20.5 13.5 19.827 13.5 19 C 13.5 18.173 14.173 17.5 15 17.5 z"></path>
-              </svg>
+              <app-icon name="filter" class="island-icon"></app-icon>
               Execution Timeline
           </h3>
       </div>
@@ -116,9 +106,7 @@
     <div class="island-chart">
       <!-- <div class="island-header">
           <h3 class="island-title">
-              <svg class="island-icon" fill="currentColor" stroke="none" viewBox="0 0 24 24">
-                  <path d="M 2.7382812 1.9902344 A 0.750075 0.750075 0 0 0 2 2.75 L 2 21.25 A 0.750075 0.750075 0 1 0 3.5 21.25 L 3.5 20 L 12 20 A 0.750075 0.750075 0 0 0 12.177734 19.978516 C 12.585834 21.150669 13.689792 22 15 22 C 16.309554 22 17.413663 21.151708 17.822266 19.980469 A 0.750075 0.750075 0 0 0 18 20 L 21.25 20 A 0.750075 0.750075 0 1 0 21.25 18.5 L 18 18.5 A 0.750075 0.750075 0 0 0 17.949219 18.501953 C 17.7102 17.085506 16.48425 16 15 16 C 13.51575 16 12.2898 17.085506 12.050781 18.501953 A 0.750075 0.750075 0 0 0 12 18.5 L 3.5 18.5 L 3.5 13 L 6 13 A 0.750075 0.750075 0 0 0 6.1777344 12.978516 C 6.5858344 14.150669 7.6897917 15 9 15 C 10.309554 15 11.413663 14.151708 11.822266 12.980469 A 0.750075 0.750075 0 0 0 12 13 L 21.25 13 A 0.750075 0.750075 0 1 0 21.25 11.5 L 12 11.5 A 0.750075 0.750075 0 0 0 11.949219 11.501953 C 11.7102 10.085506 10.48425 9 9 9 C 7.5157498 9 6.2898002 10.085506 6.0507812 11.501953 A 0.750075 0.750075 0 0 0 6 11.5 L 3.5 11.5 L 3.5 6 L 12 6 A 0.750075 0.750075 0 0 0 12.177734 5.9785156 C 12.585834 7.1506688 13.689792 8 15 8 C 16.309554 8 17.413663 7.1517083 17.822266 5.9804688 A 0.750075 0.750075 0 0 0 18 6 L 21.25 6 A 0.750075 0.750075 0 1 0 21.25 4.5 L 18 4.5 A 0.750075 0.750075 0 0 0 17.949219 4.5019531 C 17.7102 3.0855058 16.48425 2 15 2 C 13.51575 2 12.2898 3.0855058 12.050781 4.5019531 A 0.750075 0.750075 0 0 0 12 4.5 L 3.5 4.5 L 3.5 2.75 A 0.750075 0.750075 0 0 0 2.7382812 1.9902344 z M 15 3.5 C 15.827 3.5 16.5 4.173 16.5 5 C 16.5 5.827 15.827 6.5 15 6.5 C 14.173 6.5 13.5 5.827 13.5 5 C 13.5 4.173 14.173 3.5 15 3.5 z M 9 10.5 C 9.827 10.5 10.5 11.173 10.5 12 C 10.5 12.827 9.827 13.5 9 13.5 C 8.173 13.5 7.5 12.827 7.5 12 C 7.5 11.173 8.173 10.5 9 10.5 z M 15 17.5 C 15.827 17.5 16.5 18.173 16.5 19 C 16.5 19.827 15.827 20.5 15 20.5 C 14.173 20.5 13.5 19.827 13.5 19 C 13.5 18.173 14.173 17.5 15 17.5 z"></path>
-              </svg>
+              <app-icon name="filter" class="island-icon"></app-icon>
               Execution Timeline
           </h3>
       </div>
@@ -183,9 +171,7 @@
               <div style="position: relative;">
                   <button (click)="toggleActionsMenu()"
                           style="padding: 0.75rem 1rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">
-                      <svg width="16" height="16" fill="currentColor" stroke="none" viewBox="0 0 24 24">
-                        <path d="M 12 2 C 6.4771525 2 2 6.4771525 2 12 C 2 17.522847 6.4771525 22 12 22 C 17.522847 22 22 17.522847 22 12 C 22 6.4771525 17.522847 2 12 2 z M 12 6 A 1.5 1.5 0 0 1 13.5 7.5 A 1.5 1.5 0 0 1 12 9 A 1.5 1.5 0 0 1 10.5 7.5 A 1.5 1.5 0 0 1 12 6 z M 12 10.5 A 1.5 1.5 0 0 1 13.5 12 A 1.5 1.5 0 0 1 12 13.5 A 1.5 1.5 0 0 1 10.5 12 A 1.5 1.5 0 0 1 12 10.5 z M 12 15 A 1.5 1.5 0 0 1 13.5 16.5 A 1.5 1.5 0 0 1 12 18 A 1.5 1.5 0 0 1 10.5 16.5 A 1.5 1.5 0 0 1 12 15 z"></path>
-                      </svg>
+                      <app-icon name="circle" style="width:16px;height:16px;"></app-icon>
                       Actions
                       <span *ngIf="selectedCount > 0" style="background: #2196f3; color: white; border-radius: 10px; padding: 0 0.4rem; font-size: 0.75rem;">{{ selectedCount }}</span>
                   </button>
@@ -197,9 +183,7 @@
                                   [style.cursor]="selectedCount === 0 ? 'not-allowed' : 'pointer'"
                                   [style.opacity]="selectedCount === 0 ? '0.5' : '1'"
                                   style="display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.6rem 0.75rem; border: none; background: transparent; text-align: left; font-size: 0.875rem; border-radius: 4px;">
-                              <svg width="16" height="16" fill="currentColor" stroke="none" viewBox="0 0 24 24">
-                                <path d="M 12 4 C 7.5817 4 4 7.5817 4 12 L 1.5 12 L 4.5 15.5 L 7.5 12 L 6 12 C 6 8.6863 8.6863 6 12 6 C 15.3137 6 18 8.6863 18 12 C 18 15.3137 15.3137 18 12 18 C 10.3431 18 8.8431 17.3284 7.7573 16.2426 L 6.3431 17.6569 C 7.7909 19.1046 9.7909 20 12 20 C 16.4183 20 20 16.4183 20 12 C 20 7.5817 16.4183 4 12 4 z"></path>
-                              </svg>
+                              <app-icon name="refresh" style="width:16px;height:16px;"></app-icon>
                               Rebaseline selected
                           </button>
                       </div>
@@ -209,9 +193,7 @@
                   <button (click)="toggleColumnSelector()"
                           style="padding: 0.75rem 1rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">
 
-                      <svg width="16" height="16" fill="currentColor" stroke="none" viewBox="0 0 24 24">
-                        <path d="M 4 3 A 1.0001 1.0001 0 0 0 3 4 L 3 6 A 1.0001 1.0001 0 0 0 3.2402344 6.6503906 L 9 13.369141 L 9 19 A 1.0001 1.0001 0 0 0 9.5527344 19.894531 L 13.552734 21.894531 A 1.0001 1.0001 0 0 0 15 21 L 15 13.369141 L 20.759766 6.6503906 A 1.0001 1.0001 0 0 0 21 6 L 21 4 A 1.0001 1.0001 0 0 0 20 3 L 4 3 z M 5 5 L 19 5 L 19 5.6308594 L 13.240234 12.349609 A 1.0001 1.0001 0 0 0 13 13 L 13 19.382812 L 11 18.382812 L 11 13 A 1.0001 1.0001 0 0 0 10.759766 12.349609 L 5 5.6308594 L 5 5 z"></path>
-                      </svg>
+                      <app-icon name="funnel" style="width:16px;height:16px;"></app-icon>
                       Columns
                   </button>
                   <div *ngIf="showColumnSelector"
@@ -274,10 +256,10 @@
               </div>
           </div>
 
-          <div style="overflow-x: auto; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); border-radius: 8px; border: 1px solid #e9ecef;">
-              <table id="testsRunsTable" style="width: 100%; border-collapse: collapse;">
+          <div class="data-table-wrap">
+              <table id="testsRunsTable" class="data-table">
                   <thead>
-                      <tr style="background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%); border-bottom: 2px solid #e9ecef;">
+                      <tr>
                           <th class="column fit-content" style="text-align: center; width: 1%;">
                               <input type="checkbox" title="Select all"
                                      [checked]="allRowsSelected"
@@ -287,23 +269,17 @@
                           <th *ngIf="columnVisibility.path" class="column-sortable fit-content" data-sort="path" style="text-align: left;"
                           (click)="sortTable('path')">
                               Path
-                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
-                              </svg>
+                              <app-icon name="sort" style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;"></app-icon>
                           </th>
                           <th *ngIf="columnVisibility.name" class="column-sortable fit-content" data-sort="name" style="text-align: left;"
                           (click)="sortTable('name')">
                               Name
-                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
-                              </svg>
+                              <app-icon name="sort" style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;"></app-icon>
                           </th>
                           <th *ngIf="columnVisibility.status" class="column-sortable fit-content" data-sort="status" style="text-align: center;"
                           (click)="sortTable('status')">
                               Status
-                              <svg style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
-                              </svg>
+                              <app-icon name="sort" style="width: 16px; height: 16px; display: inline-block; margin-left: 0.5rem; opacity: 0.5;"></app-icon>
                           </th>
                           <th *ngIf="columnVisibility.progress" class="column fit-content" style="text-align: center;">
                               Progress
@@ -318,7 +294,7 @@
                   </thead>
                   <tbody>
                     <ng-container *ngFor="let row of filteredTestsRunResultsRows">
-                      <tr id="result" style="border-bottom: 1px solid #f5f5f5; transition: all 0.3s ease; cursor: pointer;"
+                      <tr id="result"
                         (mouseover)="onRowMouseOver(row, $event)"
                         (mouseout)="onRowMouseOut(row, $event)"
                         (click)="markRowReviewed(row, $event)"
@@ -397,9 +373,7 @@
                         <td *ngIf="columnVisibility.download" class="cell">
                           <div style="display: flex; gap: 10px; justify-content: center; align-items: center; width: 1%; min-width: fit-content; white-space: nowrap;">
                             <a class="row-action-link" data-tooltip="Hide" (click)="downloadTempDirArchive(row.result.Id)">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="" fill="currentColor" stroke="none" x="0px" y="0px" width="22" height="22" viewBox="0 0 24 24">
-                                <path d="M 4 3 C 2.9042029 3 2 3.9042029 2 5 L 2 18 C 2 19.095797 2.9042029 20 4 20 L 13 20 L 15 20 L 20 20 C 21.095797 20 22 19.095797 22 18 L 22 7 C 22 5.9042029 21.095797 5 20 5 L 10.552734 5 C 10.487304 5 10.425327 4.9753364 10.376953 4.9277344 L 9.0800781 3.6484375 L 9.078125 3.6484375 C 8.6571514 3.2326718 8.088123 3 7.4980469 3 L 4 3 z M 4 4.5 L 7.4980469 4.5 C 7.6953464 4.5 7.8864979 4.577439 8.0253906 4.7148438 A 0.750075 0.750075 0 0 0 8.0253906 4.7167969 L 9.3242188 5.9960938 C 9.6518447 6.3184917 10.094169 6.5 10.552734 6.5 L 13 6.5 L 13 8 L 15 8 L 15 6.5 L 20 6.5 C 20.284203 6.5 20.5 6.7157971 20.5 7 L 20.5 18 C 20.5 18.284203 20.284203 18.5 20 18.5 L 15 18.5 L 15 18 L 13 18 L 13 18.5 L 4 18.5 C 3.7157971 18.5 3.5 18.284203 3.5 18 L 3.5 5 C 3.5 4.7157971 3.7157971 4.5 4 4.5 z M 15 18 L 17 18 L 17 16 L 15 16 L 15 18 z M 15 16 L 15 14 L 13 14 L 13 16 L 15 16 z M 15 14 L 17 14 L 17 12 L 15 12 L 15 14 z M 15 12 L 15 10 L 13 10 L 13 12 L 15 12 z M 15 10 L 17 10 L 17 8 L 15 8 L 15 10 z"></path>
-                              </svg>
+                              <app-icon name="folder" style="width:22px;height:22px;"></app-icon>
                             </a>
                           </div>
                         </td>
@@ -407,9 +381,7 @@
                         <td class="cell">
                           <div style="display: flex; gap: 10px; justify-content: center; align-items: center; width: 1%; min-width: fit-content; white-space: nowrap;">
                             <a class="row-action-link" data-tooltip="View Statistics" (click)="openStatisticsDialog(row.result.TestId, row.result.TestName, $event)" style="cursor: pointer;">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="" fill="currentColor" stroke="none" x="0px" y="0px" width="22" height="22" viewBox="0 0 24 24">
-                                <path d="M 20.5 2 A 1.5 1.5 0 0 0 19.029297 3.7910156 L 12.587891 8.6230469 A 1.5 1.5 0 0 0 12 8.5 A 1.5 1.5 0 0 0 11.046875 8.8417969 L 4.9960938 6.5722656 A 1.5 1.5 0 0 0 3.5 5 A 1.5 1.5 0 0 0 3.5 8 A 1.5 1.5 0 0 0 4.140625 7.8535156 L 10.521484 10.248047 A 1.5 1.5 0 0 0 12 11.5 A 1.5 1.5 0 0 0 13.490234 9.8203125 L 20.021484 4.921875 A 1.5 1.5 0 0 0 20.5 5 A 1.5 1.5 0 0 0 20.5 2 z M 18 9 C 17.180203 9 16.5 9.6802029 16.5 10.5 L 16.5 19.5 C 16.5 20.319797 17.180203 21 18 21 L 20.5 21 C 21.319797 21 22 20.319797 22 19.5 L 22 10.5 C 22 9.6802029 21.319797 9 20.5 9 L 18 9 z M 18 10.5 L 20.5 10.5 L 20.5 19.5 L 18 19.5 L 18 10.5 z M 4 12 C 3.1802029 12 2.5 12.680203 2.5 13.5 L 2.5 19.5 C 2.5 20.319797 3.1802029 21 4 21 L 6.5 21 C 7.3197971 21 8 20.319797 8 19.5 L 8 13.5 C 8 12.680203 7.3197971 12 6.5 12 L 4 12 z M 4 13.5 L 6.5 13.5 L 6.5 19.5 L 4 19.5 L 4 13.5 z M 11 14 C 10.180203 14 9.5 14.680203 9.5 15.5 L 9.5 19.5 C 9.5 20.319797 10.180203 21 11 21 L 13.5 21 C 14.319797 21 15 20.319797 15 19.5 L 15 15.5 C 15 14.680203 14.319797 14 13.5 14 L 11 14 z M 11 15.5 L 13.5 15.5 L 13.5 19.5 L 11 19.5 L 11 15.5 z"></path>
-                              </svg>
+                              <app-icon name="share" style="width:22px;height:22px;"></app-icon>
                             </a>
                           </div>
                         </td>
@@ -439,9 +411,7 @@
                                       </td>
                                       <td class="cell fit-content">
                                         <a class="row-action-link" data-tooltip="Hide" (click)="showReport(diff.Id)" style="cursor: pointer;">
-                                          <svg xmlns="http://www.w3.org/2000/svg" class="" fill="currentColor" stroke="none" x="0px" y="0px" width="22" height="22" viewBox="0 0 24 24">
-                                            <path d="M 1.75 2 A 0.750075 0.750075 0 1 0 1.75 3.5 L 13.5 3.5 L 13.5 6 L 11.75 6 A 0.750075 0.750075 0 0 0 11 6.75 L 11 16.5 L 1.75 16.5 A 0.750075 0.750075 0 1 0 1.75 18 L 11 18 L 11 21.25 A 0.750075 0.750075 0 0 0 11.75 22 L 22.25 22 A 0.750075 0.750075 0 1 0 22.25 20.5 L 12.5 20.5 L 12.5 7.5 L 22.25 7.5 A 0.750075 0.750075 0 1 0 22.25 6 L 15 6 L 15 2.75 A 0.750075 0.750075 0 0 0 14.25 2 L 1.75 2 z M 4.7382812 6 A 0.750075 0.750075 0 0 0 4 6.75 L 4 9.25 L 1.75 9.25 A 0.750075 0.750075 0 1 0 1.75 10.75 L 4 10.75 L 4 13.25 A 0.750075 0.750075 0 0 0 5.28125 13.78125 L 8.53125 10.53125 A 0.750075 0.750075 0 0 0 8.53125 9.46875 L 5.28125 6.21875 A 0.750075 0.750075 0 0 0 4.7382812 6 z M 5.5 8.5625 L 6.1875 9.25 L 5.5 9.25 L 5.5 8.5625 z M 19.228516 10 A 0.750075 0.750075 0 0 0 18.71875 10.21875 L 15.46875 13.46875 A 0.750075 0.750075 0 0 0 15.46875 14.53125 L 18.71875 17.78125 A 0.750075 0.750075 0 0 0 20 17.25 L 20 14.75 L 22.25 14.75 A 0.750075 0.750075 0 1 0 22.25 13.25 L 20 13.25 L 20 10.75 A 0.750075 0.750075 0 0 0 19.228516 10 z M 5.5 10.75 L 6.1875 10.75 L 5.5 11.4375 L 5.5 10.75 z M 18.5 12.5625 L 18.5 13.25 L 17.8125 13.25 L 18.5 12.5625 z M 17.8125 14.75 L 18.5 14.75 L 18.5 15.4375 L 17.8125 14.75 z"></path>
-                                          </svg>
+                                          <app-icon name="swap" style="width:22px;height:22px;"></app-icon>
                                         </a>
                                       </td>
                                   </tr>
@@ -460,9 +430,7 @@
               </table>
           </div>
           <!-- <div id="noResults" *ngIf="filteredTestsRunsRows.length === 0" style="text-align: center; padding: 2rem; color: #6c757d;">
-              <svg style="width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.467.881-6.077 2.33l-.853-.894A9.96 9.96 0 0112 13.5a9.96 9.96 0 016.93 2.936l-.853.894z"></path>
-              </svg>
+              <app-icon name="comment" style="width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.5;"></app-icon>
               <div>{{ searchTerm ? 'No tests runs match your search criteria' : 'No tests runs found' }}</div>
           </div> -->
       </div>
@@ -575,16 +543,12 @@
     <div class="confirmation-header">
       <h3>Confirm Action</h3>
       <button class="close-button" (click)="dismissConfirmation()" aria-label="Close">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
-        </svg>
+        <app-icon name="close-sm" style="width:20px;height:20px;"></app-icon>
       </button>
     </div>
     <div class="confirmation-body">
       <div class="confirmation-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-        </svg>
+        <app-icon name="warning-sm" style="width:48px;height:48px;"></app-icon>
       </div>
       <p class="confirmation-message">{{ confirmationMessage }}</p>
     </div>
@@ -623,9 +587,7 @@
       <button class="close-button" (click)="closeRebaselineDialog()" [disabled]="rebaselineInProgress" aria-label="Close"
               [style.opacity]="rebaselineInProgress ? '0.4' : '1'"
               [style.cursor]="rebaselineInProgress ? 'not-allowed' : 'pointer'">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
-        </svg>
+        <app-icon name="close-sm" style="width:20px;height:20px;"></app-icon>
       </button>
     </div>
 
@@ -639,21 +601,13 @@
             <!-- running spinner -->
             <span *ngIf="item.status === 'running' || item.status === 'pending'" class="rebaseline-spinner"></span>
             <!-- rebaselined: green check -->
-            <svg *ngIf="item.status === 'rebaselined'" width="18" height="18" fill="#2e7d32" viewBox="0 0 16 16">
-              <path d="M13.485 1.929a1 1 0 0 1 0 1.414L6.5 10.328 2.515 6.343a1 1 0 1 1 1.414-1.414L6.5 7.5l5.571-5.571a1 1 0 0 1 1.414 0z"/>
-            </svg>
+            <app-icon name="check-sm" *ngIf="item.status === 'rebaselined'" style="width:18px;height:18px;"></app-icon>
             <!-- passed: grey check -->
-            <svg *ngIf="item.status === 'passed'" width="18" height="18" fill="#9e9e9e" viewBox="0 0 16 16">
-              <path d="M13.485 1.929a1 1 0 0 1 0 1.414L6.5 10.328 2.515 6.343a1 1 0 1 1 1.414-1.414L6.5 7.5l5.571-5.571a1 1 0 0 1 1.414 0z"/>
-            </svg>
+            <app-icon name="check-sm-grey" *ngIf="item.status === 'passed'" style="width:18px;height:18px;"></app-icon>
             <!-- nothing to rebaseline: amber info -->
-            <svg *ngIf="item.status === 'nothing'" width="18" height="18" fill="#f39c12" viewBox="0 0 16 16">
-              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-            </svg>
+            <app-icon name="info-sm" *ngIf="item.status === 'nothing'" style="width:18px;height:18px;"></app-icon>
             <!-- error: red cross -->
-            <svg *ngIf="item.status === 'error'" width="18" height="18" fill="#c0392b" viewBox="0 0 16 16">
-              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
-            </svg>
+            <app-icon name="close-sm-red" *ngIf="item.status === 'error'" style="width:18px;height:18px;"></app-icon>
           </span>
           <!-- Test name + detail -->
           <div style="flex: 1; min-width: 0;">

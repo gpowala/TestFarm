@@ -1,0 +1,71 @@
+/* ==========================================================================
+   Icons — sizing / color classes for SVG icons (rendered via <app-icon>)
+   ========================================================================== */
+
+/* <app-icon> host: the sizing lives on the host (class or inline width/height);
+   the inner <svg> fills it. */
+app-icon {
+  display: inline-flex;
+  line-height: 0;
+}
+
+app-icon > svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Sidebar nav icons */
+.nav-icon {
+  width: 22px;
+  height: 22px;
+  margin-right: 0.75rem;
+  stroke-width: 1;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.nav-link.active .nav-icon {
+  color: #d55e00;
+}
+
+.sidebar.collapsed .nav-icon {
+  margin-right: 0;
+}
+
+/* Island header icon */
+.island-icon {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2;
+  color: #d55e00;
+}
+
+/* Breadcrumb separator chevron */
+.breadcrumb-separator {
+  width: 16px;
+  height: 16px;
+  color: #adb5bd;
+  stroke-width: 2;
+}
+
+/* Table sort-direction arrow (in sortable column headers) */
+.icon-sort {
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+  margin-left: 0.5rem;
+  opacity: 0.5;
+}
+
+/* Row action icon (edit / delete / copy links inside a table row) */
+.icon-action {
+  width: 18px;
+  height: 18px;
+}
+
+/* Generic icon sitting inside a .btn */
+.icon-btn {
+  width: 16px;
+  height: 16px;
+}
