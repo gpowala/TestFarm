@@ -30,9 +30,9 @@
 }
 
 .data-table thead tr {
-  background: linear-gradient(315deg, #f0f1f2 0%, #ffffff 100%);
+  background: #eef1f3;
   border-bottom: 2px solid #e9ecef;
-  font-size: small;
+  font-size: 0.75rem;
 }
 
 .data-table tbody tr {
@@ -48,9 +48,11 @@
 /* --- Column headers ------------------------------------------------------- */
 /* Both sortable and non-sortable headers use the same small header font. */
 .column {
-  padding: 1rem;
-  font-size: small;
+  padding: 0.55rem 1rem;
+  font-size: 0.75rem;
   font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: #2c3e50;
   cursor: pointer;
   user-select: none;
@@ -60,9 +62,11 @@
 }
 
 .column-sortable {
-  padding: 1rem;
-  font-size: small;
+  padding: 0.55rem 1rem;
+  font-size: 0.75rem;
   font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: #2c3e50;
   cursor: pointer;
   user-select: none;
@@ -74,6 +78,28 @@
 .column-sortable:hover {
   color: #d55e00;
   box-shadow: inset 0 -3px 0 rgba(213, 94, 0, 0.3);
+}
+
+/* Keep the header label centered even with a sort arrow. The arrow stays
+   in normal flow (so it never overlaps or wraps), and an invisible mirror
+   spacer of the same width sits on the left — the label stays dead-centered. */
+.column-sortable {
+  white-space: nowrap;
+}
+
+.column-sortable::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+
+.column-sortable app-icon {
+  width: 14px !important;
+  height: 14px !important;
+  margin: 0 0 0 0.4rem !important;
+  vertical-align: middle;
 }
 
 .column.fit-content,
