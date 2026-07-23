@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { BenchmarksApiHttpClientService } from '../../services/benchmarks-api-http-cient-service';
 import { BenchmarksRunDescription } from '../../models/benchmarks-run-description';
 import { catchError, of, tap } from 'rxjs';
@@ -62,6 +62,32 @@ export class BenchmarksRunsComponent implements OnInit {
         return -1;
       default:
         return 24 * 7;
+    }
+  }
+
+  openFilter: 'timespan' | 'result' | null = null;
+
+  toggleFilter(name: 'timespan' | 'result'): void {
+    this.openFilter = this.openFilter === name ? null : name;
+  }
+
+  selectTimespan(key: string): void {
+    this.selectedTimespan = key;
+    this.openFilter = null;
+    this.fetchBenchmarksRuns();
+  }
+
+  selectResult(key: string): void {
+    this.selectedResult = key;
+    this.openFilter = null;
+    this.fetchBenchmarksRuns();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.tf-dropdown')) {
+      this.openFilter = null;
     }
   }
 

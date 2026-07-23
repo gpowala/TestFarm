@@ -70,7 +70,7 @@
                 </td>
                 <td class="cell">
                   <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
-                    <span class="grid-status status-{{ getGridStatus(row.grid) }}">{{ getGridStatus(row.grid) }}</span>
+                    <span class="test-status status-{{ getGridStatus(row.grid) }}">{{ getGridStatus(row.grid) }}</span>
                   </div>
                 </td>
                 <td class="cell">
@@ -90,8 +90,8 @@
               <!-- Hosts Sub-table Row -->
               <tr *ngIf="row.expanded" class="hosts-row">
                 <td colspan="7" style="padding: 0;">
-                  <div class="hosts-container">
-                    <table class="hosts-table">
+                  <div class="subtable-wrap">
+                    <table class="subtable">
                       <thead>
                         <tr>
                           <th>Hostname</th>
@@ -104,11 +104,11 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr *ngFor="let host of row.grid.Hosts" [ngClass]="{'host-online': getHostStatus(host) === 'online', 'host-offline': getHostStatus(host) === 'offline'}">
+                        <tr *ngFor="let host of row.grid.Hosts">
                           <td>{{host.Hostname}}</td>
                           <td>{{host.Type}}</td>
                           <td>
-                            <span class="host-status status-{{ getHostStatus(host) }}">{{ host.Status }}</span>
+                            <span class="test-status status-{{ getHostStatus(host) }}">{{ host.Status }}</span>
                           </td>
                           <td>{{host.Cores}}</td>
                           <td>{{host.RAM}} GB</td>

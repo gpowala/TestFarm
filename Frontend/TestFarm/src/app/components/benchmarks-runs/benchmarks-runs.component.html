@@ -29,18 +29,28 @@
                       style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; transition: all 0.2s ease;">
 
               </div>
-                  <select id="statusFilter" style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;"
-                    [(ngModel)]="selectedTimespan" (change)="fetchBenchmarksRuns()">
-                      <option *ngFor="let timespan of timespanPresets | keyvalue" [value]="timespan.key">
-                        {{timespan.value}}
-                      </option>
-                  </select>
-                  <select id="statusFilter" style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;"
-                    [(ngModel)]="selectedResult" (change)="fetchBenchmarksRuns()">
-                      <option *ngFor="let result of resultPresets | keyvalue" [value]="result.key">
-                        {{result.value}}
-                      </option>
-                  </select>
+                  <div class="tf-dropdown">
+                      <button class="tf-dropdown-trigger" style="min-width: 150px; justify-content: space-between;"
+                              [class.active]="openFilter === 'timespan'" (click)="toggleFilter('timespan')">
+                          {{ timespanPresets[selectedTimespan] }}
+                          <app-icon name="chevron-down-alt" style="width:14px;height:14px;"></app-icon>
+                      </button>
+                      <div class="tf-menu" *ngIf="openFilter === 'timespan'">
+                          <button class="tf-menu-item" *ngFor="let timespan of timespanPresets | keyvalue"
+                                  (click)="selectTimespan(timespan.key)">{{ timespan.value }}</button>
+                      </div>
+                  </div>
+                  <div class="tf-dropdown">
+                      <button class="tf-dropdown-trigger" style="min-width: 150px; justify-content: space-between;"
+                              [class.active]="openFilter === 'result'" (click)="toggleFilter('result')">
+                          {{ resultPresets[selectedResult] }}
+                          <app-icon name="chevron-down-alt" style="width:14px;height:14px;"></app-icon>
+                      </button>
+                      <div class="tf-menu" *ngIf="openFilter === 'result'">
+                          <button class="tf-menu-item" *ngFor="let result of resultPresets | keyvalue"
+                                  (click)="selectResult(result.key)">{{ result.value }}</button>
+                      </div>
+                  </div>
           </div>
           <div class="data-table-wrap">
               <table id="testsRunsTable" class="data-table">

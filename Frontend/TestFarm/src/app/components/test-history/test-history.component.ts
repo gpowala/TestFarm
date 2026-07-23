@@ -33,12 +33,4 @@ export class TestHistoryComponent implements OnInit {
       );
     }
   }
-
-  onMouseOver(event: MouseEvent) {
-    (event.currentTarget as HTMLElement).style.backgroundColor = '#f0f0f0';
-  }
-
-  onMouseOut(event: MouseEvent, detailsVisible: boolean) {
-    (event.currentTarget as HTMLElement).style.backgroundColor = detailsVisible ? '#f0f0f0' : '';
-  }
 }

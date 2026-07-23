@@ -111,21 +111,28 @@
               </div>
           </div>
           <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-            <select id="results-presentation-selector"
-              [(ngModel)]="selectedIterationsView"
-              style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;">
-              <option *ngFor="let view of iterationsViewPresets | keyvalue" [value]="view.key">
-                {{view.value}}
-              </option>
-            </select>
-            <select id="results-profile-selector"
-              [(ngModel)]="selectedProfileView"
-              (change)="changeProfileView()"
-              style="padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; min-width: 120px;">
-              <option *ngFor="let view of profileViewPresets | keyvalue" [value]="view.key">
-                {{view.value}}
-              </option>
-            </select>
+            <div class="tf-dropdown">
+              <button id="results-presentation-selector" class="tf-dropdown-trigger" style="min-width: 150px; justify-content: space-between;"
+                      [class.active]="openHeaderFilter === 'iterations'" (click)="toggleHeaderFilter('iterations')">
+                {{ iterationsViewPresets[selectedIterationsView] }}
+                <app-icon name="chevron-down-alt" style="width:14px;height:14px;"></app-icon>
+              </button>
+              <div class="tf-menu" *ngIf="openHeaderFilter === 'iterations'">
+                <button class="tf-menu-item" *ngFor="let view of iterationsViewPresets | keyvalue"
+                        (click)="selectIterationsView(view.key)">{{ view.value }}</button>
+              </div>
+            </div>
+            <div class="tf-dropdown">
+              <button id="results-profile-selector" class="tf-dropdown-trigger" style="min-width: 150px; justify-content: space-between;"
+                      [class.active]="openHeaderFilter === 'profile'" (click)="toggleHeaderFilter('profile')">
+                {{ profileViewPresets[selectedProfileView] }}
+                <app-icon name="chevron-down-alt" style="width:14px;height:14px;"></app-icon>
+              </button>
+              <div class="tf-menu" *ngIf="openHeaderFilter === 'profile'">
+                <button class="tf-menu-item" *ngFor="let view of profileViewPresets | keyvalue"
+                        (click)="selectProfileView(view.key)">{{ view.value }}</button>
+              </div>
+            </div>
           </div>
           <div class="data-table-wrap">
               <table id="benchmarksRunResultsTable" class="data-table">
@@ -339,9 +346,17 @@
                         <td class="cell">
                           <div style="display: flex; padding: 0.5rem; justify-content: center; align-items: center; font-weight: normal;">
 
-                           <select [(ngModel)]="row.selectedIteration" style="margin-top: 0.225rem; border: 1px solid #ccc; border-radius: 4px; background: #fff;">
-                             <option *ngFor="let opt of row.iterationOptions" [ngValue]="opt">{{opt}}</option>
-                           </select>
+                           <div class="tf-dropdown">
+                             <button class="tf-dropdown-trigger" style="min-width: 64px; padding: 0.4rem 0.6rem; justify-content: space-between;"
+                                     [class.active]="row.iterationDropdownOpen" (click)="toggleIterationDropdown(row)">
+                               {{ row.selectedIteration }}
+                               <app-icon name="chevron-down-alt" style="width:14px;height:14px;"></app-icon>
+                             </button>
+                             <div class="tf-menu" *ngIf="row.iterationDropdownOpen" style="min-width: 80px; max-height: 240px; overflow-y: auto;">
+                               <button class="tf-menu-item" *ngFor="let opt of row.iterationOptions"
+                                       (click)="selectIteration(row, opt)">{{ opt }}</button>
+                             </div>
+                           </div>
                           </div>
                         </td>
                         <td class="cell">

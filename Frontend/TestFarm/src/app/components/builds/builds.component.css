@@ -2,23 +2,6 @@
    .row-action-link, .fit-content) lives in src/styles/_tables.css.
    Page-unique styling below. */
 
-/* Table corner styling */
-#artifactsDefinitionsTable thead tr th:first-child {
-  border-top-left-radius: 7px;
-}
-
-#artifactsDefinitionsTable thead tr th:last-child {
-  border-top-right-radius: 7px;
-}
-
-#artifactsDefinitionsTable tbody tr:last-child td:first-child {
-  border-bottom-left-radius: 7px;
-}
-
-#artifactsDefinitionsTable tbody tr:last-child td:last-child {
-  border-bottom-right-radius: 7px;
-}
-
 /* Action Menu Styles */
 .action-menu-container {
   position: relative;
@@ -31,7 +14,7 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   color: #6c757d;
   cursor: pointer;
@@ -44,6 +27,11 @@
   color: #0a4174;
 }
 
+.action-menu-trigger.active {
+  border-color: #0a4174;
+  color: #0a4174;
+}
+
 .action-menu {
   position: absolute;
   right: 0;
@@ -51,7 +39,7 @@
   margin-top: 4px;
   min-width: 160px;
   background: white;
-  border: 1px solid #e9ecef;
+  border: 1px solid #0a4174;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 99999;

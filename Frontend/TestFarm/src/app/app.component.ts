@@ -12,6 +12,7 @@ import { filter } from 'rxjs/operators';
 export class AppComponent implements OnInit {
   title = 'TestFarm';
   isSidebarCollapsed = false;
+  isDarkMode = false;
   currentUser: User | null = null;
   showUserProfile = false;
   showNav = true;
@@ -26,6 +27,10 @@ export class AppComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Apply the saved theme (light is the default)
+    this.isDarkMode = localStorage.getItem('tf-theme') === 'dark';
+    this.applyTheme();
+
     // Subscribe to current user
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
@@ -79,6 +84,21 @@ export class AppComponent implements OnInit {
     const icon = toggleBtn.querySelector('svg path');
     if (icon) {
       icon.setAttribute('d', this.isSidebarCollapsed ? this.CHEVRON_RIGHT_PATH : this.CHEVRON_LEFT_PATH);
+    }
+  }
+
+  toggleTheme(): void {
+    this.isDarkMode = !this.isDarkMode;
+    localStorage.setItem('tf-theme', this.isDarkMode ? 'dark' : 'light');
+    this.applyTheme();
+  }
+
+  private applyTheme(): void {
+    const root = document.documentElement;
+    if (this.isDarkMode) {
+      root.setAttribute('data-theme', 'dark');
+    } else {
+      root.removeAttribute('data-theme');
     }
   }
 

@@ -100,7 +100,7 @@
           <div class="filter-group artifact-filter-group" *ngIf="artifactFilterOptions.length > 1">
             <label class="filter-label">Artifact Filter</label>
             <div class="artifact-filter-dropdown">
-              <button class="filter-select artifact-filter-btn" (click)="toggleArtifactFilter()">
+              <button class="filter-select artifact-filter-btn" [class.active]="showArtifactFilter" (click)="toggleArtifactFilter()">
                 {{ getSelectedArtifactCount() }} of {{ artifactFilterOptions.length }} selected
                 <app-icon name="chevron-down-alt" style="margin-left: 0.5rem;width:12px;height:12px;"></app-icon>
               </button>

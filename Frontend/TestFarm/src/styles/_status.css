@@ -59,25 +59,25 @@
     inset -1px 0 0 rgba(0, 0, 0, 0.15);
 }
 
-.status-passed {
+.status-passed,
+.status-completed,
+.status-online,
+.status-confirmed {
   background: linear-gradient(315deg, #d1e7dd 0%, #e8f5e8 100%);
   color: #2e7d32;
   border-color: #4caf50;
 }
 
-.status-completed {
-  background: linear-gradient(315deg, #d1e7dd 0%, #e8f5e8 100%);
-  color: #2e7d32;
-  border-color: #4caf50;
-}
-
-.status-failed {
+.status-failed,
+.status-offline {
   background: linear-gradient(315deg, #f5c2c7 0%, #ffebee 100%);
   color: #c62828;
   border-color: #f44336;
 }
 
-.status-running {
+.status-running,
+.status-partial,
+.status-pending {
   background: linear-gradient(315deg, #ffeaa7 0%, #fff3e0 100%);
   color: #ef6c00;
   border-color: #ff9800;
@@ -87,4 +87,10 @@
   background: linear-gradient(315deg, #e3eafc 0%, #f0f4ff 100%);
   color: #1565c0;
   border-color: #1976d2;
+}
+
+.status-empty {
+  background: linear-gradient(315deg, #e9ecef 0%, #f8f9fa 100%);
+  color: #6c757d;
+  border-color: #adb5bd;
 }

@@ -19,14 +19,19 @@ Never copy a shared rule into a component — extend or add to the partial inste
 | `src/styles/_layout.css`  | Reset, page background, `.container`, sidebar & nav (`.sidebar`, `.nav-*`, `.toggle-btn`), `.header*`, `.main-content`, top-level responsive rules |
 | `src/styles/_buttons.css` | `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-modal`, disabled states |
 | `src/styles/_islands.css` | `.island*`, `.islands-grid`, `.stat-card`/`.stat-*`, `.progress-*`, `.breadcrumb*` |
-| `src/styles/_tables.css`  | `.data-table` / `.data-table-wrap`, `.column`, `.column-sortable`, `.cell`, `.row-*`, `.row-link`, `.row-action-link`, `.action-item`, `.fit-content` |
+| `src/styles/_tables.css`  | `.data-table` / `.data-table-wrap`, `.column`, `.column-sortable`, `.cell`, `.row-*`, `.row-link`, `.row-action-link`, `.action-item`, `.fit-content`, `.subtable` / `.subtable-wrap` (inner/child tables) |
 | `src/styles/_status.css`  | `.test-item*`, `.test-status`, `.status-*` badges |
 | `src/styles/_forms.css`   | `.dialog-*` (modal overlay/container/header/content/actions), `.form-*`, `.tags-*`/`.tag-*`, `.add-tag-btn` |
 | `src/styles/_icons.css`   | `app-icon` host rules + icon sizing/color classes (`.nav-icon`, `.island-icon`, `.breadcrumb-separator`, `.icon-sort`, `.icon-action`, `.icon-btn`) |
 
-Page-unique CSS still living in components (by design): grids' hosts sub-table &
-status badges, builds' action menu & table corner radius, benchmarks' step sub-rows,
-runs' header, repositories' `.repo-name`, auth/user-profile layouts.
+Page-unique CSS still living in components (by design): grids' host-count badge
+& expand button, builds' action menu, benchmarks' step sub-rows, runs' header,
+repositories' `.repo-name`, auth/user-profile layouts.
+
+Nested tables inside an expanded main-table row (grids hosts, tests-run-results
+diffs & history) use the shared `.subtable` / `.subtable-wrap` — same look as
+`.data-table`, just smaller. Standard: table rows are never tinted by status —
+the status column (`.test-status` pill) is the only status indicator.
 
 ---
 
@@ -44,6 +49,7 @@ runs' header, repositories' `.repo-name`, auth/user-profile layouts.
 | Status — error | text `#c62828`, border `#f44336`, bg gradient `#f5c2c7 → #ffebee` |
 | Status — running/warn | text `#ef6c00`, border `#ff9800`, bg gradient `#ffeaa7 → #fff3e0` |
 | Status — queued/info | text `#1565c0`, border `#1976d2`, bg gradient `#e3eafc → #f0f4ff` |
+| Status — neutral/empty | text `#6c757d`, border `#adb5bd`, bg gradient `#e9ecef → #f8f9fa` |
 | Selection tint (rows) | `rgba(108, 123, 138, …)` |
 
 ---
@@ -81,7 +87,8 @@ slightly brighter gradient (`#edeeef → #fafbfc`).
 - **Forms & dialogs** — `.dialog-overlay > .dialog-container` with
   `.dialog-header` / `.dialog-content` / `.dialog-actions`; fields use `.form-field`,
   `.form-label`, `.form-input`, `.form-textarea`, `.form-error`, `.tag-chip`.
-- **Status badges** — `.test-status` + `.status-passed|failed|running|queued|completed`.
+- **Status badges (pills)** — `.test-status` + a `.status-*` colour: `passed|completed|online|confirmed` (green), `failed|offline` (red), `running|partial|pending` (amber), `queued` (blue), `empty` (neutral). One shared pill for all statuses (test/benchmark results, grid & host status, profile email status).
+- **Tag pills** — `.tag-chip` (shared): dialog tag editors and artifact/definition tag lists in tables.
 - **Breadcrumb** — `.breadcrumb-island > .breadcrumb > .breadcrumb-item`, separators
   via `<app-icon name="chevron-right" class="breadcrumb-separator">`.
 

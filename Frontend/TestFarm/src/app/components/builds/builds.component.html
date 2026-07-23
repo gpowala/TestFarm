@@ -24,8 +24,8 @@
                       style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; transition: all 0.2s ease;">
               </div>
           </div>
-          <div style="background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); border-radius: 8px; border: 1px solid #e9ecef;">
-              <table id="artifactsDefinitionsTable" class="data-table" style="border-collapse: separate; border-spacing: 0;">
+          <div class="data-table-wrap">
+              <table id="artifactsDefinitionsTable" class="data-table">
                   <thead>
                       <tr>
                           <th class="column-sortable fit-content" data-sort="id"
@@ -64,34 +64,36 @@
                           </a>
                         </td>
                         <td class="cell">
-                            <span *ngFor="let tag of row.artifact.Tags" style="padding: 0.25rem 0.75rem; margin-right: 0.25rem; background: linear-gradient(315deg, #e9ecef 0%, #f8f9fa 100%); border-radius: 12px; font-size: 0.75rem; font-weight: 600; border: 1px solid #dee2e6;">{{tag}}</span>
+                            <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: center;">
+                              <span *ngFor="let tag of row.artifact.Tags" class="tag-chip">{{tag}}</span>
+                            </div>
                         </td>
                         <td class="cell">
                            {{ row.artifact.LatestBuild?.BuildName || 'N/A' }}
                         </td>
                         <td class="cell">
-                            <div class="action-menu-container">
-                              <button class="action-menu-trigger" (click)="toggleActionMenu(row, $event)">
+                            <div class="action-menu-container tf-dropdown">
+                              <button class="action-menu-trigger" [class.active]="row === activeMenuRow" (click)="toggleActionMenu(row, $event)">
                                 <app-icon name="dots-vertical" style="width:20px;height:20px;"></app-icon>
                               </button>
-                              <div class="action-menu" [class.show]="row === activeMenuRow">
-                                <button class="action-menu-item" (click)="onMenuAction('notes', row, $event)">
+                              <div class="tf-menu" *ngIf="row === activeMenuRow">
+                                <button class="tf-menu-item" (click)="onMenuAction('notes', row, $event)">
                                   <app-icon name="note"></app-icon>
                                   Notes
                                 </button>
-                                <button class="action-menu-item" (click)="onMenuAction('links', row, $event)">
+                                <button class="tf-menu-item" (click)="onMenuAction('links', row, $event)">
                                   <app-icon name="link"></app-icon>
                                   Links
                                 </button>
-                                <button class="action-menu-item" (click)="onMenuAction('hide', row, $event)">
+                                <button class="tf-menu-item" (click)="onMenuAction('hide', row, $event)">
                                   <app-icon name="search"></app-icon>
                                   Hide
                                 </button>
-                                <button class="action-menu-item" (click)="onMenuAction('edit', row, $event)">
+                                <button class="tf-menu-item" (click)="onMenuAction('edit', row, $event)">
                                   <app-icon name="edit-alt"></app-icon>
                                   Edit
                                 </button>
-                                <button class="action-menu-item" (click)="onMenuAction('remove', row, $event)">
+                                <button class="tf-menu-item" (click)="onMenuAction('remove', row, $event)">
                                   <app-icon name="flask"></app-icon>
                                   Remove
                                 </button>

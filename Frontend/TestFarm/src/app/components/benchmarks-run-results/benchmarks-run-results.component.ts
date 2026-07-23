@@ -43,6 +43,7 @@ class BenchmarksResultDescriptionRow {
 
   iterationOptions: number[] = [0];
   selectedIteration: number = 0;
+  iterationDropdownOpen: boolean = false;
 
   charts: ChartControl[] = [];
 
@@ -91,6 +92,8 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
     'process': 'Process profile'
   };
   public selectedProfileView: string = 'general';
+
+  public openHeaderFilter: 'iterations' | 'profile' | null = null;
 
   public cpuChartLegendDropdownOpen: boolean = false;
 
@@ -1653,6 +1656,38 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
     this.cpuChartLegendDropdownOpen = !this.cpuChartLegendDropdownOpen;
   }
 
+  toggleHeaderFilter(name: 'iterations' | 'profile'): void {
+    this.openHeaderFilter = this.openHeaderFilter === name ? null : name;
+    this.closeAllIterationDropdowns();
+  }
+
+  selectIterationsView(key: string): void {
+    this.selectedIterationsView = key;
+    this.openHeaderFilter = null;
+  }
+
+  selectProfileView(key: string): void {
+    this.selectedProfileView = key;
+    this.openHeaderFilter = null;
+    this.changeProfileView();
+  }
+
+  toggleIterationDropdown(row: BenchmarksResultDescriptionRow): void {
+    const wasOpen = row.iterationDropdownOpen;
+    this.closeAllIterationDropdowns();
+    this.openHeaderFilter = null;
+    row.iterationDropdownOpen = !wasOpen;
+  }
+
+  selectIteration(row: BenchmarksResultDescriptionRow, opt: number): void {
+    row.selectedIteration = opt;
+    row.iterationDropdownOpen = false;
+  }
+
+  private closeAllIterationDropdowns(): void {
+    this.benchmarksResultsRows.forEach(r => r.iterationDropdownOpen = false);
+  }
+
   toggleCpuChartDataset(row: BenchmarksResultDescriptionRow, datasetKey: string) {
     if (row.charts.length === 0) return;
 
@@ -1694,6 +1729,11 @@ export class BenchmarksRunResultsComponent implements OnInit, AfterViewInit, OnD
 
     if (!dropdown && !button && this.cpuChartLegendDropdownOpen) {
       this.cpuChartLegendDropdownOpen = false;
+    }
+
+    if (!target.closest('.tf-dropdown')) {
+      this.openHeaderFilter = null;
+      this.closeAllIterationDropdowns();
     }
   }
 

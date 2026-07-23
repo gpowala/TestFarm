@@ -178,3 +178,52 @@
 .row-inactive-hovering {
   background: linear-gradient(180deg, rgba(10, 65, 116, 0.005) 0%, rgba(10, 65, 116, 0.03) 100%);
 }
+
+/* --- Inner / child tables -------------------------------------------------
+   Nested inside an expanded row of a main .data-table. Same look as the main
+   table, just a little smaller. Wrap the <table class="subtable"> in a
+   <div class="subtable-wrap"> for the framed, rounded container. */
+.subtable-wrap {
+  margin: 12px 16px;
+  background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%);
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.subtable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.subtable thead tr {
+  background: #eef1f3;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.subtable th {
+  padding: 0.5rem 0.9rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #2c3e50;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.subtable td {
+  padding: 0.5rem 0.9rem;
+  color: #2c3e50;
+  text-align: center;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.subtable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.subtable tbody tr:hover {
+  background: rgba(10, 65, 116, 0.03);
+}

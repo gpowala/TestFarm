@@ -168,90 +168,61 @@
                       (input)="onSearchChange($event)"
                       style="width: 100%; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); font-size: 0.875rem; transition: all 0.2s ease;">
               </div>
-              <div style="position: relative;">
-                  <button (click)="toggleActionsMenu()"
-                          style="padding: 0.75rem 1rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">
+              <div class="tf-dropdown">
+                  <button class="tf-dropdown-trigger" [class.active]="showActionsMenu" (click)="toggleActionsMenu()">
                       <app-icon name="circle" style="width:16px;height:16px;"></app-icon>
                       Actions
-                      <span *ngIf="selectedCount > 0" style="background: #2196f3; color: white; border-radius: 10px; padding: 0 0.4rem; font-size: 0.75rem;">{{ selectedCount }}</span>
+                      <span *ngIf="selectedCount > 0" class="tf-count">{{ selectedCount }}</span>
                   </button>
-                  <div *ngIf="showActionsMenu"
-                       style="position: absolute; top: 100%; right: 0; margin-top: 0.5rem; background: white; border: 1px solid #e9ecef; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); min-width: 200px; z-index: 1000;">
-                      <div style="padding: 0.5rem;">
-                          <button (click)="startRebaseline()"
-                                  [disabled]="selectedCount === 0"
-                                  [style.cursor]="selectedCount === 0 ? 'not-allowed' : 'pointer'"
-                                  [style.opacity]="selectedCount === 0 ? '0.5' : '1'"
-                                  style="display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.6rem 0.75rem; border: none; background: transparent; text-align: left; font-size: 0.875rem; border-radius: 4px;">
-                              <app-icon name="refresh" style="width:16px;height:16px;"></app-icon>
-                              Rebaseline selected
-                          </button>
-                      </div>
+                  <div *ngIf="showActionsMenu" class="tf-menu">
+                      <button class="tf-menu-item" (click)="startRebaseline()" [disabled]="selectedCount === 0">
+                          <app-icon name="refresh" style="width:16px;height:16px;"></app-icon>
+                          Rebaseline selected
+                      </button>
                   </div>
               </div>
-              <div style="position: relative;">
-                  <button (click)="toggleColumnSelector()"
-                          style="padding: 0.75rem 1rem; border: 1px solid #e9ecef; border-radius: 8px; background: linear-gradient(315deg, #f8f9fa 0%, #ffffff 100%); cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">
-
+              <div class="tf-dropdown">
+                  <button class="tf-dropdown-trigger" [class.active]="showColumnSelector" (click)="toggleColumnSelector()">
                       <app-icon name="funnel" style="width:16px;height:16px;"></app-icon>
                       Columns
                   </button>
-                  <div *ngIf="showColumnSelector"
-                       style="position: absolute; top: 100%; right: 0; margin-top: 0.5rem; background: white; border: 1px solid #e9ecef; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); min-width: 200px; z-index: 1000;">
-                      <div style="padding: 0.75rem; border-bottom: 1px solid #e9ecef; font-weight: 600; font-size: 0.875rem; color: #495057;">
-                          Select Columns
-                      </div>
-                      <div style="padding: 0.5rem;">
-                          <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer; transition: background-color 0.2s; border-radius: 4px;"
-                                 (mouseenter)="onLabelMouseEnter($event)"
-                                 (mouseleave)="onLabelMouseLeave($event)">
+                  <div *ngIf="showColumnSelector" class="tf-menu">
+                      <div class="tf-menu-header">Select columns</div>
+                          <label class="tf-menu-check">
                               <input type="checkbox" [(ngModel)]="columnVisibility.path" (change)="onColumnVisibilityChange()"
-                                     style="margin-right: 0.5rem; cursor: pointer;">
-                              <span style="font-size: 0.875rem;">Path</span>
+                                    >
+                              <span>Path</span>
                           </label>
-                          <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer; transition: background-color 0.2s; border-radius: 4px;"
-                                 (mouseenter)="onLabelMouseEnter($event)"
-                                 (mouseleave)="onLabelMouseLeave($event)">
+                          <label class="tf-menu-check">
                               <input type="checkbox" [(ngModel)]="columnVisibility.name" (change)="onColumnVisibilityChange()"
-                                     style="margin-right: 0.5rem; cursor: pointer;">
-                              <span style="font-size: 0.875rem;">Name</span>
+                                    >
+                              <span>Name</span>
                           </label>
-                          <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer; transition: background-color 0.2s; border-radius: 4px;"
-                                 (mouseenter)="onLabelMouseEnter($event)"
-                                 (mouseleave)="onLabelMouseLeave($event)">
+                          <label class="tf-menu-check">
                               <input type="checkbox" [(ngModel)]="columnVisibility.status" (change)="onColumnVisibilityChange()"
-                                     style="margin-right: 0.5rem; cursor: pointer;">
-                              <span style="font-size: 0.875rem;">Status</span>
+                                    >
+                              <span>Status</span>
                           </label>
-                          <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer; transition: background-color 0.2s; border-radius: 4px;"
-                                 (mouseenter)="onLabelMouseEnter($event)"
-                                 (mouseleave)="onLabelMouseLeave($event)">
+                          <label class="tf-menu-check">
                               <input type="checkbox" [(ngModel)]="columnVisibility.duration" (change)="onColumnVisibilityChange()"
-                                     style="margin-right: 0.5rem; cursor: pointer;">
-                              <span style="font-size: 0.875rem;">Duration</span>
+                                    >
+                              <span>Duration</span>
                           </label>
-                          <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer; transition: background-color 0.2s; border-radius: 4px;"
-                                 (mouseenter)="onLabelMouseEnter($event)"
-                                 (mouseleave)="onLabelMouseLeave($event)">
+                          <label class="tf-menu-check">
                               <input type="checkbox" [(ngModel)]="columnVisibility.progress" (change)="onColumnVisibilityChange()"
-                                     style="margin-right: 0.5rem; cursor: pointer;">
-                              <span style="font-size: 0.875rem;">Progress</span>
+                                    >
+                              <span>Progress</span>
                           </label>
-                          <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer; transition: background-color 0.2s; border-radius: 4px;"
-                                 (mouseenter)="onLabelMouseEnter($event)"
-                                 (mouseleave)="onLabelMouseLeave($event)">
+                          <label class="tf-menu-check">
                               <input type="checkbox" [(ngModel)]="columnVisibility.actions" (change)="onColumnVisibilityChange()"
-                                     style="margin-right: 0.5rem; cursor: pointer;">
-                              <span style="font-size: 0.875rem;">Actions</span>
+                                    >
+                              <span>Actions</span>
                           </label>
-                          <label style="display: flex; align-items: center; padding: 0.5rem; cursor: pointer; transition: background-color 0.2s; border-radius: 4px;"
-                                 (mouseenter)="onLabelMouseEnter($event)"
-                                 (mouseleave)="onLabelMouseLeave($event)">
+                          <label class="tf-menu-check">
                               <input type="checkbox" [(ngModel)]="columnVisibility.download" (change)="onColumnVisibilityChange()"
-                                     style="margin-right: 0.5rem; cursor: pointer;">
-                              <span style="font-size: 0.875rem;">Download</span>
+                                    >
+                              <span>Download</span>
                           </label>
-                      </div>
                   </div>
               </div>
           </div>
@@ -393,35 +364,37 @@
                         </td>
                     </tr>
                     <tr *ngIf="row.showDiffs" class="expanded-details">
-                      <td colspan="9" class="execution-output" style="padding: 5px; text-align: left; background-color: #f0f0f0;">
-                        <table class="runs-table" style="width: 100%;">
-                          <thead>
-                              <tr>
-                                  <th class="column fit-content" style="text-align: left; font-size: small;">Diff Name</th>
-                                  <th class="column fit-content" style="font-size: small;">Status</th>
-                                  <th class="column fit-content" style="font-size: small;"></th>
-                              </tr>
-                          </thead>
-                          <tbody>
-                              <ng-container *ngFor="let diff of row.result.Diffs">
-                                  <tr class="run-item" style="transition: background-color 0.3s;">
-                                      <td class="cell fit-content" style="text-align: left; font-size: small; padding: 1rem;">{{ diff.Name }}</td>
-                                      <td class="cell fit-content">
-                                        <span class="test-status status-{{ diff.Status }}">{{ diff.Status }}</span>
-                                      </td>
-                                      <td class="cell fit-content">
-                                        <a class="row-action-link" data-tooltip="Hide" (click)="showReport(diff.Id)" style="cursor: pointer;">
-                                          <app-icon name="swap" style="width:22px;height:22px;"></app-icon>
-                                        </a>
-                                      </td>
-                                  </tr>
-                              </ng-container>
-                          </tbody>
-                      </table>
+                      <td colspan="9" style="padding: 0.5rem;">
+                        <div class="subtable-wrap">
+                          <table class="subtable">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left;">Diff Name</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <ng-container *ngFor="let diff of row.result.Diffs">
+                                    <tr>
+                                        <td style="text-align: left;">{{ diff.Name }}</td>
+                                        <td>
+                                          <span class="test-status status-{{ diff.Status }}">{{ diff.Status }}</span>
+                                        </td>
+                                        <td>
+                                          <a class="row-action-link" data-tooltip="Hide" (click)="showReport(diff.Id)" style="cursor: pointer;">
+                                            <app-icon name="swap" style="width:22px;height:22px;"></app-icon>
+                                          </a>
+                                        </td>
+                                    </tr>
+                                </ng-container>
+                            </tbody>
+                          </table>
+                        </div>
                       </td>
-                  </tr>
-                  <tr *ngIf="row.showHistory" class="expanded-history">
-                        <td colspan="9" class="test-history" style="padding: 5px; text-align: left; background-color: #f0f0f0; border: 2px solid #d0d0d0;">
+                </tr>
+                <tr *ngIf="row.showHistory" class="expanded-history">
+                        <td colspan="9" style="padding: 0.5rem;">
                             <app-test-history [testId]="row.result.TestId"></app-test-history>
                         </td>
                     </tr>

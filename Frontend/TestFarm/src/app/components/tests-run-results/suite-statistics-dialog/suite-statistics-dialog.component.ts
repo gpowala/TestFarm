@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, HostListener } from '@angular/core';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { SuiteStatisticsResponse, SuiteStatisticsEntry, SuiteRunArtifact } from '../../../models/suite-statistics';
 import { TestsApiHttpClientService } from '../../../services/tests-api-http-cient-service';
@@ -114,6 +114,14 @@ export class SuiteStatisticsDialogComponent implements OnInit, AfterViewInit, On
 
   toggleArtifactFilter(): void {
     this.showArtifactFilter = !this.showArtifactFilter;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (this.showArtifactFilter && !target.closest('.artifact-filter-dropdown')) {
+      this.showArtifactFilter = false;
+    }
   }
 
   onArtifactFilterChange(): void {

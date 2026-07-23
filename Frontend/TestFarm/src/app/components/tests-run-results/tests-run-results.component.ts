@@ -1,6 +1,6 @@
 import * as pako from 'pako';
 
-import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy, HostListener } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TestsRunResultDescription } from '../../models/tests-run-result-description';
 import { TestsApiHttpClientService } from '../../services/tests-api-http-cient-service';
@@ -668,6 +668,16 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
 
   toggleActionsMenu(): void {
     this.showActionsMenu = !this.showActionsMenu;
+    this.showColumnSelector = false;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.tf-dropdown')) {
+      this.showActionsMenu = false;
+      this.showColumnSelector = false;
+    }
   }
 
   // --- Rebaseline -------------------------------------------------------------
@@ -789,6 +799,7 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
 
   toggleColumnSelector(): void {
     this.showColumnSelector = !this.showColumnSelector;
+    this.showActionsMenu = false;
   }
 
   toggleColumn(column: keyof typeof this.columnVisibility): void {

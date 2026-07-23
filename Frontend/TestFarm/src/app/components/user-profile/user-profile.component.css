@@ -56,21 +56,4 @@
   font-size: 0.95rem;
 }
 
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.status-badge.confirmed {
-  background: linear-gradient(315deg, #d4edda 0%, #c3e6cb 100%);
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.status-badge.pending {
-  background: linear-gradient(315deg, #fff3cd 0%, #ffeaa7 100%);
-  color: #856404;
-  border: 1px solid #ffeaa7;
-}
+/* Email status uses the shared .test-status pill (see _status.css). */

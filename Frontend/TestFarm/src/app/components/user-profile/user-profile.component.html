@@ -27,8 +27,8 @@
           <div class="user-field" *ngIf="user.emailConfirmed !== undefined">
             <span class="field-label">Email Status:</span>
             <span class="field-value">
-              <span *ngIf="user.emailConfirmed" class="status-badge confirmed">Confirmed</span>
-              <span *ngIf="!user.emailConfirmed" class="status-badge pending">Pending</span>
+              <span *ngIf="user.emailConfirmed" class="test-status status-confirmed">Confirmed</span>
+              <span *ngIf="!user.emailConfirmed" class="test-status status-pending">Pending</span>
             </span>
           </div>
 

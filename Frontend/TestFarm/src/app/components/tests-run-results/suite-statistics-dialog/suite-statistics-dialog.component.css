@@ -203,7 +203,7 @@
   left: 0;
   z-index: 100;
   background: white;
-  border: 1px solid #dee2e6;
+  border: 1px solid #0a4174;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   min-width: 300px;
@@ -254,7 +254,13 @@
 }
 
 .artifact-checkbox-label:hover {
-  background: #f8f9fa;
+  background: #eef1f4;
+  color: #0a4174;
+}
+
+.artifact-filter-btn.active {
+  border-color: #0a4174;
+  box-shadow: 0 0 0 3px rgba(10, 65, 116, 0.15);
 }
 
 .artifact-checkbox-text {

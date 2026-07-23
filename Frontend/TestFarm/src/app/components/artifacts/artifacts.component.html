@@ -124,8 +124,10 @@
                         <td class="cell">
                           {{row.artifact.CreationTimestamp | date:'dd/MM/yyyy HH:mm'}}
                         </td>
-                        <!-- <td class="cell" style="color: #6c757d;">
-                            <span *ngFor="let tag of row.artifact.Tags" style="padding: 0.25rem 0.75rem; background: linear-gradient(315deg, #e9ecef 0%, #f8f9fa 100%); border-radius: 12px; font-size: 0.75rem; font-weight: 600; border: 1px solid #dee2e6;">{{tag}}</span>
+                        <!-- <td class="cell">
+                            <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: center;">
+                              <span *ngFor="let tag of row.artifact.Tags" class="tag-chip">{{tag}}</span>
+                            </div>
                         </td> -->
                     </tr>
                   </tbody>
