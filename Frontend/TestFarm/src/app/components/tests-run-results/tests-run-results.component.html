@@ -300,20 +300,12 @@
                                         ? calculateDiffProgress(row.result).passed + '/' + calculateDiffProgress(row.result).total + ' diffs passed (' + calculateDiffProgress(row.result).percentage + '%)'
                                         : 'No diffs available'">
                             <ng-container *ngIf="calculateDiffProgress(row.result) as progress">
-                              <div class="progress-bar-labels">
-                                <span>0%</span>
-                                <span>100%</span>
+                              <div class="progress-bar-count" [class.na]="progress.total === 0">
+                                {{ progress.total > 0 ? progress.passed + '/' + progress.total : 'N/A' }}
                               </div>
-                              <div class="progress-bar-wrapper">
-                                <div class="progress-bar-indicator"
-                                     [style.left.%]="progress.total > 0 ? progress.percentage : 0">
-                                </div>
-                              </div>
-                              <div class="progress-bar-tooltip" *ngIf="progress.total > 0">
-                                {{ progress.passed }}/{{ progress.total }}
-                              </div>
-                              <div class="progress-bar-tooltip" *ngIf="progress.total === 0" style="color: #adb5bd;">
-                                N/A
+                              <div class="progress-bar-track">
+                                <span class="progress-bar-seg" *ngFor="let i of progressSegments"
+                                      [class.filled]="progress.total > 0 && i < filledSegments(progress.percentage)"></span>
                               </div>
                             </ng-container>
                           </div>

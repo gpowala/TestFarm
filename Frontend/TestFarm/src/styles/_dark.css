@@ -226,6 +226,12 @@
 }
 :root[data-theme="dark"] .subtable tbody tr:hover { background: var(--wf-surface-2); }
 
+/* ---- Tests-run-results: per-row Progress column bar (segmented) --------- */
+:root[data-theme="dark"] .progress-bar-seg { background: var(--wf-surface-3); }
+:root[data-theme="dark"] .progress-bar-seg.filled { background: var(--wf-text-2); }
+:root[data-theme="dark"] .progress-bar-count { color: var(--wf-text-2); }
+:root[data-theme="dark"] .progress-bar-count.na { color: var(--wf-muted); }
+
 /* ---- Status pills (outlined) -------------------------------------------- */
 :root[data-theme="dark"] .test-status {
   box-shadow: none;

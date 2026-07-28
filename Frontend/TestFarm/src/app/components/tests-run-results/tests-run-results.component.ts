@@ -523,10 +523,10 @@ export class TestsRunResultsComponent implements OnInit, AfterViewInit, OnDestro
     return { percentage, passed, total };
   }
 
-  getProgressGradient(percentage: number): string {
-    // Creates a gradient from red (0%) through yellow (50%) to green (100%)
-    // The indicator position is based on the percentage
-    return `linear-gradient(to right, #ff6b6b 0%, #ffd93d 50%, #6bcf6b 100%)`;
+  progressSegments = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+  filledSegments(percentage: number): number {
+    return Math.round(percentage / 10);
   }
 
 
