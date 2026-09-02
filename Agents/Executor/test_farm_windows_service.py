@@ -277,7 +277,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                             complete_test(test, "error", self._config)
                             raise RuntimeError(f"Pre-step failed! Exit code: {result.exit_code}\nstdout: {result.stdout}\nstderr: {result.stderr}")
 
-                    expanded_test_command = expand_magic_variables(test_case.command)    
+                    expanded_test_command = expand_magic_variables(test_case.command)
                     logging.info(f"Executing test command: {expanded_test_command}")
 
                     if test_case.type in ["unit_tests", "playwright_dotnet"]:
@@ -528,25 +528,11 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                     logging.info("Benchmark completed.")
                 else:
                     time.sleep(60)
-            except KeyboardInterrupt:
-                logging.info("KeyboardInterrupt received, shutting down...")
-                self._running = False
             except Exception as e:
                 logging.error(f"Error processing test: {e}")
             finally:
-                if self._running:
-                    update_host_status("Waiting for tests...", self._host, self._config)
-                    logging.info(f"Host {self._host.hostname} status set to \"Waiting for tests...\"")
-        
-        if self._host:
-            try:
-                update_host_status("Offline", self._host, self._config)
-                logging.info(f"Host {self._host.hostname} status set to \"Offline\"")
-                
-                unregister_host(self._host, self._config)
-                logging.info(f"Host {self._host.hostname} successfully unregistered")
-            except Exception as e:
-                logging.error(f"Error during host shutdown: {e}")
+                update_host_status("Waiting for tests...", self._host, self._config)
+                logging.info(f"Host {self._host.hostname} status set to \"Waiting for tests...\"")
 
         logging.info("TestFarm service has stopped.")
 
@@ -899,7 +885,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
             line_size_limit = line_size_limit - 1
             if line_size_limit <= 0:
-                rows.append((f'<td class="context">... diff content is limited to {5000} ...</td>', 
+                rows.append((f'<td class="context">... diff content is limited to {5000} ...</td>',
                             f'<td class="context">... diff content is limited to {5000} ...</td>'))
                 break
         
