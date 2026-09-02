@@ -51,16 +51,13 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
     _svc_display_name_ = "TestFarm Windows Service"
     _svc_description_ = "TestFarm tests and benchmarks executing service."
 
-    def __init__(self, args):
-        self._isDebugModeOn = False
+    def __init__(self, args=None):
+        self._isDebugModeOn = args is None
         self.setup()
-        
-        super().__init__(args)
-        self.create_win32_event()
 
-    def __init__(self):
-        self._isDebugModeOn = True
-        self.setup()
+        if not self._isDebugModeOn:
+            super().__init__(args)
+            self.create_win32_event()
 
     def setup(self):
         self._running = False
