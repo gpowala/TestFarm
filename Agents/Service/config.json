@@ -1,0 +1,21 @@
+{
+    "Executor": {
+        "Dir": "../Executor",
+        "PythonExe": "py",
+        "Args": [
+            "run.py"
+        ]
+    },
+    "Watchdog": {
+        "RestartDelaySeconds": 15,
+        "GracefulStopTimeoutSeconds": 120,
+        "CrashLoopThresholdSeconds": 30,
+        "CrashLoopMaxFastExits": 3,
+        "CrashLoopBackoffSeconds": 300
+    },
+    "Logging": {
+        "LogDir": "C:/logs/testfarm",
+        "MaxLogSizeMb": 10,
+        "BackupCount": 5
+    }
+}

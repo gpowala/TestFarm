@@ -1,10 +1,12 @@
 # TestFarm Executor Agent
 
-Windows Service that registers a host with the TestFarm API and executes scheduled tests and benchmarks.
+Console application that registers a host with the TestFarm API and executes scheduled tests and benchmarks.
+
+On a grid machine it is kept alive by the [TestFarm Watchdog](Service/README.md) — a tiny Windows Service whose only job is to run exactly one Executor instance and restart it if it exits. The Executor itself is never installed as a service, so it always runs through the same code path you use during development.
 
 ## Prerequisites
 
-- Windows with Python 3.x installed
+- Windows with Python 3.x installed — use a python.org (or equivalent) installation, **not** the Microsoft Store build, whose app execution alias breaks process-tree cleanup
 - Administrator access (required to install/start/stop a Windows service)
 - Git available on `PATH` (used both for cloning test repositories and for diff generation)
 - Network access to the TestFarm API and to the git repositories under test
@@ -14,18 +16,18 @@ Windows Service that registers a host with the TestFarm API and executes schedul
 Run from the repository root (`Agents/`):
 
 ```powershell
-# 1. Create the virtual environment
+# 1. Create the virtual environment (leaves you in a shell with it activated)
 .\venv_create.bat
 
-# 2. Activate it
-.\venv_start.bat
-
-# 3. Install dependencies
+# 2. Install dependencies (also registers pywin32's DLLs for this interpreter)
 .\requirements_install.bat
-
-# 4. Register pywin32's DLLs for this venv (required for the service host to load)
-python .venv\Scripts\pywin32_postinstall.py -install
 ```
+
+In a new terminal later, re-activate it with `.venv\Scripts\activate`.
+
+### Installing globally instead (no venv)
+
+If you'd rather install directly against the system/global Python on the server, just run `requirements_install.bat` **without** activating a venv first — it installs into whichever interpreter `py` resolves to and locates the right `Scripts` directory automatically, so the `pywin32_postinstall.py` step still works unchanged. Everything else (`py run.py`, installing the watchdog) goes through `py` as well, so the packages and the service registration stay consistent.
 
 ## Configuration
 
@@ -41,51 +43,67 @@ Edit [Executor/config.json](Executor/config.json) before running:
         "BaseUrl": "<your TestFarm API base URL>",
         "Timeout": 60
     },
-    "Logging": {
-        "LogDir": "C:/logs/testfarm"
+    "Storage": {
+        "Repositories": "C:/temp_repositories"
     }
 }
 ```
 
-Make sure the account the service runs under (`LocalSystem` by default) has write access to `LogDir` and to whatever repository/temp/work directories are resolved by the `testfarmutils` package.
+The Executor logs to the console; where that output ends up on a grid machine is decided by the watchdog's `LogDir` (see [Service/README.md](Service/README.md)). Make sure the account the Executor runs under (`LocalSystem` by default, inherited from the watchdog service) has write access to that folder and to whatever repository/temp/work directories are resolved by the `testfarmutils` package.
 
-## Running in debug mode (no service install)
+## Running it directly
 
-Useful to validate configuration and connectivity before installing the service. From an activated venv, in `Executor/`:
+This is how the Executor is always started — by hand during development, and by the watchdog on a grid machine. From an activated venv, in `Executor/`:
 
 ```powershell
 cd Executor
-python run.py debug
+py run.py
 ```
 
-Logs are printed to the console. Stop with `Ctrl+C`.
+Logs are printed to the console. Stop with `Ctrl+C`; the host is set `Offline` and unregistered on the way out.
 
-## Installing and managing the Windows service
+`run.py` also accepts `--stop-event <name>`: the name of a Win32 event that requests the same graceful shutdown when signalled. The watchdog creates that event and passes it in; you never need it manually.
 
-Open the terminal **as Administrator**, with the venv activated, from `Executor/`:
+## Running unattended (TestFarm Watchdog)
+
+On a grid machine the Executor is supervised by the **TestFarm Watchdog** Windows Service, which starts a single `py run.py`, restarts it if it exits, and shuts it down gracefully when the service stops.
 
 ```powershell
-# Install the service (registers "TestFarm" in the SCM)
-python run.py install
-
-# Start
-python run.py start
-
-# Stop
-python run.py stop
-
-# Uninstall
-python run.py remove
+cd Service
+.\install.bat
 ```
 
-Equivalent standard Windows tools also work once installed: `services.msc`, `sc start TestFarm`, `sc stop TestFarm`.
+See [Service/README.md](Service/README.md) for configuration, log locations, and troubleshooting.
+
+Updating the Executor is then just:
+
+```powershell
+git pull
+Restart-Service TestFarmWatchdog
+```
+
+### Migrating from the old "TestFarm" service
+
+Earlier versions installed the Executor itself as a Windows Service hosted by pywin32's `pythonservice.exe`. That is gone — `run.py` no longer has `install`/`start`/`stop`/`remove` commands, and the executor class is a plain Python class. If a machine still has the old service registered, remove it before installing the watchdog so two Executors never run side by side:
+
+```powershell
+# as Administrator
+Stop-Service TestFarm -ErrorAction SilentlyContinue
+sc.exe delete TestFarm
+```
+
+### Log on account
+
+By default the watchdog service runs as **LocalSystem**, which has its own environment: no per-user `PATH`, no loaded user profile, no mapped drives, and no access to per-user tool installs — and the Executor inherits it. If the test/install commands executed by the Executor (`execute_command`) need tools that only exist on a specific user's `PATH` or profile, configure the service to log on as that user instead (Services.msc → TestFarm Watchdog → Properties → **Log On** tab → *This account*), rather than trying to replicate the environment for LocalSystem.
 
 ## Logs
 
-Once running as a real service, logging goes to the rotating log file at the `LogDir` configured in [Executor/config.json](Executor/config.json) (e.g. `C:\logs\testfarm\testfarm_service.log`) rather than the console.
+When supervised by the watchdog, everything the Executor prints is captured into the rotating `testfarm_executor.log` in the watchdog's `LogDir`, next to the watchdog's own `testfarm_watchdog.log`. The Executor has no log configuration of its own — it always writes to the console.
 
 ## Troubleshooting
 
-- **Service fails to start immediately after install**: verify `pywin32_postinstall.py -install` was run for the venv being used; missing pywin32 DLL registration is a common cause.
-- **Service starts then stops / can't reach dependencies**: check the log file for errors reaching the TestFarm API or cloning repositories, and confirm the service's logon account has the required network and filesystem permissions.
+- **Executor keeps restarting**: read `testfarm_executor.log` — it holds the Executor's own output. Watchdog-level problems (bad paths, crash-loop back-off) are in `testfarm_watchdog.log`. See [Service/README.md](Service/README.md#troubleshooting).
+- **`ModuleNotFoundError` for a dependency (e.g. `git`, `py7zr`, `testfarmutils`)**: the interpreter `py` resolves to for the watchdog service is not the one `requirements_install.bat` installed into. The watchdog logs the resolved interpreter at startup (`Executor interpreter: py -> ...`) — install the requirements there, or pin `Executor.PythonExe` in [Service/config.json](Service/config.json) to an explicit `python.exe`.
+- **Can't reach dependencies**: check the log for errors reaching the TestFarm API or cloning repositories, and confirm the service's logon account has the required network and filesystem permissions.
+- **Test/install commands fail only when running under the service (work fine when started by hand)**: LocalSystem doesn't have your interactive user's `PATH`, profile, or mapped drives — any tool installed per-user (e.g. a per-user Python/`dotnet`/`node` install) is invisible to it. Configure the service's **Log On** account (see above) to run as the same user whose environment the commands rely on.
 - **Config not found**: `config.json` must remain alongside `test_farm_windows_service.py` in `Executor/` — its path is resolved relative to that file, not the current working directory.

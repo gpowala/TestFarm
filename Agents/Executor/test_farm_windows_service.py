@@ -9,8 +9,6 @@ from typing import Optional, List, Dict, Set
 from urllib.parse import urljoin
 import time
 import threading
-import win32serviceutil
-import win32event
 import win32job
 import win32api
 import logging
@@ -29,7 +27,6 @@ from testfarm_benchmarks_utils import *
 from test_farm_tests import TestCase, BenchmarkCase
 from test_farm_api import get_next_job, get_scheduled_test, get_scheduled_benchmark, register_host, unregister_host, update_host_status, complete_test, complete_benchmark, upload_diff, upload_benchmark_results, upload_temp_dir_archive, upload_output, Repository
 from test_farm_service_config import Config
-from logging.handlers import RotatingFileHandler
 
 class CommandStatus(Enum):
     SUCCESS = "success"
@@ -46,35 +43,14 @@ class CommandResult:
     stderr: str
     leftover_processes: List[int]  # PIDs of child processes that were still running and got terminated
 
-class TestFarmWindowsService(win32serviceutil.ServiceFramework):
-    _svc_name_ = "TestFarm"
-    _svc_display_name_ = "TestFarm Windows Service"
-    _svc_description_ = "TestFarm tests and benchmarks executing service."
-
-    def __init__(self, args=None):
-        self._isDebugModeOn = args is None
-        self.setup()
-
-        if not self._isDebugModeOn:
-            super().__init__(args)
-            self.create_win32_event()
-
-    def setup(self):
+class TestFarmWindowsService:
+    def __init__(self):
         self._running = False
         self._host = None
         self._config = None
 
         self.setup_config()
-        self.setup_logging() 
-
-    def create_win32_event(self):
-        if not self._isDebugModeOn:
-            self._hWaitStop = win32event.CreateEvent(None, 0, 0, None)
-
-    def set_win32_event(self):
-        if not self._isDebugModeOn:
-            assert self._hWaitStop is not None, "Win32 event must be initialized before setting it."
-            win32event.SetEvent(self._hWaitStop)
+        self.setup_logging()
 
     def setup_config(self):
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -84,30 +60,16 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
     def setup_logging(self):
         assert self._config is not None, "Configuration must be initialized before setting up logging."
 
-        os.makedirs(self._config.logging.log_dir, exist_ok=True)
-        
-        log_file = os.path.join(self._config.logging.log_dir, "testfarm_service.log")
-        
-        if self._isDebugModeOn:
-            log_handler = logging.StreamHandler(sys.stdout)
-            logging.info("Debug mode: logging to console")
-        else:
-            log_handler = RotatingFileHandler(
-            filename=log_file,
-            maxBytes=10*1024*1024,
-            backupCount=5,
-            )
+        log_handler = logging.StreamHandler(sys.stdout)
         log_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-        
+
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.INFO)
-        
+
         for handler in root_logger.handlers[:]:
             root_logger.removeHandler(handler)
-            
+
         root_logger.addHandler(log_handler)
-        
-        logging.info(f"Logging initialized to: {log_file}")
 
     def clone_repository(self, repository: Repository) -> str:
         logging.info(f"Fetching {repository.name} tests repository...")
@@ -138,23 +100,32 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
         return local_repository_dir
 
-    def SvcStop(self):
+    def request_stop(self):
         self._running = False
-        win32event.SetEvent(self._hWaitStop)
+        logging.info("TestFarm executor is stopping...")
 
-        logging.info("TestFarm service is stopping...")
-        
-        if self._host:
-            try:
-                logging.info(f"TestFarm service is stopping on host: {self._host.hostname}")
-                
-                update_host_status("Offline", self._host, self._config)
-                logging.info(f"Host {self._host.hostname} status set to \"Offline\"")
-                
-                unregister_host(self._host, self._config)
-                logging.info(f"Host {self._host.hostname} successfully unregistered")
-            except Exception as e:
-                logging.error(f"Error during host shutdown: {e}")
+    def idle_sleep(self, seconds: int):
+        for _ in range(seconds):
+            if not self._running:
+                return
+            time.sleep(1)
+
+    def shutdown_host(self):
+        if not self._host:
+            return
+
+        try:
+            logging.info(f"TestFarm executor is stopping on host: {self._host.hostname}")
+
+            update_host_status("Offline", self._host, self._config)
+            logging.info(f"Host {self._host.hostname} status set to \"Offline\"")
+
+            unregister_host(self._host, self._config)
+            logging.info(f"Host {self._host.hostname} successfully unregistered")
+        except Exception as e:
+            logging.error(f"Error during host shutdown: {e}")
+        finally:
+            self._host = None
 
     def install_artifacts(self, artifacts):
         if artifacts is None or len(artifacts) == 0:
@@ -173,7 +144,7 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
                     script_file.write(artifact.artifact_definition.install_script)
 
                 logging.info(f"Executing install script: {script_path}")
-                exit_code = os.system(f"python {script_path} --build {artifact.build_id} --hostname {self._host.hostname} --timeout 60")
+                exit_code = os.system(f"py {script_path} --build {artifact.build_id} --hostname {self._host.hostname} --timeout 60")
                 
                 if exit_code != 0:
                     logging.error(f"Install script failed with exit code {exit_code}")
@@ -194,10 +165,10 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
         return overall_exit_code
 
-    def SvcDoRun(self):
-        assert self._config is not None, "Configuration must be initialized before service startup."
+    def run(self):
+        assert self._config is not None, "Configuration must be initialized before startup."
 
-        logging.info(f"TestFarm service is starting for grid: {self._config.grid.name}")
+        logging.info(f"TestFarm executor is starting for grid: {self._config.grid.name}")
         logging.info(f"TestFarm API URL: {self._config.test_farm_api.base_url}")
 
         logging.info(f"Magic variables:\n{stringify_magic_variables()}")
@@ -527,14 +498,15 @@ class TestFarmWindowsService(win32serviceutil.ServiceFramework):
 
                     logging.info("Benchmark completed.")
                 else:
-                    time.sleep(60)
+                    self.idle_sleep(60)
             except Exception as e:
                 logging.error(f"Error processing test: {e}")
             finally:
-                update_host_status("Waiting for tests...", self._host, self._config)
-                logging.info(f"Host {self._host.hostname} status set to \"Waiting for tests...\"")
+                if self._running and self._host:
+                    update_host_status("Waiting for tests...", self._host, self._config)
+                    logging.info(f"Host {self._host.hostname} status set to \"Waiting for tests...\"")
 
-        logging.info("TestFarm service has stopped.")
+        logging.info("TestFarm executor has stopped.")
 
     def archive_and_upload_temp_dir(self, test):
         temp_dir = expand_magic_variables("$__TF_WORK_DIR__")
