@@ -94,12 +94,12 @@ sc.exe delete TestFarm
 
 ### Log on account
 
-By default the watchdog service runs as **LocalSystem**, which has its own environment: no per-user `PATH`, no loaded user profile, no mapped drives, and no access to per-user tool installs — and the Executor inherits it. If the test/install commands executed by the Executor (`execute_command`) need tools that only exist on a specific user's `PATH` or profile, you have two options:
+By default the watchdog service runs as **LocalSystem**, which has its own environment: no per-user `PATH`, no loaded user profile, no mapped drives, and no access to per-user tool installs — and the Executor inherits it. If the test/install commands executed by the Executor (`execute_command`) need tools that only exist on a specific user's `PATH` or profile, set `Executor.RunAs` in [Service/config.json](Service/config.json):
 
-- Set `Executor.Username` / `Executor.Password` in [Service/config.json](Service/config.json) — the watchdog logs that account on and starts `run.py` under it, with that user's environment and profile. See [Service/README.md](Service/README.md#running-the-executor-as-a-specific-user) for the required user rights and the password-handling warning.
-- Or configure the service itself to log on as that user (Services.msc → TestFarm Watchdog → Properties → **Log On** tab → *This account*).
+- `"console"` — run the Executor as the user currently logged on, in their own session. This is the closest match to running `py run.py` yourself, and needs no stored password.
+- `"user"` — run it as a fixed account from `Executor.Username` / `Executor.Password`.
 
-Either way, do not try to replicate the environment for LocalSystem.
+Leave the service itself as LocalSystem — both modes need its privileges. See [Service/README.md](Service/README.md#choosing-the-account-the-executor-runs-as) for the details and the password-handling warning.
 
 ## Logs
 

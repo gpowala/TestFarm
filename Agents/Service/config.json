@@ -5,6 +5,7 @@
         "Args": [
             "run.py"
         ],
+        "RunAs": "service",
         "Username": "",
         "Password": "",
         "LogonType": "interactive",

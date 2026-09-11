@@ -33,6 +33,7 @@ import win32profile
 import win32security
 import win32service
 import win32serviceutil
+import win32ts
 import winerror
 
 SERVICE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -51,6 +52,47 @@ LOGON_TYPES = {
     "network": win32security.LOGON32_LOGON_NETWORK,
 }
 
+RUN_AS_SERVICE = "service"
+RUN_AS_CONSOLE = "console"
+RUN_AS_USER = "user"
+RUN_AS_MODES = (RUN_AS_SERVICE, RUN_AS_CONSOLE, RUN_AS_USER)
+
+# A process that cannot reach a window station fails during DLL initialisation with
+# STATUS_DLL_INIT_FAILED, long before Python runs - so nothing lands in the executor log.
+STATUS_DLL_INIT_FAILED = -1073741502
+
+WINSTA_ACCESS = (
+    win32con.WINSTA_ACCESSCLIPBOARD
+    | win32con.WINSTA_ACCESSGLOBALATOMS
+    | win32con.WINSTA_CREATEDESKTOP
+    | win32con.WINSTA_ENUMDESKTOPS
+    | win32con.WINSTA_ENUMERATE
+    | win32con.WINSTA_EXITWINDOWS
+    | win32con.WINSTA_READATTRIBUTES
+    | win32con.WINSTA_READSCREEN
+    | win32con.WINSTA_WRITEATTRIBUTES
+    | win32con.DELETE
+    | win32con.READ_CONTROL
+    | win32con.WRITE_DAC
+    | win32con.WRITE_OWNER
+)
+
+DESKTOP_ACCESS = (
+    win32con.DESKTOP_CREATEMENU
+    | win32con.DESKTOP_CREATEWINDOW
+    | win32con.DESKTOP_ENUMERATE
+    | win32con.DESKTOP_HOOKCONTROL
+    | win32con.DESKTOP_JOURNALPLAYBACK
+    | win32con.DESKTOP_JOURNALRECORD
+    | win32con.DESKTOP_READOBJECTS
+    | win32con.DESKTOP_SWITCHDESKTOP
+    | win32con.DESKTOP_WRITEOBJECTS
+    | win32con.DELETE
+    | win32con.READ_CONTROL
+    | win32con.WRITE_DAC
+    | win32con.WRITE_OWNER
+)
+
 
 class WatchdogConfig:
     def __init__(self, config_data: dict):
@@ -66,6 +108,12 @@ class WatchdogConfig:
         self.executor_password = executor.get("Password") or ""
         self.executor_logon_type = (executor.get("LogonType") or "interactive").strip().lower()
         self.executor_load_user_profile = bool(executor.get("LoadUserProfile", True))
+
+        run_as = (executor.get("RunAs") or "").strip().lower()
+        if not run_as:
+            # Back-compat: credentials alone used to be enough to opt into "run as user".
+            run_as = RUN_AS_USER if self.executor_username else RUN_AS_SERVICE
+        self.executor_run_as = run_as
 
         self.restart_delay_seconds = int(watchdog.get("RestartDelaySeconds", 15))
         self.graceful_stop_timeout_seconds = int(watchdog.get("GracefulStopTimeoutSeconds", 120))
@@ -114,6 +162,105 @@ def duplicate_as_inheritable(handle):
     return win32api.DuplicateHandle(
         current_process, handle, current_process, 0, True, win32con.DUPLICATE_SAME_ACCESS
     )
+
+
+def find_interactive_session_id():
+    """Session of the user logged on at the console, falling back to any active session (RDP)."""
+    session_id = win32ts.WTSGetActiveConsoleSessionId()
+
+    if session_id not in (0, 0xFFFFFFFF):
+        return session_id
+
+    for session in win32ts.WTSEnumerateSessions(win32ts.WTS_CURRENT_SERVER_HANDLE):
+        if session["State"] == win32ts.WTSActive and session["SessionId"] != 0:
+            return session["SessionId"]
+
+    return None
+
+
+def acquire_console_session_token():
+    """Primary token of the interactive user - the same scope you get in their own shell."""
+    session_id = find_interactive_session_id()
+    if session_id is None:
+        raise RuntimeError("No interactive session is available - nobody is logged on to this machine.")
+
+    session_token = win32ts.WTSQueryUserToken(session_id)
+    try:
+        token = win32security.DuplicateTokenEx(
+            session_token,
+            win32security.SecurityImpersonation,
+            win32con.MAXIMUM_ALLOWED,
+            win32security.TokenPrimary,
+            None,
+        )
+    finally:
+        win32api.CloseHandle(session_token)
+
+    return token, session_id
+
+
+def describe_token_user(token) -> str:
+    sid = win32security.GetTokenInformation(token, win32security.TokenUser)[0]
+    name, domain, _ = win32security.LookupAccountSid(None, sid)
+    return f"{domain}\\{name}" if domain else name
+
+
+def grant_user_object_access(handle, sid, access: int, inheritable: bool):
+    descriptor = win32security.GetUserObjectSecurity(handle, win32security.DACL_SECURITY_INFORMATION)
+    dacl = descriptor.GetSecurityDescriptorDacl()
+
+    if inheritable:
+        dacl.AddAccessAllowedAceEx(
+            win32security.ACL_REVISION_DS,
+            win32security.CONTAINER_INHERIT_ACE
+            | win32security.INHERIT_ONLY_ACE
+            | win32security.OBJECT_INHERIT_ACE,
+            access,
+            sid,
+        )
+
+    dacl.AddAccessAllowedAceEx(win32security.ACL_REVISION_DS, win32security.NO_PROPAGATE_INHERIT_ACE, access, sid)
+
+    descriptor.SetSecurityDescriptorDacl(1, dacl, 0)
+    win32security.SetUserObjectSecurity(handle, win32security.DACL_SECURITY_INFORMATION, descriptor)
+
+
+def grant_window_station_access(sid):
+    """Without this the spawned process dies with STATUS_DLL_INIT_FAILED (0xC0000142).
+
+    A service lives in session 0, whose window station and desktop only grant access to the
+    service account. Any process started there under different credentials cannot initialise
+    user32.dll until its SID is added to both DACLs.
+    """
+    previous_station = win32service.GetProcessWindowStation()
+    station = win32service.OpenWindowStation(
+        "WinSta0", False, win32con.READ_CONTROL | win32con.WRITE_DAC
+    )
+
+    try:
+        grant_user_object_access(station, sid, WINSTA_ACCESS, inheritable=True)
+
+        # OpenDesktop resolves against the calling process's window station, so we have to
+        # switch to WinSta0 for the lookup and switch straight back.
+        station.SetProcessWindowStation()
+        try:
+            desktop = win32service.OpenDesktop(
+                "default",
+                0,
+                False,
+                win32con.READ_CONTROL
+                | win32con.WRITE_DAC
+                | win32con.DESKTOP_READOBJECTS
+                | win32con.DESKTOP_WRITEOBJECTS,
+            )
+            try:
+                grant_user_object_access(desktop, sid, DESKTOP_ACCESS, inheritable=False)
+            finally:
+                desktop.CloseDesktop()
+        finally:
+            previous_station.SetProcessWindowStation()
+    finally:
+        station.CloseWindowStation()
 
 
 class UserProcess:
@@ -224,13 +371,15 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
             logging.info("TestFarm Watchdog is starting...")
             logging.info(f"Executor directory: {self._config.executor_dir}")
             logging.info(f"Executor command: {self._config.executor_python} {' '.join(self._config.executor_args)}")
-            if self._config.executor_username:
+            if self._config.executor_run_as == RUN_AS_USER:
                 logging.info(
-                    f"Executor account: {self._config.executor_username} "
+                    f"Executor runs as: {self._config.executor_username} "
                     f"(logon type: {self._config.executor_logon_type})"
                 )
+            elif self._config.executor_run_as == RUN_AS_CONSOLE:
+                logging.info("Executor runs as: the user logged on interactively.")
             else:
-                logging.info("Executor account: the account this service runs under.")
+                logging.info("Executor runs as: the account this service runs under.")
 
             self._singleton_mutex = acquire_singleton_mutex()
             if self._singleton_mutex is None:
@@ -246,6 +395,15 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
             logging.info("TestFarm Watchdog has stopped.")
 
     def validate_executor(self):
+        if self._config.executor_run_as not in RUN_AS_MODES:
+            raise ValueError(
+                f"Unsupported Executor.RunAs \"{self._config.executor_run_as}\" - "
+                f"expected one of {', '.join(RUN_AS_MODES)}."
+            )
+
+        if self._config.executor_run_as == RUN_AS_USER and not self._config.executor_username:
+            raise ValueError("Executor.RunAs is \"user\" but Executor.Username is empty.")
+
         if not os.path.isdir(self._config.executor_dir):
             raise FileNotFoundError(f"Executor directory not found: {self._config.executor_dir}")
 
@@ -257,8 +415,7 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
         # executable search when the Executor is started, exactly like typing it in a shell.
 
     def supervise(self):
-        stop_event_name = f"{STOP_EVENT_PREFIX}_{os.getpid()}"
-        stop_event = win32event.CreateEvent(self.stop_event_security(), True, False, stop_event_name)
+        stop_event, stop_event_name = self.create_stop_event()
 
         consecutive_fast_exits = 0
 
@@ -271,6 +428,13 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
 
             if self._stop.is_set():
                 break
+
+            if exit_code == STATUS_DLL_INIT_FAILED:
+                logging.error(
+                    "The executor process was killed during DLL initialisation (0xC0000142), so it never "
+                    "produced any output. This almost always means the account it runs as has no access to "
+                    "the window station it was started on."
+                )
 
             if uptime_seconds < self._config.crash_loop_threshold_seconds:
                 consecutive_fast_exits += 1
@@ -293,18 +457,33 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
 
             self._stop.wait(restart_delay_seconds)
 
-    def stop_event_security(self):
-        """Lets the configured executor account open the stop event (the default DACL would not)."""
-        if not self._config.executor_username:
-            return None
+    def create_stop_event(self):
+        """The stop event has to live in the global namespace.
+
+        In `console` mode the Executor runs in the interactive session, so a session-local
+        event created here (session 0) would be invisible to it.
+        """
+        base_name = f"{STOP_EVENT_PREFIX}_{os.getpid()}"
+        security = self.stop_event_security()
 
         try:
-            user_sid, _, _ = win32security.LookupAccountName(None, self._config.executor_username)
+            return win32event.CreateEvent(security, True, False, f"Global\\{base_name}"), f"Global\\{base_name}"
         except pywintypes.error as error:
+            # Creating global objects needs SeCreateGlobalPrivilege, which a non-elevated
+            # foreground run does not have. Session-local is fine there.
             logging.warning(
-                f"Could not resolve \"{self._config.executor_username}\" to a SID ({error.strerror}) - "
-                "the executor may not be able to receive graceful stop requests."
+                f"Could not create a global stop event ({error.strerror}) - falling back to a session-local one."
             )
+            return win32event.CreateEvent(security, True, False, base_name), base_name
+
+    def stop_event_security(self):
+        """Lets the executor open the stop event when it runs as another user.
+
+        The default DACL only covers the service account, so an executor started under
+        different credentials could never see a graceful stop request. Authenticated users
+        get SYNCHRONIZE only - enough to wait on the event, not enough to signal it.
+        """
+        if self._config.executor_run_as == RUN_AS_SERVICE:
             return None
 
         token = win32security.OpenProcessToken(win32api.GetCurrentProcess(), win32con.TOKEN_QUERY)
@@ -313,11 +492,11 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
         finally:
             win32api.CloseHandle(token)
 
+        authenticated_users_sid = win32security.ConvertStringSidToSid("S-1-5-11")
+
         dacl = win32security.ACL()
         dacl.AddAccessAllowedAce(win32security.ACL_REVISION, win32con.GENERIC_ALL, owner_sid)
-        dacl.AddAccessAllowedAce(
-            win32security.ACL_REVISION, win32con.SYNCHRONIZE | win32event.EVENT_MODIFY_STATE, user_sid
-        )
+        dacl.AddAccessAllowedAce(win32security.ACL_REVISION, win32con.SYNCHRONIZE, authenticated_users_sid)
 
         descriptor = win32security.SECURITY_DESCRIPTOR()
         descriptor.SetSecurityDescriptorDacl(1, dacl, 0)
@@ -363,7 +542,7 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
             return None
         except pywintypes.error as error:
             logging.error(
-                f"Could not start the executor as \"{self._config.executor_username}\": "
+                f"Could not start the executor in \"{self._config.executor_run_as}\" mode: "
                 f"{error.strerror} (win32 error {error.winerror})"
             )
             return None
@@ -386,7 +565,9 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
                 log_file.close()
 
     def start_executor(self, command, log_file):
-        if not self._config.executor_username:
+        run_as = self._config.executor_run_as
+
+        if run_as == RUN_AS_SERVICE:
             return subprocess.Popen(
                 command,
                 cwd=self._config.executor_dir,
@@ -397,9 +578,22 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
                 close_fds=True,
             )
 
-        return self.start_executor_as_user(command, log_file)
+        if run_as == RUN_AS_CONSOLE:
+            token, session_id = acquire_console_session_token()
+            label = f"{describe_token_user(token)} (interactive session {session_id})"
+            return self.start_executor_with_token(command, log_file, token, None, label)
 
-    def start_executor_as_user(self, command, log_file):
+        if run_as == RUN_AS_USER:
+            token, profile = self.logon_configured_user()
+            return self.start_executor_with_token(
+                command, log_file, token, profile, self._config.executor_username
+            )
+
+        raise ValueError(
+            f"Unsupported Executor.RunAs \"{run_as}\" - expected one of {', '.join(RUN_AS_MODES)}."
+        )
+
+    def logon_configured_user(self):
         logon_type = LOGON_TYPES.get(self._config.executor_logon_type)
         if logon_type is None:
             raise ValueError(
@@ -418,15 +612,34 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
         )
 
         profile = None
+
+        try:
+            # The session 0 window station does not grant this account anything by default,
+            # which would kill the executor during DLL initialisation.
+            sid = win32security.GetTokenInformation(token, win32security.TokenUser)[0]
+            try:
+                grant_window_station_access(sid)
+            except pywintypes.error as error:
+                logging.warning(
+                    f"Could not grant \"{self._config.executor_username}\" access to the service window "
+                    f"station ({error.strerror}) - the executor may fail to start."
+                )
+
+            if self._config.executor_load_user_profile:
+                profile = win32profile.LoadUserProfile(token, {"UserName": username})
+        except Exception:
+            win32api.CloseHandle(token)
+            raise
+
+        return token, profile
+
+    def start_executor_with_token(self, command, log_file, token, profile, label: str):
         stdin_handle = None
         stdout_handle = None
 
         try:
-            if self._config.executor_load_user_profile:
-                profile = win32profile.LoadUserProfile(token, {"UserName": username})
-
             # Give the executor the target user's environment (per-user PATH, %APPDATA%, ...),
-            # which is the whole point of running it under a dedicated account.
+            # which is the whole point of running it under another account.
             environment = win32profile.CreateEnvironmentBlock(token, False)
 
             with open(os.devnull, "rb") as devnull:
@@ -454,7 +667,7 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
             )
 
             win32api.CloseHandle(thread_handle)
-            logging.info(f"Executor is running as \"{self._config.executor_username}\".")
+            logging.info(f"Executor is running as {label}.")
 
             user_process = UserProcess(process_handle, pid, command, token, profile)
             token, profile = None, None
