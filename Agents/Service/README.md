@@ -33,7 +33,7 @@ The watchdog avoids all of it:
 
 Same interpreter and dependencies as the Executor — see [../README.md](../README.md). The watchdog itself only needs `pywin32`, which is already in `Agents/requirements.txt`.
 
-Use a python.org (or equivalent) installation. The Microsoft Store build of Python starts through an app execution alias, so the real interpreter is created by a broker rather than as a direct child and never joins the watchdog's job object — leftover test processes would then survive a stop. The watchdog logs a warning if it detects this.
+Use a python.org (or equivalent) installation, installed **for all users** so that `py` is on the PATH of the account the service runs under. The Microsoft Store build of Python starts through an app execution alias, so the real interpreter is created by a broker rather than as a direct child and never joins the watchdog's job object — leftover test processes would then survive a stop.
 
 ## Configuration
 
@@ -44,7 +44,11 @@ Use a python.org (or equivalent) installation. The Microsoft Store build of Pyth
     "Executor": {
         "Dir": "../Executor",
         "PythonExe": "py",
-        "Args": ["run.py"]
+        "Args": ["run.py"],
+        "Username": "",
+        "Password": "",
+        "LogonType": "interactive",
+        "LoadUserProfile": true
     },
     "Watchdog": {
         "RestartDelaySeconds": 15,
@@ -64,8 +68,12 @@ Use a python.org (or equivalent) installation. The Microsoft Store build of Pyth
 | Setting | Meaning |
 | --- | --- |
 | `Executor.Dir` | Executor folder, relative to this folder (or absolute). Becomes the child's working directory. |
-| `Executor.PythonExe` | Interpreter used for the Executor. `py` (the Windows launcher) by default; set an explicit `python.exe` path to pin a specific interpreter. The watchdog logs which interpreter `py` actually resolved to at startup. |
+| `Executor.PythonExe` | Interpreter used for the Executor. `py` (the Windows launcher) by default — it is looked up through the normal executable search when the Executor is started, so it must be on the PATH of the service's logon account. Set an explicit `python.exe` path to pin a specific interpreter. |
 | `Executor.Args` | Command line for the Executor. `--stop-event <name>` is appended automatically. |
+| `Executor.Username` | Account the Executor runs as. Empty (the default) means it runs as the service's own logon account. See [Running the Executor as a specific user](#running-the-executor-as-a-specific-user). |
+| `Executor.Password` | Password for `Executor.Username`. Ignored when the username is empty. |
+| `Executor.LogonType` | `interactive` (default), `batch`, `service` or `network`. Picks the Win32 logon type used for `Executor.Username`. |
+| `Executor.LoadUserProfile` | Load the target user's registry profile before starting the Executor. Keep it `true` unless the account has no profile. |
 | `RestartDelaySeconds` | Delay before restarting an Executor that exited. |
 | `GracefulStopTimeoutSeconds` | How long to wait for the Executor to unregister its host and exit before killing its process tree. Must comfortably exceed the longest acceptable test run you are willing to wait for on shutdown. |
 | `CrashLoopThresholdSeconds` | An Executor that lives shorter than this counts as a fast exit. |
@@ -115,7 +123,39 @@ If you move or rename the folder, re-run the install — the script path is stor
 
 ### Log on account
 
-By default the service runs as **LocalSystem**, which has its own environment: no per-user `PATH`, no loaded user profile, no mapped drives, and no access to per-user tool installs. The Executor inherits that environment. If the test/install commands it runs need tools that only exist on a specific user's `PATH` or profile, configure the service to log on as that user (Services.msc → *TestFarm Watchdog* → Properties → **Log On** tab → *This account*), rather than trying to replicate the environment for LocalSystem.
+By default the service runs as **LocalSystem**, which has its own environment: no per-user `PATH`, no loaded user profile, no mapped drives, and no access to per-user tool installs. The Executor inherits that environment. If the test/install commands it runs need tools that only exist on a specific user's `PATH` or profile, either configure the service to log on as that user (Services.msc → *TestFarm Watchdog* → Properties → **Log On** tab → *This account*), or keep the service as LocalSystem and let it start the Executor under that user — see the next section.
+
+## Running the Executor as a specific user
+
+Set `Executor.Username` and `Executor.Password` in [config.json](config.json) and the watchdog will log that account on and start `run.py` under it, with the account's own environment block (per-user `PATH`, `%APPDATA%`, `%USERPROFILE%`, ...). The watchdog service itself keeps running as its own account.
+
+```json
+"Executor": {
+    "Dir": "../Executor",
+    "PythonExe": "py",
+    "Args": ["run.py"],
+    "Username": "MYDOMAIN\\testfarm",
+    "Password": "...",
+    "LogonType": "interactive",
+    "LoadUserProfile": true
+}
+```
+
+`Username` accepts `DOMAIN\user`, `user@domain.com` or a bare local user name.
+
+Requirements for the target account:
+
+- The rights matching `LogonType`: **Allow log on locally** for `interactive`, **Log on as a batch job** for `batch` (`secpol.msc` → *Local Policies* → *User Rights Assignment*). `batch` is the better fit for an unattended account; use `interactive` if that right is the one already granted.
+- Read/execute access to the `Agents` folder and write access to whatever the tests touch.
+- `Executor.PythonExe` must be resolvable from the **service's** `PATH`, not the target user's — the executable search still happens in the watchdog's context. If `py` only exists in the target user's per-user install, set `Executor.PythonExe` to a full `python.exe` path.
+
+> **Security**: the password is stored in clear text. Never commit a real one — keep the value empty in git and fill it in only on the deployed machine, then lock the file down:
+>
+> ```powershell
+> icacls config.json /inheritance:r /grant "SYSTEM:(F)" "Administrators:(F)"
+> ```
+>
+> If that is not acceptable, leave `Username` empty and change the service's own logon account instead.
 
 ## Running in the foreground
 
@@ -150,8 +190,10 @@ The service registration is untouched; the next Executor start simply picks up t
 ## Troubleshooting
 
 - **Service will not start / stops immediately**: read `testfarm_watchdog.log` first. Startup failures (missing `config.json`, missing `Executor` folder, missing interpreter) are logged there and to the Windows Event Log.
-- **`ModuleNotFoundError` when the service starts**: the interpreter running the Executor does not have the requirements installed. The watchdog logs the one it resolved at startup (`Executor interpreter: py -> ...`); install the requirements there, or pin `Executor.PythonExe` to an explicit `python.exe`. For the watchdog's own imports, check the service host with `Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\TestFarmWatchdog' | Select-Object ImagePath`, then `py watchdog.py remove` and reinstall from the correct interpreter.
+- **`Could not start "py"` in the watchdog log**: the Python launcher is not on the PATH of the account the service runs under — typically because Python was installed *just for me* rather than for all users. Reinstall Python for all users, add the launcher to the system PATH, or set `Executor.PythonExe` to a full `python.exe` path.
+- **`ModuleNotFoundError` when the service starts**: the interpreter running the Executor does not have the requirements installed. Install them with the same `py` the service will use, or pin `Executor.PythonExe` to an explicit `python.exe`. For the watchdog's own imports, check the service host with `Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\TestFarmWatchdog' | Select-Object ImagePath`, then `py watchdog.py remove` and reinstall from the correct interpreter.
+- **`Could not start the executor as "<user>"` in the watchdog log**: the logon failed. Win32 error `1326` is a wrong user name or password, `1385` means the account lacks the user right required by `Executor.LogonType` (try `batch` and grant *Log on as a batch job*), `1327` means blank passwords are not allowed for that account, `1314` means the account **the service itself runs as** lacks *Replace a process level token* / *Adjust memory quotas for a process* — run the service as LocalSystem, or grant those rights.
 - **Executor restarts in a loop**: `testfarm_executor.log` holds the actual error. The watchdog backs off to `CrashLoopBackoffSeconds` after `CrashLoopMaxFastExits` fast exits, so restarts get sparse rather than stopping.
 - **Host stays online in TestFarm after a stop**: the Executor did not shut down within `GracefulStopTimeoutSeconds` and was killed. Raise the timeout, or check `testfarm_executor.log` for what it was busy with.
-- **Test processes survive a service stop**: verify you are not running the Microsoft Store build of Python (the watchdog warns about this at startup) — processes started through its app execution alias never join the watchdog's job object.
+- **Test processes survive a service stop**: verify you are not running the Microsoft Store build of Python — processes started through its app execution alias never join the watchdog's job object.
 - **"Another TestFarm Watchdog instance is already running"**: the service and a foreground `py watchdog.py run` are both active. Stop one of them.

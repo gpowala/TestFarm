@@ -4,7 +4,11 @@
         "PythonExe": "py",
         "Args": [
             "run.py"
-        ]
+        ],
+        "Username": "",
+        "Password": "",
+        "LogonType": "interactive",
+        "LoadUserProfile": true
     },
     "Watchdog": {
         "RestartDelaySeconds": 15,

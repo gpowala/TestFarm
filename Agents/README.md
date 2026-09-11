@@ -6,7 +6,7 @@ On a grid machine it is kept alive by the [TestFarm Watchdog](Service/README.md)
 
 ## Prerequisites
 
-- Windows with Python 3.x installed — use a python.org (or equivalent) installation, **not** the Microsoft Store build, whose app execution alias breaks process-tree cleanup
+- Windows with Python 3.x installed — use a python.org (or equivalent) installation **for all users** (so `py` is on the service account's PATH), **not** the Microsoft Store build, whose app execution alias breaks process-tree cleanup
 - Administrator access (required to install/start/stop a Windows service)
 - Git available on `PATH` (used both for cloning test repositories and for diff generation)
 - Network access to the TestFarm API and to the git repositories under test
@@ -94,7 +94,12 @@ sc.exe delete TestFarm
 
 ### Log on account
 
-By default the watchdog service runs as **LocalSystem**, which has its own environment: no per-user `PATH`, no loaded user profile, no mapped drives, and no access to per-user tool installs — and the Executor inherits it. If the test/install commands executed by the Executor (`execute_command`) need tools that only exist on a specific user's `PATH` or profile, configure the service to log on as that user instead (Services.msc → TestFarm Watchdog → Properties → **Log On** tab → *This account*), rather than trying to replicate the environment for LocalSystem.
+By default the watchdog service runs as **LocalSystem**, which has its own environment: no per-user `PATH`, no loaded user profile, no mapped drives, and no access to per-user tool installs — and the Executor inherits it. If the test/install commands executed by the Executor (`execute_command`) need tools that only exist on a specific user's `PATH` or profile, you have two options:
+
+- Set `Executor.Username` / `Executor.Password` in [Service/config.json](Service/config.json) — the watchdog logs that account on and starts `run.py` under it, with that user's environment and profile. See [Service/README.md](Service/README.md#running-the-executor-as-a-specific-user) for the required user rights and the password-handling warning.
+- Or configure the service itself to log on as that user (Services.msc → TestFarm Watchdog → Properties → **Log On** tab → *This account*).
+
+Either way, do not try to replicate the environment for LocalSystem.
 
 ## Logs
 
@@ -103,7 +108,7 @@ When supervised by the watchdog, everything the Executor prints is captured into
 ## Troubleshooting
 
 - **Executor keeps restarting**: read `testfarm_executor.log` — it holds the Executor's own output. Watchdog-level problems (bad paths, crash-loop back-off) are in `testfarm_watchdog.log`. See [Service/README.md](Service/README.md#troubleshooting).
-- **`ModuleNotFoundError` for a dependency (e.g. `git`, `py7zr`, `testfarmutils`)**: the interpreter `py` resolves to for the watchdog service is not the one `requirements_install.bat` installed into. The watchdog logs the resolved interpreter at startup (`Executor interpreter: py -> ...`) — install the requirements there, or pin `Executor.PythonExe` in [Service/config.json](Service/config.json) to an explicit `python.exe`.
+- **`ModuleNotFoundError` for a dependency (e.g. `git`, `py7zr`, `testfarmutils`)**: the interpreter `py` picks for the watchdog service is not the one `requirements_install.bat` installed into. Install the requirements with the same `py`, or pin `Executor.PythonExe` in [Service/config.json](Service/config.json) to an explicit `python.exe`.
 - **Can't reach dependencies**: check the log for errors reaching the TestFarm API or cloning repositories, and confirm the service's logon account has the required network and filesystem permissions.
 - **Test/install commands fail only when running under the service (work fine when started by hand)**: LocalSystem doesn't have your interactive user's `PATH`, profile, or mapped drives — any tool installed per-user (e.g. a per-user Python/`dotnet`/`node` install) is invisible to it. Configure the service's **Log On** account (see above) to run as the same user whose environment the commands rely on.
 - **Config not found**: `config.json` must remain alongside `test_farm_windows_service.py` in `Executor/` — its path is resolved relative to that file, not the current working directory.

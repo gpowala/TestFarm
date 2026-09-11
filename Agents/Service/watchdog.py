@@ -13,8 +13,8 @@ plus a service restart.
 
 import json
 import logging
+import msvcrt
 import os
-import shutil
 import signal
 import subprocess
 import sys
@@ -22,11 +22,15 @@ import time
 import threading
 from logging.handlers import RotatingFileHandler
 
+import pywintypes
 import servicemanager
 import win32api
 import win32con
 import win32event
 import win32job
+import win32process
+import win32profile
+import win32security
 import win32service
 import win32serviceutil
 import winerror
@@ -40,6 +44,13 @@ EXECUTOR_LOG_NAME = "testfarm_executor.log"
 SINGLETON_MUTEX_NAME = "Global\\TestFarmWatchdogSingleton"
 STOP_EVENT_PREFIX = "TestFarmExecutorStop"
 
+LOGON_TYPES = {
+    "interactive": win32security.LOGON32_LOGON_INTERACTIVE,
+    "batch": win32security.LOGON32_LOGON_BATCH,
+    "service": win32security.LOGON32_LOGON_SERVICE,
+    "network": win32security.LOGON32_LOGON_NETWORK,
+}
+
 
 class WatchdogConfig:
     def __init__(self, config_data: dict):
@@ -50,6 +61,11 @@ class WatchdogConfig:
         self.executor_dir = os.path.abspath(os.path.join(SERVICE_DIR, executor.get("Dir", "../Executor")))
         self.executor_python = executor.get("PythonExe") or "py"
         self.executor_args = list(executor.get("Args", ["run.py"]))
+
+        self.executor_username = (executor.get("Username") or "").strip()
+        self.executor_password = executor.get("Password") or ""
+        self.executor_logon_type = (executor.get("LogonType") or "interactive").strip().lower()
+        self.executor_load_user_profile = bool(executor.get("LoadUserProfile", True))
 
         self.restart_delay_seconds = int(watchdog.get("RestartDelaySeconds", 15))
         self.graceful_stop_timeout_seconds = int(watchdog.get("GracefulStopTimeoutSeconds", 120))
@@ -79,6 +95,63 @@ def rotate_file(file_path: str, max_bytes: int, backup_count: int):
             if os.path.exists(destination):
                 os.remove(destination)
             os.replace(source, destination)
+
+
+def split_username(value: str):
+    """Splits "DOMAIN\\user", "user@domain" or a bare local user name into (domain, user)."""
+    if "\\" in value:
+        domain, _, username = value.partition("\\")
+        return domain, username
+
+    if "@" in value:
+        return None, value
+
+    return ".", value
+
+
+def duplicate_as_inheritable(handle):
+    current_process = win32api.GetCurrentProcess()
+    return win32api.DuplicateHandle(
+        current_process, handle, current_process, 0, True, win32con.DUPLICATE_SAME_ACCESS
+    )
+
+
+class UserProcess:
+    """A `subprocess.Popen`-shaped wrapper around a process started with CreateProcessAsUser."""
+
+    def __init__(self, process_handle, pid: int, command, token, profile):
+        self._process_handle = process_handle
+        self._token = token
+        self._profile = profile
+        self._command = command
+        self.pid = pid
+
+    def poll(self):
+        if win32event.WaitForSingleObject(self._process_handle, 0) != win32event.WAIT_OBJECT_0:
+            return None
+        return win32process.GetExitCodeProcess(self._process_handle)
+
+    def wait(self, timeout=None):
+        milliseconds = win32event.INFINITE if timeout is None else int(timeout * 1000)
+
+        if win32event.WaitForSingleObject(self._process_handle, milliseconds) != win32event.WAIT_OBJECT_0:
+            raise subprocess.TimeoutExpired(self._command, timeout)
+
+        return win32process.GetExitCodeProcess(self._process_handle)
+
+    def close(self):
+        if self._profile is not None:
+            try:
+                win32profile.UnloadUserProfile(self._token, self._profile)
+            except Exception as error:
+                logging.warning(f"Could not unload the user profile: {error}")
+            self._profile = None
+
+        for handle_name in ("_process_handle", "_token"):
+            handle = getattr(self, handle_name)
+            if handle is not None:
+                win32api.CloseHandle(handle)
+                setattr(self, handle_name, None)
 
 
 class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
@@ -151,13 +224,19 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
             logging.info("TestFarm Watchdog is starting...")
             logging.info(f"Executor directory: {self._config.executor_dir}")
             logging.info(f"Executor command: {self._config.executor_python} {' '.join(self._config.executor_args)}")
+            if self._config.executor_username:
+                logging.info(
+                    f"Executor account: {self._config.executor_username} "
+                    f"(logon type: {self._config.executor_logon_type})"
+                )
+            else:
+                logging.info("Executor account: the account this service runs under.")
 
             self._singleton_mutex = acquire_singleton_mutex()
             if self._singleton_mutex is None:
                 raise RuntimeError("Another TestFarm Watchdog instance is already running - aborting.")
 
             self.validate_executor()
-            self.report_interpreter()
 
             self.supervise()
         except Exception:
@@ -174,46 +253,12 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
         if not os.path.isfile(entry_point):
             raise FileNotFoundError(f"Executor entry point not found: {entry_point}")
 
-        if shutil.which(self._config.executor_python) is None:
-            raise FileNotFoundError(f"Executor interpreter not found: {self._config.executor_python}")
-
-    def report_interpreter(self):
-        # `py` is a launcher, so log which interpreter it actually picks - that is what the
-        # Executor's dependencies have to be installed into.
-        try:
-            result = subprocess.run(
-                [self._config.executor_python, "-c", "import sys; print(sys.executable)"],
-                capture_output=True,
-                text=True,
-                timeout=60,
-                creationflags=subprocess.CREATE_NO_WINDOW,
-            )
-        except Exception as error:
-            logging.warning(f"Could not resolve the interpreter behind \"{self._config.executor_python}\": {error}")
-            return
-
-        if result.returncode != 0:
-            logging.warning(
-                f"\"{self._config.executor_python}\" exited with code {result.returncode} when asked for its "
-                f"interpreter path: {result.stderr.strip()}"
-            )
-            return
-
-        interpreter = result.stdout.strip()
-        logging.info(f"Executor interpreter: {self._config.executor_python} -> {interpreter}")
-
-        # The Microsoft Store build of Python starts through an app execution alias, so the real
-        # interpreter is created by a broker instead of as our direct child. It never joins the
-        # watchdog job object, which means leftover test processes can survive a stop.
-        if "windowsapps" in interpreter.lower():
-            logging.warning(
-                "The executor interpreter is the Microsoft Store Python. Processes it starts escape "
-                "the watchdog job object and can survive a stop - install Python from python.org instead."
-            )
+        # The interpreter is deliberately not resolved here: `py` is looked up by the normal
+        # executable search when the Executor is started, exactly like typing it in a shell.
 
     def supervise(self):
         stop_event_name = f"{STOP_EVENT_PREFIX}_{os.getpid()}"
-        stop_event = win32event.CreateEvent(None, True, False, stop_event_name)
+        stop_event = win32event.CreateEvent(self.stop_event_security(), True, False, stop_event_name)
 
         consecutive_fast_exits = 0
 
@@ -248,6 +293,40 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
 
             self._stop.wait(restart_delay_seconds)
 
+    def stop_event_security(self):
+        """Lets the configured executor account open the stop event (the default DACL would not)."""
+        if not self._config.executor_username:
+            return None
+
+        try:
+            user_sid, _, _ = win32security.LookupAccountName(None, self._config.executor_username)
+        except pywintypes.error as error:
+            logging.warning(
+                f"Could not resolve \"{self._config.executor_username}\" to a SID ({error.strerror}) - "
+                "the executor may not be able to receive graceful stop requests."
+            )
+            return None
+
+        token = win32security.OpenProcessToken(win32api.GetCurrentProcess(), win32con.TOKEN_QUERY)
+        try:
+            owner_sid = win32security.GetTokenInformation(token, win32security.TokenUser)[0]
+        finally:
+            win32api.CloseHandle(token)
+
+        dacl = win32security.ACL()
+        dacl.AddAccessAllowedAce(win32security.ACL_REVISION, win32con.GENERIC_ALL, owner_sid)
+        dacl.AddAccessAllowedAce(
+            win32security.ACL_REVISION, win32con.SYNCHRONIZE | win32event.EVENT_MODIFY_STATE, user_sid
+        )
+
+        descriptor = win32security.SECURITY_DESCRIPTOR()
+        descriptor.SetSecurityDescriptorDacl(1, dacl, 0)
+
+        attributes = win32security.SECURITY_ATTRIBUTES()
+        attributes.SECURITY_DESCRIPTOR = descriptor
+
+        return attributes
+
     def run_executor(self, stop_event, stop_event_name: str):
         command = [self._config.executor_python] + self._config.executor_args + ["--stop-event", stop_event_name]
 
@@ -265,15 +344,7 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
 
             logging.info(f"Starting executor: {' '.join(command)}")
 
-            process = subprocess.Popen(
-                command,
-                cwd=self._config.executor_dir,
-                stdin=subprocess.DEVNULL,
-                stdout=log_file,
-                stderr=subprocess.STDOUT,
-                creationflags=subprocess.CREATE_NO_WINDOW,
-                close_fds=True,
-            )
+            process = self.start_executor(command, log_file)
 
             self.assign_to_job_object(job, process.pid)
             logging.info(f"Executor started with PID {process.pid}. Output goes to {executor_log_path}")
@@ -283,6 +354,19 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
                 return exit_code
 
             return self.stop_executor(process, stop_event, job)
+        except FileNotFoundError:
+            logging.error(
+                f"Could not start \"{self._config.executor_python}\" - it is not on the PATH of the account this "
+                "service runs under. Install the Python launcher for all users, or set Executor.PythonExe in "
+                f"{CONFIG_PATH} to a full path."
+            )
+            return None
+        except pywintypes.error as error:
+            logging.error(
+                f"Could not start the executor as \"{self._config.executor_username}\": "
+                f"{error.strerror} (win32 error {error.winerror})"
+            )
+            return None
         except Exception:
             logging.exception("Failed to run the executor.")
             return None
@@ -290,13 +374,100 @@ class TestFarmWatchdogService(win32serviceutil.ServiceFramework):
             # Closing the job handle kills anything the executor left behind.
             if job is not None:
                 win32api.CloseHandle(job)
-            if process is not None and process.poll() is None:
-                try:
-                    process.wait(timeout=10)
-                except subprocess.TimeoutExpired:
-                    logging.warning(f"Executor PID {process.pid} is still running after the job object was closed.")
+            if process is not None:
+                if process.poll() is None:
+                    try:
+                        process.wait(timeout=10)
+                    except subprocess.TimeoutExpired:
+                        logging.warning(f"Executor PID {process.pid} is still running after the job object was closed.")
+                if hasattr(process, "close"):
+                    process.close()
             if log_file is not None:
                 log_file.close()
+
+    def start_executor(self, command, log_file):
+        if not self._config.executor_username:
+            return subprocess.Popen(
+                command,
+                cwd=self._config.executor_dir,
+                stdin=subprocess.DEVNULL,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+                creationflags=subprocess.CREATE_NO_WINDOW,
+                close_fds=True,
+            )
+
+        return self.start_executor_as_user(command, log_file)
+
+    def start_executor_as_user(self, command, log_file):
+        logon_type = LOGON_TYPES.get(self._config.executor_logon_type)
+        if logon_type is None:
+            raise ValueError(
+                f"Unsupported Executor.LogonType \"{self._config.executor_logon_type}\" - "
+                f"expected one of {', '.join(sorted(LOGON_TYPES))}."
+            )
+
+        domain, username = split_username(self._config.executor_username)
+
+        token = win32security.LogonUser(
+            username,
+            domain,
+            self._config.executor_password,
+            logon_type,
+            win32security.LOGON32_PROVIDER_DEFAULT,
+        )
+
+        profile = None
+        stdin_handle = None
+        stdout_handle = None
+
+        try:
+            if self._config.executor_load_user_profile:
+                profile = win32profile.LoadUserProfile(token, {"UserName": username})
+
+            # Give the executor the target user's environment (per-user PATH, %APPDATA%, ...),
+            # which is the whole point of running it under a dedicated account.
+            environment = win32profile.CreateEnvironmentBlock(token, False)
+
+            with open(os.devnull, "rb") as devnull:
+                stdin_handle = duplicate_as_inheritable(msvcrt.get_osfhandle(devnull.fileno()))
+            stdout_handle = duplicate_as_inheritable(msvcrt.get_osfhandle(log_file.fileno()))
+
+            startup_info = win32process.STARTUPINFO()
+            startup_info.dwFlags = win32con.STARTF_USESTDHANDLES
+            startup_info.lpDesktop = "winsta0\\default"
+            startup_info.hStdInput = stdin_handle
+            startup_info.hStdOutput = stdout_handle
+            startup_info.hStdError = stdout_handle
+
+            process_handle, thread_handle, pid, _ = win32process.CreateProcessAsUser(
+                token,
+                None,
+                subprocess.list2cmdline(command),
+                None,
+                None,
+                True,
+                subprocess.CREATE_NO_WINDOW | win32con.CREATE_UNICODE_ENVIRONMENT,
+                environment,
+                self._config.executor_dir,
+                startup_info,
+            )
+
+            win32api.CloseHandle(thread_handle)
+            logging.info(f"Executor is running as \"{self._config.executor_username}\".")
+
+            user_process = UserProcess(process_handle, pid, command, token, profile)
+            token, profile = None, None
+
+            return user_process
+        finally:
+            for handle in (stdin_handle, stdout_handle):
+                if handle is not None:
+                    win32api.CloseHandle(handle)
+            if profile is not None:
+                win32profile.UnloadUserProfile(token, profile)
+            if token is not None:
+                win32api.CloseHandle(token)
 
     def create_job_object(self):
         job = win32job.CreateJobObject(None, "")
