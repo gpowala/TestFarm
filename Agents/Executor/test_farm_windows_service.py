@@ -13,6 +13,7 @@ import win32job
 import win32api
 import logging
 import sys
+from logging.handlers import RotatingFileHandler
 import subprocess
 import difflib
 import chardet
@@ -60,8 +61,7 @@ class TestFarmWindowsService:
     def setup_logging(self):
         assert self._config is not None, "Configuration must be initialized before setting up logging."
 
-        log_handler = logging.StreamHandler(sys.stdout)
-        log_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.INFO)
@@ -69,7 +69,25 @@ class TestFarmWindowsService:
         for handler in root_logger.handlers[:]:
             root_logger.removeHandler(handler)
 
-        root_logger.addHandler(log_handler)
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(formatter)
+        root_logger.addHandler(console_handler)
+
+        # Unattended runs have nowhere for stdout to go, so the executor keeps its own
+        # rotating log file. Its location comes from the Logging section of config.json.
+        log_config = self._config.logging
+        os.makedirs(log_config.log_dir, exist_ok=True)
+
+        file_handler = RotatingFileHandler(
+            log_config.log_path,
+            maxBytes=log_config.max_log_size_bytes,
+            backupCount=log_config.backup_count,
+            encoding="utf-8"
+        )
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
+
+        logging.info(f"Logging to {log_config.log_path}")
 
     def clone_repository(self, repository: Repository) -> str:
         logging.info(f"Fetching {repository.name} tests repository...")

@@ -12,5 +12,11 @@
     },
     "Storage": {
         "Repositories": "C:/temp_repositories"
+    },
+    "Logging": {
+        "LogDir": "C:/logs/testfarm",
+        "LogFile": "testfarm_executor.log",
+        "MaxLogSizeMb": 10,
+        "BackupCount": 5
     }
 }
