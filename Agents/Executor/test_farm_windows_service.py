@@ -156,13 +156,14 @@ class TestFarmWindowsService:
             try:
                 logging.info(f"Preparing install script for artifact: {artifact.artifact_definition.name} (Build Name: {artifact.build_name} Build ID: {artifact.build_id})")
 
+                python_exe = expand_magic_variables("$__TF_PYTHON_EXE")
                 script_path = expand_magic_variables("$__TF_TEMP_DIR__/artifact_install_script.py")
 
                 with open(script_path, 'w') as script_file:
                     script_file.write(artifact.artifact_definition.install_script)
 
                 logging.info(f"Executing install script: {script_path}")
-                exit_code = os.system(f"py {script_path} --build {artifact.build_id} --hostname {self._host.hostname} --timeout 60")
+                exit_code = os.system(f"{python_exe} {script_path} --build {artifact.build_id} --hostname {self._host.hostname} --timeout 60")
                 
                 if exit_code != 0:
                     logging.error(f"Install script failed with exit code {exit_code}")
